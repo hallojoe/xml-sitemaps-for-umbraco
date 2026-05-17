@@ -1,0 +1,14 @@
+{
+  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "Title": "Xml Sitemaps for Umbraco",
+  "Description": "Xml Sitemaps for Umbraco",
+  "Tags": ["xml sitemap", "sitemap", "meta", "seo"],
+  "IssueTrackerUrl": "https://github.com/hallojoe/xml-sitemaps-for-umbraco/issues",
+  "PackageType": "Package",
+  "LicenseTypes": ["Free"],
+  "Category": "Headless",
+  "AlternateCategory": "Developer Tools",
+  "AlternatePackageNames": ["Xml Sitemaps for Umbraco" ],
+  "AuthorDetails": { "Name": "Casper Korsgaard", "ImageUrl": "https://avatars.githubusercontent.com/u/830813" },
+  "LookingForContributors": true
+}
