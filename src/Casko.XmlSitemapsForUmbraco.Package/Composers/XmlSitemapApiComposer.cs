@@ -24,7 +24,7 @@ public class XmlSitemapApiComposer : IComposer
     public void Compose(IUmbracoBuilder builder)
     {
         builder.Services.AddMvc()
-            .AddApplicationPart(typeof(CharlieTangoUmbracoXmlSitemapApiController).Assembly);
+            .AddApplicationPart(typeof(XmlSitemapsApiController).Assembly);
 
         builder.Services.AddSingleton<IOperationIdHandler, CaskoSitemapsForUmbracoOperationHandler>();
 

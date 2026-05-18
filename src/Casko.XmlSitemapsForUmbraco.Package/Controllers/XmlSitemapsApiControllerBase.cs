@@ -5,6 +5,6 @@ using Umbraco.Cms.Web.Common.Authorization;
 namespace Casko.XmlSitemapsForUmbraco.Package.Controllers;
 
 [Authorize(Policy = AuthorizationPolicies.SectionAccessContent)]
-public class CharlieTangoUmbracoXmlSitemapApiControllerBase : ManagementApiControllerBase
+public class XmlSitemapsApiControllerBase : ManagementApiControllerBase
 {
 }
