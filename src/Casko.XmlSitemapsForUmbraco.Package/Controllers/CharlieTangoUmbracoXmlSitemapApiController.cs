@@ -14,7 +14,7 @@ namespace Casko.XmlSitemapsForUmbraco.Package.Controllers;
 
 [ApiController]
 [ApiVersion("1.0")]
-[VersionedApiBackOfficeRoute("charlietangoumbracoxmlsitemap/api")]
+[VersionedApiBackOfficeRoute("xmlsitemapsforumbraco/api")]
 [Authorize(Policy = AuthorizationPolicies.SectionAccessContent)]
 [MapToApi(XmlSitemapConstants.ApiName)]
 public class CharlieTangoUmbracoXmlSitemapApiController(IOptions<XmlSitemapsOptions> xmlSitemapOptions)

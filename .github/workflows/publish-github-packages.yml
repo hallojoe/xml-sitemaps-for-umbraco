@@ -1,4 +1,4 @@
-name: Publish packages to GitHub Packages and npm
+name: Publish NuGet package to GitHub Packages and NuGet
 
 on:
   release:
@@ -11,11 +11,9 @@ permissions:
 
 env:
   DOTNET_VERSION: 10.0.x
-  NODE_VERSION: 22
   PROJECT_FILE: src/Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj
-  NPM_PACKAGE_DIR: src/Casko.XmlSitemapsForUmbraco.Package/Client
-  NPM_REGISTRY_URL: https://registry.npmjs.org
-  PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+  GITHUB_PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+  NUGET_PACKAGE_SOURCE: https://api.nuget.org/v3/index.json
 
 jobs:
   publish:
@@ -29,14 +27,6 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          registry-url: ${{ env.NPM_REGISTRY_URL }}
-          cache: npm
-          cache-dependency-path: ${{ env.NPM_PACKAGE_DIR }}/package-lock.json
 
       - name: Derive and validate package version
         id: versioning
@@ -64,10 +54,8 @@ jobs:
 
           if [[ "$VERSION" == *-* ]]; then
             IS_PRERELEASE=true
-            NPM_TAG=next
           else
             IS_PRERELEASE=false
-            NPM_TAG=latest
           fi
 
           if [[ "$IS_PRERELEASE" == "false" && "$TARGET_BRANCH" != "main" ]]; then
@@ -82,11 +70,9 @@ jobs:
 
           echo "package_version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
-          echo "npm_tag=$NPM_TAG" >> "$GITHUB_OUTPUT"
 
           echo "Resolved package version: $VERSION"
           echo "Prerelease: $IS_PRERELEASE"
-          echo "npm dist-tag: $NPM_TAG"
 
       - name: Restore
         run: dotnet restore "${{ env.PROJECT_FILE }}"
@@ -101,7 +87,7 @@ jobs:
 
       - name: Push package to GitHub Packages
         env:
-          GITHUB_TOKEN: ${{ secrets.NUGET_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
@@ -122,7 +108,7 @@ jobs:
 
             echo "Pushing $pkg"
             dotnet nuget push "$pkg" \
-              --source "${{ env.PACKAGE_SOURCE }}" \
+              --source "${{ env.GITHUB_PACKAGE_SOURCE }}" \
               --api-key "$GITHUB_TOKEN" \
               --skip-duplicate
           done
@@ -131,47 +117,36 @@ jobs:
             echo "::notice::Symbol packages were produced but are not being pushed in this workflow."
           fi
 
-      - name: Install npm dependencies
-        working-directory: ${{ env.NPM_PACKAGE_DIR }}
-        run: npm ci
-
-      - name: Build npm package
-        working-directory: ${{ env.NPM_PACKAGE_DIR }}
-        run: npm run build
-
-      - name: Prepare npm package metadata
-        working-directory: ${{ env.NPM_PACKAGE_DIR }}
+      - name: Push package to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
+          shopt -s nullglob
 
-          PACKAGE_NAME="$(node -p "require('./package.json').name")"
-          IS_PRIVATE="$(node -p "require('./package.json').private === true ? 'true' : 'false'")"
+          packages=(./artifacts/*.nupkg)
 
-          if [[ "$PACKAGE_NAME" != @*/* ]]; then
-            echo "::error::npm package name must be scoped to an npm org, for example '@org/package'. Got: $PACKAGE_NAME"
+          if [ ${#packages[@]} -eq 0 ]; then
+            echo "::error::No .nupkg files were produced."
             exit 1
           fi
 
-          if [[ "$IS_PRIVATE" == "true" ]]; then
-            echo "::error::npm package is marked private. Remove 'private: true' before publishing to npm."
-            exit 1
-          fi
+          for pkg in "${packages[@]}"; do
+            if [[ "$pkg" == *.snupkg ]]; then
+              continue
+            fi
 
-          npm version "${{ steps.versioning.outputs.package_version }}" --no-git-tag-version
-          npm pack --dry-run
-
-      - name: Publish npm package
-        working-directory: ${{ env.NPM_PACKAGE_DIR }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --provenance --tag "${{ steps.versioning.outputs.npm_tag }}"
+            echo "Pushing $pkg"
+            dotnet nuget push "$pkg" \
+              --source "${{ env.NUGET_PACKAGE_SOURCE }}" \
+              --api-key "$NUGET_API_KEY" \
+              --skip-duplicate
+          done
 
       - name: Summarize
         run: |
           echo "Published version: ${{ steps.versioning.outputs.package_version }}"
           echo "Prerelease: ${{ steps.versioning.outputs.is_prerelease }}"
-          echo "Package source: ${{ env.PACKAGE_SOURCE }}"
-          echo "npm registry: ${{ env.NPM_REGISTRY_URL }}"
-          echo "npm dist-tag: ${{ steps.versioning.outputs.npm_tag }}"
-
+          echo "GitHub Packages source: ${{ env.GITHUB_PACKAGE_SOURCE }}"
+          echo "NuGet source: ${{ env.NUGET_PACKAGE_SOURCE }}"
