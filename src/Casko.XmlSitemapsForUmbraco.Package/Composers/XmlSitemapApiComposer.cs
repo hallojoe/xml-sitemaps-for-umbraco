@@ -1,4 +1,9 @@
 using Asp.Versioning;
+using Casko.XmlSitemapsForUmbraco.Package.Controllers;
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Package.Models;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +14,8 @@ using Umbraco.Cms.Api.Common.OpenApi;
 using Umbraco.Cms.Api.Management.OpenApi;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
+using Umbraco.Cms.Web.Common.ApplicationBuilder;
+using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Casko.XmlSitemapsForUmbraco.Package.Composers;
 
@@ -16,7 +23,52 @@ public class XmlSitemapApiComposer : IComposer
 {
     public void Compose(IUmbracoBuilder builder)
     {
+        builder.Services.AddMvc()
+            .AddApplicationPart(typeof(CharlieTangoUmbracoXmlSitemapApiController).Assembly);
+
         builder.Services.AddSingleton<IOperationIdHandler, CaskoSitemapsForUmbracoOperationHandler>();
+
+        builder.Services.Configure<UmbracoPipelineOptions>(options =>
+        {
+            options.AddFilter(new UmbracoPipelineFilter(
+                $"{XmlSitemapConstants.ApiName}-configuration-api",
+                postPipeline: app => app.Use(async (context, next) =>
+                {
+                    if (HttpMethods.IsGet(context.Request.Method)
+                        && context.Request.Path.Equals(
+                            "/umbraco/backoffice/charlietangoumbracoxmlsitemap/api/v1/configuration",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (context.User.Identity?.IsAuthenticated is not true)
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            return;
+                        }
+
+                        XmlSitemapsOptions xmlSitemapOptions = context.RequestServices
+                            .GetRequiredService<IOptions<XmlSitemapsOptions>>()
+                            .Value;
+
+                        await context.Response.WriteAsJsonAsync(
+                            XmlSitemapConfigurationResponse.FromOptions(xmlSitemapOptions));
+                        return;
+                    }
+
+                    await next();
+                }),
+                endpoints: app => app.UseEndpoints(endpoints =>
+                {
+                    endpoints
+                        .MapGet(
+                            "/umbraco/backoffice/charlietangoumbracoxmlsitemap/api/v1/configuration",
+                            (IOptions<XmlSitemapsOptions> xmlSitemapOptions) =>
+                                Results.Ok(XmlSitemapConfigurationResponse.FromOptions(xmlSitemapOptions.Value)))
+                        .RequireAuthorization(AuthorizationPolicies.SectionAccessContent)
+                        .WithGroupName(XmlSitemapConstants.ApiName)
+                        .WithName("GetConfiguration")
+                        .Produces<XmlSitemapConfigurationResponse>();
+                })));
+        });
 
         builder.Services.Configure<SwaggerGenOptions>(opt =>
         {

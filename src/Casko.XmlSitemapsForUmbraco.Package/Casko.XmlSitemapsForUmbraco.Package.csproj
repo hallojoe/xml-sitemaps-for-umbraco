@@ -9,8 +9,8 @@
     <PropertyGroup>
         <Product>Casko.XmlSitemapsForUmbraco</Product>
         <PackageId>Casko.XmlSitemapsForUmbraco</PackageId>
-        <Title>Umbraco Xml Sitemaps</Title>
-        <Description>Umbraco Xml Sitemaps</Description>
+        <Title>XNL Sitemaps for Umbraco</Title>
+        <Description>Xml Sitemaps package for Umbraco CMS.</Description>
         <PackageTags>umbraco;umbraco-marketplace</PackageTags>
         <Authors>Casper Korsgaard</Authors>
         <Copyright>$([System.DateTime]::UtcNow.ToString(`yyyy`)) © Casper Korsgaard</Copyright>
@@ -54,5 +54,3 @@
     </ItemGroup>
 
 </Project>
-
-

@@ -3,3 +3,82 @@
 export type ClientOptions = {
     baseUrl: 'https://localhost:44341' | (string & {});
 };
+
+export type XmlSitemapConfigurationResponse = {
+    enabled: boolean;
+    rewritesEnabled: boolean;
+    renderAlternateLinksForSingleCultureSitemaps: boolean;
+    sitemapCount: number;
+    customSitemapCount: number;
+    indexCount: number;
+    globalFilters: XmlSitemapGlobalFiltersResponse;
+    storage: XmlSitemapStorageConfigurationResponse;
+    sitemaps: Array<XmlSitemapConfigurationRowResponse>;
+    customSitemaps: Array<XmlSitemapCustomConfigurationRowResponse>;
+    indexes: Array<XmlSitemapIndexConfigurationRowResponse>;
+};
+
+export type XmlSitemapConfigurationRowResponse = {
+    key: string;
+    path?: string | null;
+    hostName?: string | null;
+    culture?: string | null;
+    includedCultures: Array<string>;
+    excludedCultures: Array<string>;
+    includedDocumentTypeAliases: Array<string>;
+    excludedDocumentTypeAliases: Array<string>;
+};
+
+export type XmlSitemapCustomConfigurationRowResponse = {
+    key: string;
+    providerAlias?: string | null;
+    hostName?: string | null;
+    settingCount: number;
+    settingKeys: Array<string>;
+};
+
+export type XmlSitemapGlobalFiltersResponse = {
+    includedContentTypeAliases: Array<string>;
+    excludedContentTypeAliases: Array<string>;
+    includedCultures: Array<string>;
+    excludedCultures: Array<string>;
+};
+
+export type XmlSitemapIndexConfigurationRowResponse = {
+    key: string;
+    hostName?: string | null;
+    sitemaps: Array<string>;
+};
+
+export type XmlSitemapStorageConfigurationResponse = {
+    refreshStaleAfterSeconds: number;
+    backgroundJobEnabled: boolean;
+    backgroundJobIntervalSeconds: number;
+};
+
+export type GetConfigurationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/umbraco/management/api/v1/charlietangoumbracoxmlsitemap/api/configuration';
+};
+
+export type GetConfigurationErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+    /**
+     * The authenticated user does not have access to this resource
+     */
+    403: unknown;
+};
+
+export type GetConfigurationResponses = {
+    /**
+     * OK
+     */
+    200: XmlSitemapConfigurationResponse;
+};
+
+export type GetConfigurationResponse = GetConfigurationResponses[keyof GetConfigurationResponses];

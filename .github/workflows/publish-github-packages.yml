@@ -1,4 +1,4 @@
-name: Publish NuGet package to GitHub Packages
+name: Publish packages to GitHub Packages and npm
 
 on:
   release:
@@ -6,11 +6,15 @@ on:
 
 permissions:
   contents: read
+  id-token: write
   packages: write
 
 env:
   DOTNET_VERSION: 10.0.x
-  PROJECT_FILE: src/CharlieTango.UmbracoXmlSitemap/CharlieTango.UmbracoXmlSitemap.csproj
+  NODE_VERSION: 22
+  PROJECT_FILE: src/Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj
+  NPM_PACKAGE_DIR: src/Casko.XmlSitemapsForUmbraco.Package/Client
+  NPM_REGISTRY_URL: https://registry.npmjs.org
   PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
 jobs:
@@ -25,6 +29,14 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: ${{ env.NPM_REGISTRY_URL }}
+          cache: npm
+          cache-dependency-path: ${{ env.NPM_PACKAGE_DIR }}/package-lock.json
 
       - name: Derive and validate package version
         id: versioning
@@ -52,8 +64,10 @@ jobs:
 
           if [[ "$VERSION" == *-* ]]; then
             IS_PRERELEASE=true
+            NPM_TAG=next
           else
             IS_PRERELEASE=false
+            NPM_TAG=latest
           fi
 
           if [[ "$IS_PRERELEASE" == "false" && "$TARGET_BRANCH" != "main" ]]; then
@@ -68,9 +82,11 @@ jobs:
 
           echo "package_version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "npm_tag=$NPM_TAG" >> "$GITHUB_OUTPUT"
 
           echo "Resolved package version: $VERSION"
           echo "Prerelease: $IS_PRERELEASE"
+          echo "npm dist-tag: $NPM_TAG"
 
       - name: Restore
         run: dotnet restore "${{ env.PROJECT_FILE }}"
@@ -115,9 +131,47 @@ jobs:
             echo "::notice::Symbol packages were produced but are not being pushed in this workflow."
           fi
 
+      - name: Install npm dependencies
+        working-directory: ${{ env.NPM_PACKAGE_DIR }}
+        run: npm ci
+
+      - name: Build npm package
+        working-directory: ${{ env.NPM_PACKAGE_DIR }}
+        run: npm run build
+
+      - name: Prepare npm package metadata
+        working-directory: ${{ env.NPM_PACKAGE_DIR }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          IS_PRIVATE="$(node -p "require('./package.json').private === true ? 'true' : 'false'")"
+
+          if [[ "$PACKAGE_NAME" != @*/* ]]; then
+            echo "::error::npm package name must be scoped to an npm org, for example '@org/package'. Got: $PACKAGE_NAME"
+            exit 1
+          fi
+
+          if [[ "$IS_PRIVATE" == "true" ]]; then
+            echo "::error::npm package is marked private. Remove 'private: true' before publishing to npm."
+            exit 1
+          fi
+
+          npm version "${{ steps.versioning.outputs.package_version }}" --no-git-tag-version
+          npm pack --dry-run
+
+      - name: Publish npm package
+        working-directory: ${{ env.NPM_PACKAGE_DIR }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance --tag "${{ steps.versioning.outputs.npm_tag }}"
+
       - name: Summarize
         run: |
           echo "Published version: ${{ steps.versioning.outputs.package_version }}"
           echo "Prerelease: ${{ steps.versioning.outputs.is_prerelease }}"
           echo "Package source: ${{ env.PACKAGE_SOURCE }}"
+          echo "npm registry: ${{ env.NPM_REGISTRY_URL }}"
+          echo "npm dist-tag: ${{ steps.versioning.outputs.npm_tag }}"
 
