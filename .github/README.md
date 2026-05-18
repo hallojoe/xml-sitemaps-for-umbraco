@@ -1,34 +1,253 @@
-# Casko .Dot Net .Templates .Extension Package Template For Umbraco 
+# XML Sitemaps for Umbraco
 
-[![Downloads](https://img.shields.io/nuget/dt/CharlieTango.UmbracoXmlSitemap?color=cc9900)](https://www.nuget.org/packages/CharlieTango.UmbracoXmlSitemap/)
-[![NuGet](https://img.shields.io/nuget/vpre/CharlieTango.UmbracoXmlSitemap?color=0273B3)](https://www.nuget.org/packages/CharlieTango.UmbracoXmlSitemap)
-[![GitHub license](https://img.shields.io/github/license/charlie-tango/umbraco-xmlsitemap?color=8AB803)](../LICENSE)
+[![Downloads](https://img.shields.io/nuget/dt/Casko.XmlSitemapsForUmbraco?color=cc9900)](https://www.nuget.org/packages/Casko.XmlSitemapsForUmbraco/)
+[![NuGet](https://img.shields.io/nuget/vpre/Casko.XmlSitemapsForUmbraco?color=0273B3)](https://www.nuget.org/packages/Casko.XmlSitemapsForUmbraco)
+[![GitHub license](https://img.shields.io/github/license/charlie-tango/umbraco-xmlsitemap?color=8AB803)](https://github.com/charlie-tango/umbraco-xmlsitemap/blob/main/LICENSE)
 
-TODO: describe your package
+XML Sitemaps for Umbraco adds configurable XML sitemap and sitemap index delivery to Umbraco. It can render sitemaps from Umbraco content, expose friendly rewrite URLs such as `/xmlsitemap.xml`, store generated XML in Umbraco media, refresh stored files in the background, and let projects plug in custom sitemap providers for data that does not come from the content tree.
 
-<!--
-Including screenshots is a really good idea! 
-
-If you put images into /docs/screenshots, then you would reference them in this readme as, for example:
-
-<img alt="..." src="https://github.com/charlie-tango/umbraco-xmlsitemap/blob/develop/docs/screenshots/screenshot.png">
-
-And don't forget to add the screenshot files to umbraco-marketplace.json too!
--->
+The package is built for teams that want sitemap behavior controlled from configuration while still keeping room for custom implementation when a site needs it.
 
 ## Installation
 
-Add the package to an existing Umbraco website (v17+) from nuget:
+Install the NuGet package:
 
-`dotnet add package CharlieTango.UmbracoXmlSitemap`
+```powershell
+dotnet add package Casko.XmlSitemapsForUmbraco
+```
 
-TODO *provide any other instructions for someone using your package*
+The package composer registers the delivery API, rewrite pipeline, XML rendering services, Umbraco media storage, and the background refresh job.
 
-## Contributing
+## Quick Start
 
-Contributions to this package are most welcome! Please read the [Contributing Guidelines](CONTRIBUTING.md).
+Add an `XmlSiteMaps` section to `appsettings.json`:
 
-## Acknowledgments
+```json
+{
+  "XmlSiteMaps": {
+    "Enabled": true,
+    "RewritesEnabled": true,
+    "IncludedCultures": [ "en", "da" ],
+    "ExcludedCultures": [],
+    "RenderAlternateLinksForSingleCultureSitemaps": true,
+    "Indexes": {
+      "xmlsitemap": {
+        "HostName": "https://www.example.com",
+        "Sitemaps": [ "xmlsitemap-en", "xmlsitemap-da" ]
+      }
+    },
+    "Sitemaps": {
+      "xmlsitemap-en": {
+        "Path": "/",
+        "HostName": "https://www.example.com",
+        "Culture": "en",
+        "IncludedCultures": [ "en" ],
+        "ExcludedCultures": [ "da" ]
+      },
+      "xmlsitemap-da": {
+        "Path": "/",
+        "HostName": "https://www.example.com",
+        "Culture": "da",
+        "IncludedCultures": [ "da" ],
+        "ExcludedCultures": [ "en" ]
+      }
+    }
+  }
+}
+```
 
-TODO
+With rewrites enabled, the configured entries are available as:
 
+- `/xmlsitemap.xml` for the sitemap index.
+- `/xmlsitemap-en.xml` and `/xmlsitemap-da.xml` for configured sitemaps.
+
+The delivery API is also available directly:
+
+- `/api/sitemap/key?key=xmlsitemap-en`
+- `/api/sitemap/index/key?key=xmlsitemap`
+
+## Configured Sitemaps
+
+Configured sitemaps live under `XmlSiteMaps:Sitemaps`. Each entry is keyed by the public sitemap name.
+
+```json
+{
+  "XmlSiteMaps": {
+    "Sitemaps": {
+      "products": {
+        "Path": "/products",
+        "HostName": "https://www.example.com",
+        "Culture": "en",
+        "IncludedCultures": [ "en" ],
+        "ExcludedCultures": [],
+        "IncludedDocumentTypeAliases": [ "productPage" ],
+        "ExcludedDocumentTypeAliases": []
+      }
+    }
+  }
+}
+```
+
+Important settings:
+
+- `Path`: content path to use as the sitemap root. Defaults to `/`.
+- `HostName`: host used to resolve the root and render absolute URLs.
+- `Culture`: primary culture used when rendering URLs.
+- `IncludedCultures` and `ExcludedCultures`: per-sitemap culture filtering.
+- `IncludedDocumentTypeAliases` and `ExcludedDocumentTypeAliases`: per-sitemap document type filtering.
+
+Root-level culture and document type settings apply to all configured sitemaps unless a sitemap entry narrows them further.
+
+## Sitemap Indexes
+
+Configured indexes live under `XmlSiteMaps:Indexes`. Each index lists sitemap keys to include:
+
+```json
+{
+  "XmlSiteMaps": {
+    "Indexes": {
+      "xmlsitemap": {
+        "HostName": "https://www.example.com",
+        "Sitemaps": [ "products", "articles" ]
+      }
+    }
+  }
+}
+```
+
+Indexes may reference regular configured sitemaps and custom configured sitemaps.
+
+## Custom Sitemaps
+
+Custom sitemaps are for XML sitemap entries that should be generated by project code instead of the Umbraco content tree. Configure them under `XmlSiteMaps:CustomSitemaps`:
+
+```json
+{
+  "XmlSiteMaps": {
+    "CustomSitemaps": {
+      "external-products": {
+        "ProviderAlias": "external-products-provider",
+        "HostName": "https://www.example.com",
+        "Settings": {
+          "FeedId": "products"
+        }
+      }
+    }
+  }
+}
+```
+
+Create and register a provider:
+
+```csharp
+using Casko.XmlSitemapsForUmbraco.Common.Services;
+using Casko.XmlSitemapsForUmbraco.Models;
+
+public sealed class ExternalProductsSitemapProvider : IXmlSitemapCustomProvider
+{
+    public string Alias => "external-products-provider";
+
+    public Task<XmlSiteMap> GetSitemapAsync(
+        XmlSitemapCustomProviderContext context,
+        CancellationToken cancellationToken = default)
+    {
+        var sitemap = new XmlSiteMap
+        {
+            Urls =
+            [
+                new XmlSiteMapUrl
+                {
+                    Location = "https://www.example.com/products/example-product",
+                    LastModified = DateTime.UtcNow
+                }
+            ]
+        };
+
+        return Task.FromResult(sitemap);
+    }
+}
+```
+
+Register the provider in an Umbraco composer or another startup path:
+
+```csharp
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Umbraco.Cms.Core.Composing;
+using Umbraco.Cms.Core.DependencyInjection;
+
+public sealed class SitemapProviderComposer : IComposer
+{
+    public void Compose(IUmbracoBuilder builder)
+    {
+        builder.Services.AddXmlSitemapCustomProvider<ExternalProductsSitemapProvider>();
+    }
+}
+```
+
+The provider context contains the configured sitemap key, host name, and flat string settings. If a custom sitemap references a provider alias that is not registered, the package throws a clear configuration error.
+
+## Stored Media Files And Refresh
+
+The package stores generated XML sitemap files in Umbraco media. Stored files are reused when fresh and rebuilt when missing or stale.
+
+```json
+{
+  "XmlSiteMaps": {
+    "Storage": {
+      "RefreshStaleAfterSeconds": 3600,
+      "BackgroundJob": {
+        "Enabled": true,
+        "IntervalSeconds": 3600
+      }
+    }
+  }
+}
+```
+
+Storage behavior:
+
+- Stored sitemap files are created in an `Xml Sitemaps` media folder.
+- The background job starts after a 10 second delay.
+- The job refreshes regular sitemaps, custom sitemaps, then sitemap indexes.
+- Request-time delivery rebuilds a stored sitemap if the media file is older than `RefreshStaleAfterSeconds`.
+- Set `RefreshStaleAfterSeconds` to `0` or less to disable request-time stale checks.
+
+## Rewrite Delivery
+
+When `RewritesEnabled` is `true`, configured sitemap keys are exposed as XML files at the site root.
+
+```json
+{
+  "XmlSiteMaps": {
+    "RewritesEnabled": true
+  }
+}
+```
+
+Examples:
+
+- Index key `xmlsitemap` becomes `/xmlsitemap.xml`.
+- Sitemap key `products` becomes `/products.xml`.
+- Custom sitemap key `external-products` becomes `/external-products.xml`.
+
+If two configured entries produce the same path, the first definition wins. Sitemap indexes are registered before regular sitemaps, and regular sitemaps before custom sitemaps.
+
+## Configuration Reference
+
+Common root settings:
+
+- `Enabled`: enables XML sitemap features. Defaults to `true`.
+- `RewritesEnabled`: exposes configured entries as friendly XML rewrite paths.
+- `IncludedContentTypeAliases`: global document type allow list.
+- `ExcludedContentTypeAliases`: global document type deny list.
+- `IncludedCultures`: global culture allow list.
+- `ExcludedCultures`: global culture deny list.
+- `RenderAlternateLinksForSingleCultureSitemaps`: controls alternate link rendering for single-culture sitemaps.
+- `Sitemaps`: generated sitemap configurations.
+- `CustomSitemaps`: custom provider-backed sitemap configurations.
+- `Indexes`: sitemap index configurations.
+- `Storage`: stored media and refresh settings.
+
+## Notes
+
+This package targets modern Umbraco projects and uses strongly typed configuration, dependency injection, and the existing XML sitemap model types. It is intended to be configured per site, with custom provider support for anything that needs project-specific data or sitemap rules.
