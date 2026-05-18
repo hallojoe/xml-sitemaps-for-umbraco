@@ -16,7 +16,7 @@ permissions:
 env:
   DOTNET_VERSION: 10.0.x
   NODE_VERSION: 22
-  PACKAGE_PROJECT: src/Casko..Package/Casko.XmlSitemapsForUmbraco.Package.csproj
+  PACKAGE_PROJECT: src/Casko.Package/Casko.XmlSitemapsForUmbraco.Package.csproj
   CLIENT_DIR: src/Casko.XmlSitemapsForUmbraco.Package/Client
   TEST_PROJECT: src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj
   TESTSITE_PROJECT: src/Casko.XmlSitemapsForUmbraco.TestSite/Casko.UmbracoXmlSitemapsForUmbracoXmlSitemap.TestSite.csproj
