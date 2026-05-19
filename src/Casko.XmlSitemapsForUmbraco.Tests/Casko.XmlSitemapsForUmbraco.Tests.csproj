@@ -23,6 +23,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Delivery\Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.TestSite\Casko.XmlSitemapsForUmbraco.TestSite.csproj" />
     </ItemGroup>
