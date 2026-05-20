@@ -38,16 +38,19 @@ public class SitemapRewriteDefinitionServiceTests
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap.xml" &&
             definition.TargetPath == "/api/sitemap/index/key?key=xmlsitemap" &&
+            definition.PublicName == "xmlsitemap" &&
             definition.Kind == SitemapRewriteKind.SitemapIndex &&
             definition.HostName == "host.dk"));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap-host-dk-en.xml" &&
             definition.TargetPath == "/api/sitemap/key?key=xmlsitemap-host-dk-en" &&
+            definition.PublicName == "xmlsitemap-host-dk-en" &&
             definition.Kind == SitemapRewriteKind.Sitemap &&
             definition.HostName == "host.dk"));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/external-products.xml" &&
             definition.TargetPath == "/api/sitemap/key?key=external-products" &&
+            definition.PublicName == "external-products" &&
             definition.Kind == SitemapRewriteKind.Sitemap &&
             definition.HostName == "custom.dk"));
     }
@@ -74,18 +77,23 @@ public class SitemapRewriteDefinitionServiceTests
     }
 
     [Test]
-    public void GetDefinitions_WhenRegularAndCustomSitemapKeysCollide_PrefersRegularSitemapDefinition()
+    public void GetDefinitions_WhenPublicNamesMatchAcrossDifferentHosts_KeepsBothDefinitions()
     {
         var sut = CreateService(new XmlSitemapsOptions
         {
             Sitemaps =
             {
-                ["xmlsitemap"] = new SitemapOptions { HostName = "regular.dk" }
+                ["regular-sitemap"] = new SitemapOptions
+                {
+                    PublicName = "xmlsitemap",
+                    HostName = "regular.dk"
+                }
             },
             CustomSitemaps =
             {
-                ["xmlsitemap"] = new CustomSitemapOptions
+                ["custom-sitemap"] = new CustomSitemapOptions
                 {
+                    PublicName = "xmlsitemap",
                     ProviderAlias = "custom-provider",
                     HostName = "custom.dk"
                 }
@@ -94,8 +102,42 @@ public class SitemapRewriteDefinitionServiceTests
 
         var result = sut.GetDefinitions();
 
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
+            definition.Path == "/xmlsitemap.xml" &&
+            definition.TargetPath == "/api/sitemap/key?key=regular-sitemap" &&
+            definition.HostName == "regular.dk"));
+        Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
+            definition.Path == "/xmlsitemap.xml" &&
+            definition.TargetPath == "/api/sitemap/key?key=custom-sitemap" &&
+            definition.HostName == "custom.dk"));
+    }
+
+    [Test]
+    public void GetDefinitions_WhenPublicNamesMatchOnSameHost_KeepsFirstDefinition()
+    {
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Sitemaps =
+            {
+                ["first-sitemap"] = new SitemapOptions
+                {
+                    PublicName = "xmlsitemap",
+                    HostName = "host.dk"
+                },
+                ["second-sitemap"] = new SitemapOptions
+                {
+                    PublicName = "xmlsitemap",
+                    HostName = "https://host.dk"
+                }
+            }
+        });
+
+        var result = sut.GetDefinitions();
+
         Assert.That(result, Has.Count.EqualTo(1));
-        Assert.That(result.Single().HostName, Is.EqualTo("regular.dk"));
+        Assert.That(result.Single().Key, Is.EqualTo("first-sitemap"));
+        Assert.That(result.Single().Path, Is.EqualTo("/xmlsitemap.xml"));
     }
 
     [Test]
@@ -105,12 +147,16 @@ public class SitemapRewriteDefinitionServiceTests
         {
             Sitemaps =
             {
-                ["xmlsitemap-host-dk-en"] = new SitemapOptions { HostName = "host.dk" }
+                ["xmlsitemap-host-dk-en"] = new SitemapOptions
+                {
+                    PublicName = "xmlsitemap",
+                    HostName = "host.dk"
+                }
             }
         });
 
         var matched = sut.TryMatch(
-            new PathString("/XMLSITEMAP-HOST-DK-EN.xml"),
+            new PathString("/XMLSITEMAP.xml"),
             new HostString("host.dk"),
             out var definition);
 
@@ -136,6 +182,34 @@ public class SitemapRewriteDefinitionServiceTests
 
         Assert.That(matched, Is.False);
         Assert.That(definition, Is.Null);
+    }
+
+    [Test]
+    public void TryMatch_WhenHostSpecificAndDefaultDefinitionsSharePublicName_PrefersHostSpecificDefinition()
+    {
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Sitemaps =
+            {
+                ["default-sitemap"] = new SitemapOptions
+                {
+                    PublicName = "xmlsitemap"
+                },
+                ["host-sitemap"] = new SitemapOptions
+                {
+                    PublicName = "xmlsitemap",
+                    HostName = "host.dk"
+                }
+            }
+        });
+
+        var matched = sut.TryMatch(
+            new PathString("/xmlsitemap.xml"),
+            new HostString("host.dk"),
+            out var definition);
+
+        Assert.That(matched, Is.True);
+        Assert.That(definition?.Key, Is.EqualTo("host-sitemap"));
     }
 
     [Test]

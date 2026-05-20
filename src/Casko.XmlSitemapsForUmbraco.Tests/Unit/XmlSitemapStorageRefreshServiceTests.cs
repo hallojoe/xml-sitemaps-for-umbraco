@@ -35,7 +35,7 @@ public class XmlSitemapStorageRefreshServiceTests
         {
             Sitemaps =
             {
-                ["products"] = new SitemapOptions { HostName = "www.example.com" },
+                ["products"] = new SitemapOptions { PublicName = "xmlsitemap", HostName = "www.example.com" },
                 ["articles"] = new SitemapOptions { HostName = "articles.example.com" }
             },
             CustomSitemaps =

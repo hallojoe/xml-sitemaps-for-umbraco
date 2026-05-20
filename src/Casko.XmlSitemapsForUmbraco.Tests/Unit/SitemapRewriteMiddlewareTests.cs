@@ -21,6 +21,7 @@ public class SitemapRewriteMiddlewareTests
                     "/xmlsitemap-host-dk-en.xml",
                     "/api/sitemap/key?key=xmlsitemap-host-dk-en",
                     "xmlsitemap-host-dk-en",
+                    "xmlsitemap-host-dk-en",
                     SitemapRewriteKind.Sitemap,
                     "host.dk");
 
@@ -49,6 +50,7 @@ public class SitemapRewriteMiddlewareTests
                 callInfo[2] = new SitemapRewriteDefinition(
                     "/xmlsitemap.xml",
                     "/api/sitemap/index/key?key=xmlsitemap",
+                    "xmlsitemap",
                     "xmlsitemap",
                     SitemapRewriteKind.SitemapIndex,
                     "host.dk");

@@ -35,7 +35,8 @@ public class DefaultXmlSiteMapService(
         return sitemapIndexRenderer.Render(new XmlSitemapIndexRenderContext(
             sitemapIndexOptions.Sitemaps,
             sitemapIndexOptions.HostName,
-            XmlSitemapIndexLocationMode.LegacyXmlFile));
+            XmlSitemapIndexLocationMode.LegacyXmlFile,
+            ResolvePublicSitemapAliases(sitemapIndexOptions.Sitemaps, configuredSitemaps)));
     }
 
     /// <inheritdoc />
@@ -111,6 +112,33 @@ public class DefaultXmlSiteMapService(
             sitemapKey,
             sitemapOptions.HostName,
             sitemapOptions.Settings));
+    }
+
+    private static IReadOnlyDictionary<string, string> ResolvePublicSitemapAliases(
+        IEnumerable<string> sitemapKeys,
+        XmlSitemapsOptions configuredSitemaps)
+    {
+        return sitemapKeys
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                key => key,
+                key => ResolvePublicSitemapAlias(key, configuredSitemaps),
+                StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string ResolvePublicSitemapAlias(string key, XmlSitemapsOptions configuredSitemaps)
+    {
+        if (configuredSitemaps.Sitemaps.TryGetValue(key, out var sitemapOptions))
+        {
+            return SitemapPublicName.Resolve(key, sitemapOptions.PublicName);
+        }
+
+        if (configuredSitemaps.CustomSitemaps.TryGetValue(key, out var customSitemapOptions))
+        {
+            return SitemapPublicName.Resolve(key, customSitemapOptions.PublicName);
+        }
+
+        return key;
     }
 
     private async Task<XmlSiteMap> GetXmlSiteMapAsync(

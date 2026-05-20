@@ -99,7 +99,7 @@ public sealed record XmlSitemapConfigurationResponse
                 .ToArray(),
             Indexes = options.Indexes
                 .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                .Select(pair => XmlSitemapIndexConfigurationRowResponse.FromOptions(pair.Key, pair.Value))
+                .Select(pair => XmlSitemapIndexConfigurationRowResponse.FromOptions(pair.Key, pair.Value, options))
                 .ToArray()
         };
     }
@@ -163,6 +163,11 @@ public sealed record XmlSitemapConfigurationRowResponse
     public required string Key { get; init; }
 
     /// <summary>
+    /// Gets the public sitemap name used for rewrite URLs.
+    /// </summary>
+    public required string PublicName { get; init; }
+
+    /// <summary>
     /// Gets the configured content path.
     /// </summary>
     public string? Path { get; init; }
@@ -202,6 +207,7 @@ public sealed record XmlSitemapConfigurationRowResponse
         return new XmlSitemapConfigurationRowResponse
         {
             Key = key,
+            PublicName = SitemapPublicName.Resolve(key, options.PublicName),
             Path = options.Path,
             HostName = options.HostName,
             Culture = options.Culture,
@@ -222,6 +228,11 @@ public sealed record XmlSitemapCustomConfigurationRowResponse
     /// Gets the configured sitemap key.
     /// </summary>
     public required string Key { get; init; }
+
+    /// <summary>
+    /// Gets the public sitemap name used for rewrite URLs.
+    /// </summary>
+    public required string PublicName { get; init; }
 
     /// <summary>
     /// Gets the configured custom provider alias.
@@ -250,6 +261,7 @@ public sealed record XmlSitemapCustomConfigurationRowResponse
         return new XmlSitemapCustomConfigurationRowResponse
         {
             Key = key,
+            PublicName = SitemapPublicName.Resolve(key, options.PublicName),
             ProviderAlias = options.ProviderAlias,
             HostName = options.HostName,
             SettingCount = options.Settings.Count,
@@ -269,6 +281,11 @@ public sealed record XmlSitemapIndexConfigurationRowResponse
     public required string Key { get; init; }
 
     /// <summary>
+    /// Gets the public sitemap index name used for rewrite URLs.
+    /// </summary>
+    public required string PublicName { get; init; }
+
+    /// <summary>
     /// Gets the configured host name.
     /// </summary>
     public string? HostName { get; init; }
@@ -278,15 +295,40 @@ public sealed record XmlSitemapIndexConfigurationRowResponse
     /// </summary>
     public required IReadOnlyList<string> Sitemaps { get; init; }
 
+    /// <summary>
+    /// Gets the public sitemap names included in this index.
+    /// </summary>
+    public required IReadOnlyList<string> PublicSitemaps { get; init; }
+
     internal static XmlSitemapIndexConfigurationRowResponse FromOptions(
         string key,
-        SitemapIndexOptions options)
+        SitemapIndexOptions options,
+        XmlSitemapsOptions rootOptions)
     {
         return new XmlSitemapIndexConfigurationRowResponse
         {
             Key = key,
+            PublicName = SitemapPublicName.Resolve(key, options.PublicName),
             HostName = options.HostName,
-            Sitemaps = options.Sitemaps
+            Sitemaps = options.Sitemaps,
+            PublicSitemaps = options.Sitemaps
+                .Select(sitemapKey => ResolvePublicSitemapName(sitemapKey, rootOptions))
+                .ToArray()
         };
+    }
+
+    private static string ResolvePublicSitemapName(string key, XmlSitemapsOptions rootOptions)
+    {
+        if (rootOptions.Sitemaps.TryGetValue(key, out var sitemapOptions))
+        {
+            return SitemapPublicName.Resolve(key, sitemapOptions.PublicName);
+        }
+
+        if (rootOptions.CustomSitemaps.TryGetValue(key, out var customSitemapOptions))
+        {
+            return SitemapPublicName.Resolve(key, customSitemapOptions.PublicName);
+        }
+
+        return key;
     }
 }

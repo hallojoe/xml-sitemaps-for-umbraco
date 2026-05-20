@@ -8,6 +8,16 @@ import type {
   XmlSitemapIndexConfigurationRowResponse,
 } from "../api/types.gen.js";
 
+type SitemapReferenceRow = {
+  key?: string | null;
+  publicName?: string | null;
+  hostName?: string | null;
+};
+
+type SitemapIndexReferenceRow = SitemapReferenceRow & {
+  publicSitemaps?: Array<string>;
+};
+
 @customElement("casko-xml-sitemaps-configuration-workspace-view")
 export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitElement {
   @state()
@@ -101,6 +111,7 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       html`
         <tr>
           <th>Key</th>
+          <th>Public name</th>
           <th>Host</th>
           <th>Path</th>
           <th>Culture</th>
@@ -112,7 +123,8 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       `,
       (row) => html`
         <tr>
-          <td>${this._renderSitemapReference(row.key, row.hostName, rewritesEnabled)}</td>
+          <td>${this._formatValue(row.key)}</td>
+          <td>${this._renderSitemapReference(this._getPublicName(row), row.hostName, rewritesEnabled)}</td>
           <td>${this._formatValue(row.hostName)}</td>
           <td>${this._formatValue(row.path)}</td>
           <td>${this._formatValue(row.culture)}</td>
@@ -133,6 +145,7 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       html`
         <tr>
           <th>Key</th>
+          <th>Public name</th>
           <th>Provider</th>
           <th>Host</th>
           <th>Settings</th>
@@ -140,7 +153,8 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       `,
       (row) => html`
         <tr>
-          <td>${this._renderSitemapReference(row.key, row.hostName, rewritesEnabled)}</td>
+          <td>${this._formatValue(row.key)}</td>
+          <td>${this._renderSitemapReference(this._getPublicName(row), row.hostName, rewritesEnabled)}</td>
           <td>${this._formatValue(row.providerAlias)}</td>
           <td>${this._formatValue(row.hostName)}</td>
           <td>${this._formatSettingKeys(row.settingKeys, row.settingCount)}</td>
@@ -157,15 +171,17 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       html`
         <tr>
           <th>Key</th>
+          <th>Public name</th>
           <th>Host</th>
           <th>Sitemaps</th>
         </tr>
       `,
       (row) => html`
         <tr>
-          <td>${this._renderSitemapReference(row.key, row.hostName, rewritesEnabled)}</td>
+          <td>${this._formatValue(row.key)}</td>
+          <td>${this._renderSitemapReference(this._getPublicName(row), row.hostName, rewritesEnabled)}</td>
           <td>${this._formatValue(row.hostName)}</td>
-          <td>${this._renderSitemapReferenceList(row.sitemaps, row.hostName, rewritesEnabled)}</td>
+          <td>${this._renderSitemapReferenceList(this._getPublicSitemaps(row), row.hostName, rewritesEnabled)}</td>
         </tr>
       `,
       "No sitemap indexes."
@@ -243,6 +259,17 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
         )}
       </span>
     `;
+  }
+
+  private _getPublicName(row: SitemapReferenceRow) {
+    return row.publicName || row.key;
+  }
+
+  private _getPublicSitemaps(row: XmlSitemapIndexConfigurationRowResponse) {
+    const indexRow = row as SitemapIndexReferenceRow;
+    return indexRow.publicSitemaps && indexRow.publicSitemaps.length > 0
+      ? indexRow.publicSitemaps
+      : row.sitemaps;
   }
 
   private _buildSitemapUrl(key: string, hostName: string | undefined | null) {

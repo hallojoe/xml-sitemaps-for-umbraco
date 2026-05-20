@@ -1,5 +1,5 @@
 import { UmbLitElement as G } from "@umbraco-cms/backoffice/lit-element";
-import { html as f, css as Q, state as N, customElement as Y } from "@umbraco-cms/backoffice/external/lit";
+import { html as f, css as Q, state as T, customElement as Y } from "@umbraco-cms/backoffice/external/lit";
 import { umbHttpClient as Z } from "@umbraco-cms/backoffice/http-client";
 const ee = {
   bodySerializer: (e) => JSON.stringify(
@@ -23,93 +23,93 @@ const ee = {
   const C = l ?? ((u) => new Promise((m) => setTimeout(m, u)));
   return { stream: async function* () {
     let u = d ?? 3e3, m = 0;
-    const x = i.signal ?? new AbortController().signal;
-    for (; !x.aborted; ) {
+    const $ = i.signal ?? new AbortController().signal;
+    for (; !$.aborted; ) {
       m++;
       const z = i.headers instanceof Headers ? i.headers : new Headers(i.headers);
       h !== void 0 && z.set("Last-Event-ID", h);
       try {
-        const _ = {
+        const x = {
           redirect: "follow",
           ...i,
           body: i.serializedBody,
           headers: z,
-          signal: x
+          signal: $
         };
-        let g = new Request(c, _);
-        e && (g = await e(c, _));
-        const b = await (i.fetch ?? globalThis.fetch)(g);
+        let y = new Request(c, x);
+        e && (y = await e(c, x));
+        const b = await (i.fetch ?? globalThis.fetch)(y);
         if (!b.ok)
           throw new Error(
             `SSE failed: ${b.status} ${b.statusText}`
           );
         if (!b.body) throw new Error("No body in SSE response");
         const S = b.body.pipeThrough(new TextDecoderStream()).getReader();
-        let A = "";
+        let N = "";
         const L = () => {
           try {
             S.cancel();
           } catch {
           }
         };
-        x.addEventListener("abort", L);
+        $.addEventListener("abort", L);
         try {
           for (; ; ) {
             const { done: J, value: K } = await S.read();
             if (J) break;
-            A += K;
-            const O = A.split(`
+            N += K;
+            const O = N.split(`
 
 `);
-            A = O.pop() ?? "";
+            N = O.pop() ?? "";
             for (const M of O) {
               const X = M.split(`
 `), k = [];
-              let q;
-              for (const y of X)
-                if (y.startsWith("data:"))
-                  k.push(y.replace(/^data:\s*/, ""));
-                else if (y.startsWith("event:"))
-                  q = y.replace(/^event:\s*/, "");
-                else if (y.startsWith("id:"))
-                  h = y.replace(/^id:\s*/, "");
-                else if (y.startsWith("retry:")) {
-                  const B = Number.parseInt(
-                    y.replace(/^retry:\s*/, ""),
+              let P;
+              for (const g of X)
+                if (g.startsWith("data:"))
+                  k.push(g.replace(/^data:\s*/, ""));
+                else if (g.startsWith("event:"))
+                  P = g.replace(/^event:\s*/, "");
+                else if (g.startsWith("id:"))
+                  h = g.replace(/^id:\s*/, "");
+                else if (g.startsWith("retry:")) {
+                  const D = Number.parseInt(
+                    g.replace(/^retry:\s*/, ""),
                     10
                   );
-                  Number.isNaN(B) || (u = B);
+                  Number.isNaN(D) || (u = D);
                 }
-              let v, D = !1;
+              let v, q = !1;
               if (k.length) {
-                const y = k.join(`
+                const g = k.join(`
 `);
                 try {
-                  v = JSON.parse(y), D = !0;
+                  v = JSON.parse(g), q = !0;
                 } catch {
-                  v = y;
+                  v = g;
                 }
               }
-              D && (a && await a(v), s && (v = await s(v))), t?.({
+              q && (a && await a(v), s && (v = await s(v))), t?.({
                 data: v,
-                event: q,
+                event: P,
                 id: h,
                 retry: u
               }), k.length && (yield v);
             }
           }
         } finally {
-          x.removeEventListener("abort", L), S.releaseLock();
+          $.removeEventListener("abort", L), S.releaseLock();
         }
         break;
-      } catch (_) {
-        if (r?.(_), o !== void 0 && m >= o)
+      } catch (x) {
+        if (r?.(x), o !== void 0 && m >= o)
           break;
-        const g = Math.min(
+        const y = Math.min(
           u * 2 ** (m - 1),
           n ?? 3e4
         );
-        await C(g);
+        await C(y);
       }
     }
   }() };
@@ -146,7 +146,7 @@ const ee = {
     default:
       return "&";
   }
-}, V = ({
+}, U = ({
   allowReserved: e,
   explode: r,
   name: t,
@@ -236,7 +236,7 @@ const ee = {
       if (Array.isArray(l)) {
         t = t.replace(
           a,
-          V({ explode: d, name: o, style: n, value: l })
+          U({ explode: d, name: o, style: n, value: l })
         );
         continue;
       }
@@ -304,7 +304,7 @@ const de = async (e, r) => {
       const n = a[o];
       if (n != null)
         if (Array.isArray(n)) {
-          const l = V({
+          const l = U({
             allowReserved: e,
             explode: !0,
             name: o,
@@ -372,13 +372,13 @@ const de = async (e, r) => {
         break;
     }
   }
-}, P = (e) => oe({
+}, B = (e) => oe({
   baseUrl: e.baseUrl,
   path: e.path,
   query: e.query,
   querySerializer: typeof e.querySerializer == "function" ? e.querySerializer : H(e.querySerializer),
   url: e.url
-}), U = (e, r) => {
+}), V = (e, r) => {
   const t = { ...e, ...r };
   return t.baseUrl?.endsWith("/") && (t.baseUrl = t.baseUrl.substring(0, t.baseUrl.length - 1)), t.headers = W(e.headers, r.headers), t;
 }, he = (e) => {
@@ -405,7 +405,7 @@ const de = async (e, r) => {
   }
   return r;
 };
-class T {
+class A {
   constructor() {
     this.fns = [];
   }
@@ -432,9 +432,9 @@ class T {
   }
 }
 const pe = () => ({
-  error: new T(),
-  request: new T(),
-  response: new T()
+  error: new A(),
+  request: new A(),
+  response: new A()
 }), me = H({
   allowReserved: !1,
   array: {
@@ -453,9 +453,9 @@ const pe = () => ({
   parseAs: "auto",
   querySerializer: me,
   ...e
-}), ye = (e = {}) => {
-  let r = U(F(), e);
-  const t = () => ({ ...r }), s = (c) => (r = U(r, c), t()), a = pe(), d = async (c) => {
+}), ge = (e = {}) => {
+  let r = V(F(), e);
+  const t = () => ({ ...r }), s = (c) => (r = V(r, c), t()), a = pe(), d = async (c) => {
     const i = {
       ...r,
       ...c,
@@ -467,7 +467,7 @@ const pe = () => ({
       ...i,
       security: i.security
     }), i.requestValidator && await i.requestValidator(i), i.body !== void 0 && i.bodySerializer && (i.serializedBody = i.bodySerializer(i.body)), (i.body === void 0 || i.serializedBody === "") && i.headers.delete("Content-Type");
-    const h = P(i);
+    const h = B(i);
     return { opts: i, url: h };
   }, o = async (c) => {
     const { opts: i, url: h } = await d(c), C = {
@@ -475,15 +475,15 @@ const pe = () => ({
       ...i,
       body: le(i)
     };
-    let $ = new Request(h, C);
+    let _ = new Request(h, C);
     for (const p of a.request.fns)
-      p && ($ = await p($, i));
+      p && (_ = await p(_, i));
     const E = i.fetch;
-    let u = await E($);
+    let u = await E(_);
     for (const p of a.response.fns)
-      p && (u = await p(u, $, i));
+      p && (u = await p(u, _, i));
     const m = {
-      request: $,
+      request: _,
       response: u
     };
     if (u.ok) {
@@ -531,20 +531,20 @@ const pe = () => ({
         ...m
       };
     }
-    const x = await u.text();
+    const $ = await u.text();
     let z;
     try {
-      z = JSON.parse(x);
+      z = JSON.parse($);
     } catch {
     }
-    const _ = z ?? x;
-    let g = _;
+    const x = z ?? $;
+    let y = x;
     for (const p of a.error.fns)
-      p && (g = await p(_, u, $, i));
-    if (g = g || {}, i.throwOnError)
-      throw g;
+      p && (y = await p(x, u, _, i));
+    if (y = y || {}, i.throwOnError)
+      throw y;
     return i.responseStyle === "data" ? void 0 : {
-      error: g,
+      error: y,
       ...m
     };
   }, n = (c) => (i) => o({ ...i, method: c }), l = (c) => async (i) => {
@@ -554,8 +554,8 @@ const pe = () => ({
       body: h.body,
       headers: h.headers,
       method: c,
-      onRequest: async ($, E) => {
-        let u = new Request($, E);
+      onRequest: async (_, E) => {
+        let u = new Request(_, E);
         for (const m of a.request.fns)
           m && (u = await m(u, h));
         return u;
@@ -564,7 +564,7 @@ const pe = () => ({
     });
   };
   return {
-    buildUrl: P,
+    buildUrl: B,
     connect: n("CONNECT"),
     delete: n("DELETE"),
     get: n("GET"),
@@ -590,13 +590,13 @@ const pe = () => ({
     },
     trace: n("TRACE")
   };
-}, ge = (e) => ({
+}, ye = (e) => ({
   ...e,
   ...Z.getConfig()
-}), Se = ye(ge(F({
+}), Se = ge(ye(F({
   baseUrl: "https://localhost:44341"
 })));
-class $e {
+class _e {
   static getConfiguration(r) {
     return (r?.client ?? Se).get({
       security: [
@@ -610,10 +610,10 @@ class $e {
     });
   }
 }
-var xe = Object.defineProperty, _e = Object.getOwnPropertyDescriptor, I = (e, r, t, s) => {
-  for (var a = s > 1 ? void 0 : s ? _e(r, t) : r, d = e.length - 1, o; d >= 0; d--)
+var $e = Object.defineProperty, xe = Object.getOwnPropertyDescriptor, I = (e, r, t, s) => {
+  for (var a = s > 1 ? void 0 : s ? xe(r, t) : r, d = e.length - 1, o; d >= 0; d--)
     (o = e[d]) && (a = (s ? o(r, t, a) : o(a)) || a);
-  return s && a && xe(r, t, a), a;
+  return s && a && $e(r, t, a), a;
 };
 let w = class extends G {
   constructor() {
@@ -674,7 +674,7 @@ let w = class extends G {
   }
   async _loadConfiguration() {
     try {
-      const e = await $e.getConfiguration({ throwOnError: !0 });
+      const e = await _e.getConfiguration({ throwOnError: !0 });
       this._configuration = e.data;
     } catch {
       this._error = "Unable to load sitemap configuration.";
@@ -689,6 +689,7 @@ let w = class extends G {
       f`
         <tr>
           <th>Key</th>
+          <th>Public name</th>
           <th>Host</th>
           <th>Path</th>
           <th>Culture</th>
@@ -700,7 +701,8 @@ let w = class extends G {
       `,
       (t) => f`
         <tr>
-          <td>${this._renderSitemapReference(t.key, t.hostName, r)}</td>
+          <td>${this._formatValue(t.key)}</td>
+          <td>${this._renderSitemapReference(this._getPublicName(t), t.hostName, r)}</td>
           <td>${this._formatValue(t.hostName)}</td>
           <td>${this._formatValue(t.path)}</td>
           <td>${this._formatValue(t.culture)}</td>
@@ -720,6 +722,7 @@ let w = class extends G {
       f`
         <tr>
           <th>Key</th>
+          <th>Public name</th>
           <th>Provider</th>
           <th>Host</th>
           <th>Settings</th>
@@ -727,7 +730,8 @@ let w = class extends G {
       `,
       (t) => f`
         <tr>
-          <td>${this._renderSitemapReference(t.key, t.hostName, r)}</td>
+          <td>${this._formatValue(t.key)}</td>
+          <td>${this._renderSitemapReference(this._getPublicName(t), t.hostName, r)}</td>
           <td>${this._formatValue(t.providerAlias)}</td>
           <td>${this._formatValue(t.hostName)}</td>
           <td>${this._formatSettingKeys(t.settingKeys, t.settingCount)}</td>
@@ -743,15 +747,17 @@ let w = class extends G {
       f`
         <tr>
           <th>Key</th>
+          <th>Public name</th>
           <th>Host</th>
           <th>Sitemaps</th>
         </tr>
       `,
       (t) => f`
         <tr>
-          <td>${this._renderSitemapReference(t.key, t.hostName, r)}</td>
+          <td>${this._formatValue(t.key)}</td>
+          <td>${this._renderSitemapReference(this._getPublicName(t), t.hostName, r)}</td>
           <td>${this._formatValue(t.hostName)}</td>
-          <td>${this._renderSitemapReferenceList(t.sitemaps, t.hostName, r)}</td>
+          <td>${this._renderSitemapReferenceList(this._getPublicSitemaps(t), t.hostName, r)}</td>
         </tr>
       `,
       "No sitemap indexes."
@@ -810,6 +816,13 @@ let w = class extends G {
     )}
       </span>
     ` : this._formatList(e);
+  }
+  _getPublicName(e) {
+    return e.publicName || e.key;
+  }
+  _getPublicSitemaps(e) {
+    const r = e;
+    return r.publicSitemaps && r.publicSitemaps.length > 0 ? r.publicSitemaps : e.sitemaps;
   }
   _buildSitemapUrl(e, r) {
     const t = `/${encodeURIComponent(e)}.xml`, s = r?.trim();
@@ -970,13 +983,13 @@ w.styles = [
     `
 ];
 I([
-  N()
+  T()
 ], w.prototype, "_configuration", 2);
 I([
-  N()
+  T()
 ], w.prototype, "_error", 2);
 I([
-  N()
+  T()
 ], w.prototype, "_isLoading", 2);
 w = I([
   Y("casko-xml-sitemaps-configuration-workspace-view")
@@ -986,4 +999,4 @@ export {
   w as CaskoXmlSitemapsConfigurationWorkspaceViewElement,
   ze as default
 };
-//# sourceMappingURL=configuration-workspace-view.element-G8Y5KfSr.js.map
+//# sourceMappingURL=configuration-workspace-view.element-CDSz4-ZH.js.map

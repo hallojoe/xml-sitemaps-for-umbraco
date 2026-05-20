@@ -16,10 +16,11 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
         {
             var definition = CreateDefinition(
                 indexKey,
+                SitemapPublicName.Resolve(indexKey, indexOptions.PublicName),
                 indexOptions.HostName,
                 SitemapRewriteKind.SitemapIndex);
 
-            if (paths.Add(definition.Path))
+            if (paths.Add(GetDefinitionConflictKey(definition)))
             {
                 definitions.Add(definition);
             }
@@ -29,10 +30,11 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
         {
             var definition = CreateDefinition(
                 sitemapKey,
+                SitemapPublicName.Resolve(sitemapKey, sitemapOptions.PublicName),
                 sitemapOptions.HostName,
                 SitemapRewriteKind.Sitemap);
 
-            if (paths.Add(definition.Path))
+            if (paths.Add(GetDefinitionConflictKey(definition)))
             {
                 definitions.Add(definition);
             }
@@ -42,10 +44,11 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
         {
             var definition = CreateDefinition(
                 sitemapKey,
+                SitemapPublicName.Resolve(sitemapKey, sitemapOptions.PublicName),
                 sitemapOptions.HostName,
                 SitemapRewriteKind.Sitemap);
 
-            if (paths.Add(definition.Path))
+            if (paths.Add(GetDefinitionConflictKey(definition)))
             {
                 definitions.Add(definition);
             }
@@ -56,20 +59,25 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
 
     public bool TryMatch(PathString requestPath, HostString requestHost, out SitemapRewriteDefinition? definition)
     {
+        var normalizedRequestHost = NormalizeHostName(requestHost.Value);
+
         definition = GetDefinitions()
-            .FirstOrDefault(candidate =>
-                string.Equals(candidate.Path, requestPath.Value, StringComparison.OrdinalIgnoreCase) &&
-                IsHostMatch(candidate.HostName, requestHost));
+            .Where(candidate => string.Equals(candidate.Path, requestPath.Value, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(candidate =>
+                candidate.HostName is not null &&
+                string.Equals(candidate.HostName, normalizedRequestHost, StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault(candidate => IsHostMatch(candidate.HostName, normalizedRequestHost));
 
         return definition is not null;
     }
 
-    private static SitemapRewriteDefinition CreateDefinition(string key, string? hostName, SitemapRewriteKind kind)
+    private static SitemapRewriteDefinition CreateDefinition(string key, string publicName, string? hostName, SitemapRewriteKind kind)
     {
         return new SitemapRewriteDefinition(
-            Path: $"/{key}.xml",
+            Path: $"/{publicName}.xml",
             TargetPath: CreateTargetPath(key, kind),
             Key: key,
+            PublicName: publicName,
             Kind: kind,
             HostName: NormalizeHostName(hostName));
     }
@@ -84,14 +92,18 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
         return $"{route}?key={escapedKey}";
     }
 
-    private static bool IsHostMatch(string? configuredHostName, HostString requestHost)
+    private static string GetDefinitionConflictKey(SitemapRewriteDefinition definition)
+    {
+        return $"{definition.Path}|{definition.HostName}";
+    }
+
+    private static bool IsHostMatch(string? configuredHostName, string? normalizedRequestHost)
     {
         if (string.IsNullOrWhiteSpace(configuredHostName))
         {
             return true;
         }
 
-        var normalizedRequestHost = NormalizeHostName(requestHost.Value);
         return string.Equals(configuredHostName, normalizedRequestHost, StringComparison.OrdinalIgnoreCase);
     }
 
