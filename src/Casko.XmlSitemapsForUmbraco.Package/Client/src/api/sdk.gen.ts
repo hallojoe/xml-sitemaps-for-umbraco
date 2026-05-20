@@ -27,7 +27,7 @@ export class V1Service {
                     type: 'http'
                 }
             ],
-            url: '/umbraco/management/api/v1/charlietangoumbracoxmlsitemap/api/configuration',
+            url: '/umbraco/management/api/v1/xmlsitemapsforumbraco/api/configuration',
             ...options
         });
     }

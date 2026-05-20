@@ -60,7 +60,7 @@ export type GetConfigurationData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/charlietangoumbracoxmlsitemap/api/configuration';
+    url: '/umbraco/management/api/v1/xmlsitemapsforumbraco/api/configuration';
 };
 
 export type GetConfigurationErrors = {

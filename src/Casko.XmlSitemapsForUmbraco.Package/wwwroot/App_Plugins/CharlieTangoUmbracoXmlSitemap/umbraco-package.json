@@ -8,7 +8,7 @@
       "name": "Umbraco Xml Sitemaps Bundle",
       "alias": "Casko.XmlSitemapsForUmbraco.Bundle",
       "type": "bundle",
-      "js": "/App_Plugins/CharlieTangoUmbracoXmlSitemap/charlie-tango-umbraco-xml-sitemap.js"
+      "js": "/App_Plugins/XmlSitemapForUmbraco/xml-sitemaps-for-umbraco.js"
     }
   ]
 }

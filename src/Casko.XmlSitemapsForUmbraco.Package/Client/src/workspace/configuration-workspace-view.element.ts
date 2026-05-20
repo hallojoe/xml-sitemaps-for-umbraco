@@ -77,9 +77,9 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
         </div>
       </uui-box>
 
-      ${this._renderConfiguredSitemaps(configuration.sitemaps ?? [])}
-      ${this._renderCustomSitemaps(configuration.customSitemaps ?? [])}
-      ${this._renderIndexes(configuration.indexes ?? [])}
+      ${this._renderConfiguredSitemaps(configuration.sitemaps ?? [], configuration.rewritesEnabled)}
+      ${this._renderCustomSitemaps(configuration.customSitemaps ?? [], configuration.rewritesEnabled)}
+      ${this._renderIndexes(configuration.indexes ?? [], configuration.rewritesEnabled)}
     `;
   }
 
@@ -94,7 +94,7 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
     }
   }
 
-  private _renderConfiguredSitemaps(rows: Array<XmlSitemapConfigurationRowResponse>) {
+  private _renderConfiguredSitemaps(rows: Array<XmlSitemapConfigurationRowResponse>, rewritesEnabled: boolean) {
     return this._renderTable(
       "Configured Sitemaps",
       rows,
@@ -112,13 +112,13 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       `,
       (row) => html`
         <tr>
-          <td>${this._formatValue(row.key)}</td>
+          <td>${this._renderSitemapReference(row.key, row.hostName, rewritesEnabled)}</td>
           <td>${this._formatValue(row.hostName)}</td>
           <td>${this._formatValue(row.path)}</td>
           <td>${this._formatValue(row.culture)}</td>
           <td>${this._formatList(row.includedCultures)}</td>
           <td>${this._formatList(row.excludedCultures)}</td>
-          <td>${this._formatList(row.includedDocumentTypeAliases)}</td>
+          <td>${this._formatList(row.includedDocumentTypeAliases, "All")}</td>
           <td>${this._formatList(row.excludedDocumentTypeAliases)}</td>
         </tr>
       `,
@@ -126,7 +126,7 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
     );
   }
 
-  private _renderCustomSitemaps(rows: Array<XmlSitemapCustomConfigurationRowResponse>) {
+  private _renderCustomSitemaps(rows: Array<XmlSitemapCustomConfigurationRowResponse>, rewritesEnabled: boolean) {
     return this._renderTable(
       "Custom Sitemaps",
       rows,
@@ -140,7 +140,7 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       `,
       (row) => html`
         <tr>
-          <td>${this._formatValue(row.key)}</td>
+          <td>${this._renderSitemapReference(row.key, row.hostName, rewritesEnabled)}</td>
           <td>${this._formatValue(row.providerAlias)}</td>
           <td>${this._formatValue(row.hostName)}</td>
           <td>${this._formatSettingKeys(row.settingKeys, row.settingCount)}</td>
@@ -150,7 +150,7 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
     );
   }
 
-  private _renderIndexes(rows: Array<XmlSitemapIndexConfigurationRowResponse>) {
+  private _renderIndexes(rows: Array<XmlSitemapIndexConfigurationRowResponse>, rewritesEnabled: boolean) {
     return this._renderTable(
       "Indexes",
       rows,
@@ -163,9 +163,9 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       `,
       (row) => html`
         <tr>
-          <td>${this._formatValue(row.key)}</td>
+          <td>${this._renderSitemapReference(row.key, row.hostName, rewritesEnabled)}</td>
           <td>${this._formatValue(row.hostName)}</td>
-          <td>${this._formatList(row.sitemaps)}</td>
+          <td>${this._renderSitemapReferenceList(row.sitemaps, row.hostName, rewritesEnabled)}</td>
         </tr>
       `,
       "No sitemap indexes."
@@ -210,6 +210,55 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
         <strong>${this._formatList(values, message)}</strong>
       </div>
     `;
+  }
+
+  private _renderSitemapReference(key: string | undefined | null, hostName: string | undefined | null, rewritesEnabled: boolean) {
+    if (!rewritesEnabled || !key) {
+      return this._formatValue(key);
+    }
+
+    return html`
+      <a class="sitemap-link" href=${this._buildSitemapUrl(key, hostName)} target="_blank" rel="noopener noreferrer">
+        ${key}
+      </a>
+    `;
+  }
+
+  private _renderSitemapReferenceList(values: Array<string> | undefined, hostName: string | undefined | null, rewritesEnabled: boolean) {
+    if (!values || values.length === 0) {
+      return "None";
+    }
+
+    if (!rewritesEnabled) {
+      return this._formatList(values);
+    }
+
+    return html`
+      <span class="sitemap-link-list">
+        ${values.map(
+          (value, index) => html`
+            ${index > 0 ? html`<span>, </span>` : undefined}
+            ${this._renderSitemapReference(value, hostName, rewritesEnabled)}
+          `
+        )}
+      </span>
+    `;
+  }
+
+  private _buildSitemapUrl(key: string, hostName: string | undefined | null) {
+    const path = `/${encodeURIComponent(key)}.xml`;
+    const host = hostName?.trim();
+
+    if (!host) {
+      return path;
+    }
+
+    const normalizedHost = host.replace(/\/+$/, "");
+    if (/^https?:\/\//i.test(normalizedHost)) {
+      return `${normalizedHost}${path}`;
+    }
+
+    return `https://${normalizedHost}${path}`;
   }
 
   private _formatSettingKeys(values?: Array<string>, count?: number) {
@@ -348,6 +397,21 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       }
 
       td {
+        overflow-wrap: anywhere;
+      }
+
+      .sitemap-link {
+        color: var(--uui-color-interactive);
+        text-decoration: none;
+        overflow-wrap: anywhere;
+      }
+
+      .sitemap-link:hover {
+        color: var(--uui-color-interactive-emphasis);
+        text-decoration: underline;
+      }
+
+      .sitemap-link-list {
         overflow-wrap: anywhere;
       }
     `,

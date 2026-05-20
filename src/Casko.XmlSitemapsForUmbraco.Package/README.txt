@@ -24,7 +24,7 @@
 * Open a terminal inside the `\Client` folder
 * Run `npm install` to install all the dependencies
 * Run `npm run build` to build the project
-* The build output is copied to `wwwroot\App_Plugins\CharlieTangoUmbracoXmlSitemap\charlie-tango-umbraco-xml-sitemap.js`
+* The build output is copied to `wwwroot\App_Plugins\XmlSitemapForUmbraco\xml-sitemaps-for-umbraco.js`
 
 == File Watching ==
 * Add this Razor Class Library Project as a project reference to an Umbraco Website project
