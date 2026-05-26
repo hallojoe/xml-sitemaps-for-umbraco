@@ -41,6 +41,16 @@ public sealed class XmlSitemapsOptions
     public List<string> ExcludedCultures { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the property alias whose value can exclude a content URL from generated sitemaps.
+    /// </summary>
+    public string? ExcludingUrlPropertyAlias { get; set; }
+
+    /// <summary>
+    /// Gets or sets the property value that excludes a content URL when found in the configured property.
+    /// </summary>
+    public string? ExcludingUrlPropertyValue { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to render alternate links for single culture sitemaps.
     /// </summary>
     public bool RenderAlternateLinksForSingleCultureSitemaps { get; set; }

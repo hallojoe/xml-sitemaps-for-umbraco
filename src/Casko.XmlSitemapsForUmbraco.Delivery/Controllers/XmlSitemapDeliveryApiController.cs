@@ -99,6 +99,29 @@ public class XmlSitemapDeliveryApiController(
             return Results.BadRequest(exception.Message);
         }
     }
+
+    /// <summary>
+    /// Returns the XML sitemap for the specified root content key.
+    /// </summary>
+    [Produces(Constants.XmlMimeType)]
+    [HttpGet("root-key")]
+    public async Task<IResult> GetXmlSiteMapByRootKey([FromQuery(Name = "key")] Guid key)
+    {
+        try
+        {
+            var xmlSiteMap = await xmlSitemapService.GetByRootKeyAsync(key) as XmlSiteMap;
+            if (xmlSiteMap is null)
+            {
+                return Results.NotFound();
+            }
+
+            return new XmlResult<XmlSiteMap>(xmlSiteMap);
+        }
+        catch (Exception exception)
+        {
+            return Results.BadRequest(exception.Message);
+        }
+    }
     //
     // /// <summary>
     // /// Returns the stored XML sitemap for the specified key, creating it when it does not exist.

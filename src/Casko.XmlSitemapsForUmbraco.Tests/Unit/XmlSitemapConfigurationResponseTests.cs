@@ -41,6 +41,8 @@ public sealed class XmlSitemapConfigurationResponseTests
             ExcludedContentTypeAliases = ["hiddenPage"],
             IncludedCultures = ["en", "da"],
             ExcludedCultures = ["pl"],
+            ExcludingUrlPropertyAlias = "metaRobots",
+            ExcludingUrlPropertyValue = "noindex",
             Storage =
             {
                 RefreshStaleAfterSeconds = 120,
@@ -61,6 +63,8 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(result.GlobalFilters.ExcludedContentTypeAliases, Is.EqualTo(new[] { "hiddenPage" }));
             Assert.That(result.GlobalFilters.IncludedCultures, Is.EqualTo(new[] { "en", "da" }));
             Assert.That(result.GlobalFilters.ExcludedCultures, Is.EqualTo(new[] { "pl" }));
+            Assert.That(result.GlobalFilters.ExcludingUrlPropertyAlias, Is.EqualTo("metaRobots"));
+            Assert.That(result.GlobalFilters.ExcludingUrlPropertyValue, Is.EqualTo("noindex"));
             Assert.That(result.Storage.RefreshStaleAfterSeconds, Is.EqualTo(120));
             Assert.That(result.Storage.BackgroundJobEnabled, Is.False);
             Assert.That(result.Storage.BackgroundJobIntervalSeconds, Is.EqualTo(600));

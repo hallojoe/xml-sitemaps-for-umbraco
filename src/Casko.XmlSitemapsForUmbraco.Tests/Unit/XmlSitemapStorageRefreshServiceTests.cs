@@ -9,6 +9,7 @@ using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using Umbraco.Cms.Core.Routing;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -28,6 +29,7 @@ public class XmlSitemapStorageRefreshServiceTests
             Substitute.For<ICmsContentService>(),
             Substitute.For<IXmlSitemapRenderer>(),
             Substitute.For<IXmlSitemapIndexRenderer>(),
+            Substitute.For<IPublishedUrlProvider>(),
             Array.Empty<IXmlSitemapCustomProvider>());
         _xmlSitemapDataSource = Substitute.For<IXmlSitemapDataSource>();
         _xmlSitemapXmlSerializer = Substitute.For<IXmlSitemapXmlSerializer>();
