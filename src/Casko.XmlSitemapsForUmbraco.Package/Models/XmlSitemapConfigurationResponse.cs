@@ -81,7 +81,9 @@ public sealed record XmlSitemapConfigurationResponse
                 IncludedContentTypeAliases = options.IncludedContentTypeAliases,
                 ExcludedContentTypeAliases = options.ExcludedContentTypeAliases,
                 IncludedCultures = options.IncludedCultures,
-                ExcludedCultures = options.ExcludedCultures
+                ExcludedCultures = options.ExcludedCultures,
+                ExcludingUrlPropertyAlias = options.ExcludingUrlPropertyAlias,
+                ExcludingUrlPropertyValue = options.ExcludingUrlPropertyValue
             },
             Storage = new XmlSitemapStorageConfigurationResponse
             {
@@ -129,6 +131,16 @@ public sealed record XmlSitemapGlobalFiltersResponse
     /// Gets root-level excluded cultures.
     /// </summary>
     public required IReadOnlyList<string> ExcludedCultures { get; init; }
+
+    /// <summary>
+    /// Gets the property alias whose value can exclude a content URL from generated sitemaps.
+    /// </summary>
+    public string? ExcludingUrlPropertyAlias { get; init; }
+
+    /// <summary>
+    /// Gets the property value that excludes a content URL when found in the configured property.
+    /// </summary>
+    public string? ExcludingUrlPropertyValue { get; init; }
 }
 
 /// <summary>

@@ -6,7 +6,7 @@ using Casko.XmlSitemapsForUmbraco.Common.Services.Rendering;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Extensions;
+using Umbraco.Cms.Core.Routing;
 
 namespace Casko.XmlSitemapsForUmbraco.Common.Services;
 
@@ -15,6 +15,7 @@ public class DefaultXmlSiteMapService(
     ICmsContentService cmsContentService,
     IXmlSitemapRenderer sitemapRenderer,
     IXmlSitemapIndexRenderer sitemapIndexRenderer,
+    IPublishedUrlProvider publishedUrlProvider,
     IEnumerable<IXmlSitemapCustomProvider> customProviders) : IXmlSitemapService
 {
     /// <inheritdoc />
@@ -52,9 +53,15 @@ public class DefaultXmlSiteMapService(
     }
 
     /// <inheritdoc />
-    public virtual Task<IXmlSiteMapModel> GetByRootKeyAsync(Guid rootKey)
+    public virtual async Task<IXmlSiteMapModel> GetByRootKeyAsync(Guid rootKey)
     {
-        throw new NotImplementedException();
+        var rootContent = cmsContentService.GetContent(rootKey);
+        if (rootContent is null)
+        {
+            throw new RootContentNotFoundException();
+        }
+
+        return await RenderXmlSiteMapAsync(rootContent, hostname: null, culture: null, sitemapOptions: null);
     }
 
     /// <inheritdoc />
@@ -147,6 +154,21 @@ public class DefaultXmlSiteMapService(
         string? culture,
         SitemapOptions? sitemapOptions)
     {
+        var rootContent = cmsContentService.GetContentByPath(path, hostname, culture);
+        if (rootContent is null)
+        {
+            throw new RootContentNotFoundException();
+        }
+
+        return await RenderXmlSiteMapAsync(rootContent, hostname, culture, sitemapOptions);
+    }
+
+    private async Task<XmlSiteMap> RenderXmlSiteMapAsync(
+        IPublishedContent rootContent,
+        string? hostname,
+        string? culture,
+        SitemapOptions? sitemapOptions)
+    {
         var rootOptions = legacySitemapOptions.Value;
 
         var allLanguageCodes = await cmsContentService.GetLanguagesAsync();
@@ -159,16 +181,11 @@ public class DefaultXmlSiteMapService(
             sitemapOptions);
 
         var contentTypeSelection = SitemapContentTypeSelection.Resolve(rootOptions, sitemapOptions);
-
-        var rootContent = cmsContentService.GetContentByPath(path, hostname, culture);
-        if (rootContent is null)
-        {
-            throw new RootContentNotFoundException();
-        }
+        var propertyExclusionSelection = SitemapPropertyExclusionSelection.Resolve(rootOptions);
 
         if (string.IsNullOrWhiteSpace(hostname))
         {
-            hostname = rootContent.Url(mode: UrlMode.Absolute).Replace("https://", "").Split('/').First();
+            hostname = ResolveHostname(rootContent, culture);
         }
 
         return sitemapRenderer.Render(new XmlSitemapRenderContext(
@@ -177,8 +194,29 @@ public class DefaultXmlSiteMapService(
             cultureSelection.Cultures,
             hostname,
             cultureSelection.RenderAlternateLinks,
-            contentTypeSelection.ShouldInclude));
+            content => contentTypeSelection.ShouldInclude(content) &&
+                       propertyExclusionSelection.ShouldInclude(content, defaultLanguageCode)));
     }
 
+    private string? ResolveHostname(IPublishedContent rootContent, string? culture)
+    {
+        var absoluteUrl = publishedUrlProvider.GetUrl(rootContent, UrlMode.Absolute, culture, current: null);
+        if (string.IsNullOrWhiteSpace(absoluteUrl) || absoluteUrl == "#")
+        {
+            return null;
+        }
 
+        if (Uri.TryCreate(absoluteUrl, UriKind.Absolute, out var absoluteUri))
+        {
+            return absoluteUri.Authority;
+        }
+
+        var schemeSeparatorIndex = absoluteUrl.IndexOf("://", StringComparison.Ordinal);
+        if (schemeSeparatorIndex >= 0)
+        {
+            absoluteUrl = absoluteUrl[(schemeSeparatorIndex + 3)..];
+        }
+
+        return absoluteUrl.Split('/').FirstOrDefault();
+    }
 }
