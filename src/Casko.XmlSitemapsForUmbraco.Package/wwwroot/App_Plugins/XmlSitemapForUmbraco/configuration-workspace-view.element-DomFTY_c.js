@@ -45,7 +45,7 @@ const ee = {
           );
         if (!b.body) throw new Error("No body in SSE response");
         const S = b.body.pipeThrough(new TextDecoderStream()).getReader();
-        let N = "";
+        let A = "";
         const L = () => {
           try {
             S.cancel();
@@ -57,42 +57,42 @@ const ee = {
           for (; ; ) {
             const { done: J, value: K } = await S.read();
             if (J) break;
-            N += K;
-            const O = N.split(`
+            A += K;
+            const P = A.split(`
 
 `);
-            N = O.pop() ?? "";
-            for (const M of O) {
+            A = P.pop() ?? "";
+            for (const M of P) {
               const X = M.split(`
 `), k = [];
-              let P;
+              let O;
               for (const g of X)
                 if (g.startsWith("data:"))
                   k.push(g.replace(/^data:\s*/, ""));
                 else if (g.startsWith("event:"))
-                  P = g.replace(/^event:\s*/, "");
+                  O = g.replace(/^event:\s*/, "");
                 else if (g.startsWith("id:"))
                   h = g.replace(/^id:\s*/, "");
                 else if (g.startsWith("retry:")) {
-                  const D = Number.parseInt(
+                  const q = Number.parseInt(
                     g.replace(/^retry:\s*/, ""),
                     10
                   );
-                  Number.isNaN(D) || (u = D);
+                  Number.isNaN(q) || (u = q);
                 }
-              let v, q = !1;
+              let v, D = !1;
               if (k.length) {
                 const g = k.join(`
 `);
                 try {
-                  v = JSON.parse(g), q = !0;
+                  v = JSON.parse(g), D = !0;
                 } catch {
                   v = g;
                 }
               }
-              q && (a && await a(v), s && (v = await s(v))), t?.({
+              D && (a && await a(v), s && (v = await s(v))), t?.({
                 data: v,
-                event: P,
+                event: O,
                 id: h,
                 retry: u
               }), k.length && (yield v);
@@ -146,7 +146,7 @@ const ee = {
     default:
       return "&";
   }
-}, U = ({
+}, B = ({
   allowReserved: e,
   explode: r,
   name: t,
@@ -236,7 +236,7 @@ const ee = {
       if (Array.isArray(l)) {
         t = t.replace(
           a,
-          U({ explode: d, name: o, style: n, value: l })
+          B({ explode: d, name: o, style: n, value: l })
         );
         continue;
       }
@@ -304,7 +304,7 @@ const de = async (e, r) => {
       const n = a[o];
       if (n != null)
         if (Array.isArray(n)) {
-          const l = U({
+          const l = B({
             allowReserved: e,
             explode: !0,
             name: o,
@@ -372,7 +372,7 @@ const de = async (e, r) => {
         break;
     }
   }
-}, B = (e) => oe({
+}, U = (e) => oe({
   baseUrl: e.baseUrl,
   path: e.path,
   query: e.query,
@@ -405,7 +405,7 @@ const de = async (e, r) => {
   }
   return r;
 };
-class A {
+class N {
   constructor() {
     this.fns = [];
   }
@@ -432,9 +432,9 @@ class A {
   }
 }
 const pe = () => ({
-  error: new A(),
-  request: new A(),
-  response: new A()
+  error: new N(),
+  request: new N(),
+  response: new N()
 }), me = H({
   allowReserved: !1,
   array: {
@@ -467,7 +467,7 @@ const pe = () => ({
       ...i,
       security: i.security
     }), i.requestValidator && await i.requestValidator(i), i.body !== void 0 && i.bodySerializer && (i.serializedBody = i.bodySerializer(i.body)), (i.body === void 0 || i.serializedBody === "") && i.headers.delete("Content-Type");
-    const h = B(i);
+    const h = U(i);
     return { opts: i, url: h };
   }, o = async (c) => {
     const { opts: i, url: h } = await d(c), C = {
@@ -564,7 +564,7 @@ const pe = () => ({
     });
   };
   return {
-    buildUrl: B,
+    buildUrl: U,
     connect: n("CONNECT"),
     delete: n("DELETE"),
     get: n("GET"),
@@ -660,6 +660,8 @@ let w = class extends G {
           ${this._renderListDetail("Excluded cultures", e.globalFilters?.excludedCultures)}
           ${this._renderListDetail("Included content types", e.globalFilters?.includedContentTypeAliases, "All")}
           ${this._renderListDetail("Excluded content types", e.globalFilters?.excludedContentTypeAliases)}
+          ${this._renderDetail("Excluding URL property", e.globalFilters?.excludingUrlPropertyAlias)}
+          ${this._renderDetail("Excluding URL value", e.globalFilters?.excludingUrlPropertyValue)}
         </div>
       </uui-box>
 
@@ -795,6 +797,14 @@ let w = class extends G {
       <div class="detail">
         <span>${e}</span>
         <strong>${this._formatList(r, t)}</strong>
+      </div>
+    `;
+  }
+  _renderDetail(e, r) {
+    return f`
+      <div class="detail">
+        <span>${e}</span>
+        <strong>${this._formatValue(r)}</strong>
       </div>
     `;
   }
@@ -999,4 +1009,4 @@ export {
   w as CaskoXmlSitemapsConfigurationWorkspaceViewElement,
   ze as default
 };
-//# sourceMappingURL=configuration-workspace-view.element-CDSz4-ZH.js.map
+//# sourceMappingURL=configuration-workspace-view.element-DomFTY_c.js.map
