@@ -84,6 +84,8 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
           ${this._renderListDetail("Excluded cultures", configuration.globalFilters?.excludedCultures)}
           ${this._renderListDetail("Included content types", configuration.globalFilters?.includedContentTypeAliases, "All")}
           ${this._renderListDetail("Excluded content types", configuration.globalFilters?.excludedContentTypeAliases)}
+          ${this._renderDetail("Excluding URL property", configuration.globalFilters?.excludingUrlPropertyAlias)}
+          ${this._renderDetail("Excluding URL value", configuration.globalFilters?.excludingUrlPropertyValue)}
         </div>
       </uui-box>
 
@@ -224,6 +226,15 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
       <div class="detail">
         <span>${label}</span>
         <strong>${this._formatList(values, message)}</strong>
+      </div>
+    `;
+  }
+
+  private _renderDetail(label: string, value?: string | number | null) {
+    return html`
+      <div class="detail">
+        <span>${label}</span>
+        <strong>${this._formatValue(value)}</strong>
       </div>
     `;
   }
