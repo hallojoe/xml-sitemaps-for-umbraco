@@ -102,6 +102,18 @@ Important settings:
 - `IncludedDocumentTypeAliases` and `ExcludedDocumentTypeAliases`: per-sitemap document type filtering.
 
 Root-level culture and document type settings apply to all configured sitemaps unless a sitemap entry narrows them further.
+Use `ExcludingUrlPropertyAlias` and `ExcludingUrlPropertyValue` at the root level to skip content whose property value contains a configured value. A common setup is:
+
+```json
+{
+  "XmlSiteMaps": {
+    "ExcludingUrlPropertyAlias": "metaRobots",
+    "ExcludingUrlPropertyValue": "noindex"
+  }
+}
+```
+
+The value check is case-insensitive and uses the sitemap culture when reading variant properties.
 
 ## Sitemap Indexes
 
@@ -287,6 +299,8 @@ Common root settings:
 - `RewritesEnabled`: exposes configured entries as friendly XML rewrite paths.
 - `IncludedContentTypeAliases`: global document type allow list.
 - `ExcludedContentTypeAliases`: global document type deny list.
+- `ExcludingUrlPropertyAlias`: global property alias used to exclude content URLs when the value matches.
+- `ExcludingUrlPropertyValue`: global property value that excludes content URLs when found in `ExcludingUrlPropertyAlias`.
 - `IncludedCultures`: global culture allow list.
 - `ExcludedCultures`: global culture deny list.
 - `RenderAlternateLinksForSingleCultureSitemaps`: controls alternate link rendering for single-culture sitemaps.
