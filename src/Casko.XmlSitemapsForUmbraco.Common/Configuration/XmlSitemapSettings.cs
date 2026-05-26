@@ -41,6 +41,16 @@ public sealed class XmlSitemapsOptions
     public List<string> ExcludedCultures { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the property alias whose value can exclude a content URL from generated sitemaps.
+    /// </summary>
+    public string? ExcludingUrlPropertyAlias { get; set; }
+
+    /// <summary>
+    /// Gets or sets the property value that excludes a content URL when found in the configured property.
+    /// </summary>
+    public string? ExcludingUrlPropertyValue { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to render alternate links for single culture sitemaps.
     /// </summary>
     public bool RenderAlternateLinksForSingleCultureSitemaps { get; set; }
@@ -104,6 +114,11 @@ public sealed class XmlSitemapStorageBackgroundJobOptions
 public sealed class SitemapOptions
 {
     /// <summary>
+    /// Gets or sets the public XML file name for this sitemap, without the .xml extension.
+    /// </summary>
+    public string? PublicName { get; set; }
+
+    /// <summary>
     /// Gets or sets the path of content to render.
     /// </summary>
     public string? Path { get; set; }
@@ -145,6 +160,11 @@ public sealed class SitemapOptions
 public sealed class CustomSitemapOptions
 {
     /// <summary>
+    /// Gets or sets the public XML file name for this custom sitemap, without the .xml extension.
+    /// </summary>
+    public string? PublicName { get; set; }
+
+    /// <summary>
     /// Gets or sets the alias of the custom sitemap provider.
     /// </summary>
     public string? ProviderAlias { get; set; }
@@ -165,6 +185,11 @@ public sealed class CustomSitemapOptions
 /// </summary>
 public sealed class SitemapIndexOptions
 {
+    /// <summary>
+    /// Gets or sets the public XML file name for this sitemap index, without the .xml extension.
+    /// </summary>
+    public string? PublicName { get; set; }
+
     /// <summary>
     /// Gets or sets the host name for this XML sitemap index.
     /// </summary>

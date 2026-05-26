@@ -1,4 +1,9 @@
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.TestSite;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddXmlSitemapCustomProvider<DummyCustomSitemapProvider>();
 
 builder.CreateUmbracoBuilder()
     .AddBackOffice()

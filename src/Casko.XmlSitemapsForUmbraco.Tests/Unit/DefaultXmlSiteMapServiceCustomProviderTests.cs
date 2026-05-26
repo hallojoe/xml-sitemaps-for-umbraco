@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Routing;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -121,6 +122,7 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
             _cmsContentService,
             _sitemapRenderer,
             _sitemapIndexRenderer,
+            Substitute.For<IPublishedUrlProvider>(),
             customProviders);
     }
 }

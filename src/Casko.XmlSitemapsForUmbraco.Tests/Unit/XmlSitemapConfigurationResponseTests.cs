@@ -41,6 +41,8 @@ public sealed class XmlSitemapConfigurationResponseTests
             ExcludedContentTypeAliases = ["hiddenPage"],
             IncludedCultures = ["en", "da"],
             ExcludedCultures = ["pl"],
+            ExcludingUrlPropertyAlias = "metaRobots",
+            ExcludingUrlPropertyValue = "noindex",
             Storage =
             {
                 RefreshStaleAfterSeconds = 120,
@@ -61,6 +63,8 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(result.GlobalFilters.ExcludedContentTypeAliases, Is.EqualTo(new[] { "hiddenPage" }));
             Assert.That(result.GlobalFilters.IncludedCultures, Is.EqualTo(new[] { "en", "da" }));
             Assert.That(result.GlobalFilters.ExcludedCultures, Is.EqualTo(new[] { "pl" }));
+            Assert.That(result.GlobalFilters.ExcludingUrlPropertyAlias, Is.EqualTo("metaRobots"));
+            Assert.That(result.GlobalFilters.ExcludingUrlPropertyValue, Is.EqualTo("noindex"));
             Assert.That(result.Storage.RefreshStaleAfterSeconds, Is.EqualTo(120));
             Assert.That(result.Storage.BackgroundJobEnabled, Is.False);
             Assert.That(result.Storage.BackgroundJobIntervalSeconds, Is.EqualTo(600));
@@ -76,6 +80,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             {
                 ["products"] = new SitemapOptions
                 {
+                    PublicName = "products-public",
                     Path = "/products",
                     HostName = "https://example.com",
                     Culture = "en",
@@ -89,6 +94,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             {
                 ["external-products"] = new CustomSitemapOptions
                 {
+                    PublicName = "external-products-public",
                     ProviderAlias = "externalProducts",
                     HostName = "https://external.example.com",
                     Settings =
@@ -102,6 +108,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             {
                 ["xmlsitemap"] = new SitemapIndexOptions
                 {
+                    PublicName = "xmlsitemap-public",
                     HostName = "https://example.com",
                     Sitemaps = ["products", "external-products"]
                 }
@@ -119,6 +126,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(result.IndexCount, Is.EqualTo(1));
 
             Assert.That(sitemap.Key, Is.EqualTo("products"));
+            Assert.That(sitemap.PublicName, Is.EqualTo("products-public"));
             Assert.That(sitemap.Path, Is.EqualTo("/products"));
             Assert.That(sitemap.HostName, Is.EqualTo("https://example.com"));
             Assert.That(sitemap.Culture, Is.EqualTo("en"));
@@ -128,6 +136,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(sitemap.ExcludedDocumentTypeAliases, Is.EqualTo(new[] { "archivedProduct" }));
 
             Assert.That(customSitemap.Key, Is.EqualTo("external-products"));
+            Assert.That(customSitemap.PublicName, Is.EqualTo("external-products-public"));
             Assert.That(customSitemap.ProviderAlias, Is.EqualTo("externalProducts"));
             Assert.That(customSitemap.HostName, Is.EqualTo("https://external.example.com"));
             Assert.That(customSitemap.SettingCount, Is.EqualTo(2));
@@ -136,8 +145,46 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(customSitemap.SettingKeys, Does.Not.Contain("https://api.example.com"));
 
             Assert.That(index.Key, Is.EqualTo("xmlsitemap"));
+            Assert.That(index.PublicName, Is.EqualTo("xmlsitemap-public"));
             Assert.That(index.HostName, Is.EqualTo("https://example.com"));
             Assert.That(index.Sitemaps, Is.EqualTo(new[] { "products", "external-products" }));
+            Assert.That(index.PublicSitemaps, Is.EqualTo(new[] { "products-public", "external-products-public" }));
+        });
+    }
+
+    [Test]
+    public void FromOptions_WhenPublicNamesAreNotConfigured_UsesKeysAsPublicNames()
+    {
+        var result = XmlSitemapConfigurationResponse.FromOptions(new XmlSitemapsOptions
+        {
+            Sitemaps =
+            {
+                ["products"] = new SitemapOptions()
+            },
+            CustomSitemaps =
+            {
+                ["external-products"] = new CustomSitemapOptions()
+            },
+            Indexes =
+            {
+                ["xmlsitemap"] = new SitemapIndexOptions
+                {
+                    Sitemaps = ["products", "external-products", "missing"]
+                }
+            }
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Sitemaps.Single().PublicName, Is.EqualTo("products"));
+            Assert.That(result.CustomSitemaps.Single().PublicName, Is.EqualTo("external-products"));
+            Assert.That(result.Indexes.Single().PublicName, Is.EqualTo("xmlsitemap"));
+            Assert.That(result.Indexes.Single().PublicSitemaps, Is.EqualTo(new[]
+            {
+                "products",
+                "external-products",
+                "missing"
+            }));
         });
     }
 

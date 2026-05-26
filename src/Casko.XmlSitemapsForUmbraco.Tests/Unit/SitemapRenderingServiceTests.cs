@@ -185,6 +185,29 @@ public class SitemapRenderingServiceTests
     }
 
     [Test]
+    public void RenderIndex_WhenPublicAliasesAreConfigured_UsesPublicAliasesForLocations()
+    {
+        var sut = new XmlSitemapIndexRenderer(new SitemapUrlBuilder());
+
+        var result = sut.Render(new XmlSitemapIndexRenderContext(
+            ["host1-main", "host2-main", "news"],
+            "https://example.com",
+            XmlSitemapIndexLocationMode.LegacyXmlFile,
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["host1-main"] = "xmlsitemap",
+                ["host2-main"] = "xmlsitemap",
+                ["news"] = "news-public"
+            }));
+
+        Assert.That(result.Locations.Select(location => location.Location), Is.EqualTo(new[]
+        {
+            "https://example.com/xmlsitemap.xml",
+            "https://example.com/news-public.xml"
+        }));
+    }
+
+    [Test]
     public void BuildLegacySitemapFileUrl_CombinesHostnameAndAlias()
     {
         var sut = new SitemapUrlBuilder();

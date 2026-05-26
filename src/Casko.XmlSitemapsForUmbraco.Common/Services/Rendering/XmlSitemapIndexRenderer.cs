@@ -9,14 +9,22 @@ public sealed class XmlSitemapIndexRenderer(ISitemapUrlBuilder urlBuilder) : IXm
         return new XmlSiteMapIndex
         {
             Locations = context.SitemapAliases
+                .Select(alias => ResolvePublicAlias(alias, context.PublicSitemapAliases))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select(alias => new XmlSiteMapIndexLocation
+                .Select(publicAlias => new XmlSiteMapIndexLocation
                 {
                     Location = context.LocationMode == XmlSitemapIndexLocationMode.LegacyXmlFile
-                        ? urlBuilder.BuildLegacySitemapFileUrl(alias, context.Hostname)
-                        : urlBuilder.BuildSitemapApiUrl(alias, context.Hostname)
+                        ? urlBuilder.BuildLegacySitemapFileUrl(publicAlias, context.Hostname)
+                        : urlBuilder.BuildSitemapApiUrl(publicAlias, context.Hostname)
                 })
                 .ToList()
         };
+    }
+
+    private static string ResolvePublicAlias(string alias, IReadOnlyDictionary<string, string>? publicAliases)
+    {
+        return publicAliases is not null && publicAliases.TryGetValue(alias, out var publicAlias)
+            ? publicAlias
+            : alias;
     }
 }

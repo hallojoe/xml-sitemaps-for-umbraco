@@ -5,9 +5,9 @@ export default defineConfig({
     lib: {
       entry: "src/bundle.manifests.ts", // Bundle registers one or more manifests
       formats: ["es"],
-      fileName: "charlie-tango-umbraco-xml-sitemap",
+      fileName: "xml-sitemaps-for-umbraco",
     },
-    outDir: "../wwwroot/App_Plugins/CharlieTangoUmbracoXmlSitemap", // your web component will be saved in this location
+    outDir: "../wwwroot/App_Plugins/XmlSitemapForUmbraco", // your web component will be saved in this location
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {

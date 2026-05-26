@@ -6,12 +6,12 @@ using NUnit.Framework;
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
 [TestFixture]
-public sealed class CharlieTangoUmbracoXmlSitemapApiControllerTests
+public sealed class XmlSitemapsApiControllerTests
 {
     [Test]
     public void GetConfiguration_ReturnsConfiguredOptions()
     {
-        var controller = new CharlieTangoUmbracoXmlSitemapApiController(Options.Create(new XmlSitemapsOptions
+        var controller = new XmlSitemapsApiController(Options.Create(new XmlSitemapsOptions
         {
             Enabled = false,
             Sitemaps =

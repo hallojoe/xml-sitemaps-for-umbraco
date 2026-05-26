@@ -20,6 +20,7 @@ export type XmlSitemapConfigurationResponse = {
 
 export type XmlSitemapConfigurationRowResponse = {
     key: string;
+    publicName: string;
     path?: string | null;
     hostName?: string | null;
     culture?: string | null;
@@ -31,6 +32,7 @@ export type XmlSitemapConfigurationRowResponse = {
 
 export type XmlSitemapCustomConfigurationRowResponse = {
     key: string;
+    publicName: string;
     providerAlias?: string | null;
     hostName?: string | null;
     settingCount: number;
@@ -42,12 +44,16 @@ export type XmlSitemapGlobalFiltersResponse = {
     excludedContentTypeAliases: Array<string>;
     includedCultures: Array<string>;
     excludedCultures: Array<string>;
+    excludingUrlPropertyAlias?: string | null;
+    excludingUrlPropertyValue?: string | null;
 };
 
 export type XmlSitemapIndexConfigurationRowResponse = {
     key: string;
+    publicName: string;
     hostName?: string | null;
     sitemaps: Array<string>;
+    publicSitemaps: Array<string>;
 };
 
 export type XmlSitemapStorageConfigurationResponse = {
@@ -60,7 +66,7 @@ export type GetConfigurationData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/charlietangoumbracoxmlsitemap/api/configuration';
+    url: '/umbraco/management/api/v1/xmlsitemapsforumbraco/api/configuration';
 };
 
 export type GetConfigurationErrors = {

@@ -4,6 +4,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceBuildOutput</TargetsForTfmSpecificBuildOutput>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -46,11 +47,17 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Delivery\Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Models\Casko.XmlSitemapsForUmbraco.Models.csproj" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" />
+      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" PrivateAssets="all" />
+      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Delivery\Casko.XmlSitemapsForUmbraco.Delivery.csproj" PrivateAssets="all" />
+      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Models\Casko.XmlSitemapsForUmbraco.Models.csproj" PrivateAssets="all" />
+      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" PrivateAssets="all" />
+      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" PrivateAssets="all" />
     </ItemGroup>
+
+    <Target Name="IncludeProjectReferenceBuildOutput" DependsOnTargets="ResolveReferences">
+        <ItemGroup>
+            <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference'" />
+        </ItemGroup>
+    </Target>
 
 </Project>

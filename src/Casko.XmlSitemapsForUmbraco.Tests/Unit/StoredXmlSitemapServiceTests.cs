@@ -9,6 +9,7 @@ using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using Umbraco.Cms.Core.Routing;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -29,6 +30,7 @@ public class StoredXmlSitemapServiceTests
             Substitute.For<ICmsContentService>(),
             Substitute.For<IXmlSitemapRenderer>(),
             Substitute.For<IXmlSitemapIndexRenderer>(),
+            Substitute.For<IPublishedUrlProvider>(),
             Array.Empty<IXmlSitemapCustomProvider>());
         _xmlSitemapDataSource = Substitute.For<IXmlSitemapDataSource>();
         _xmlSitemapXmlDeserializer = Substitute.For<IXmlSitemapXmlDeserializer>();
@@ -59,6 +61,23 @@ public class StoredXmlSitemapServiceTests
                 }
             }
         });
+    }
+
+    [Test]
+    public async Task GetByRootKeyAsync_DelegatesToDefaultServiceWithoutUsingStorage()
+    {
+        var rootKey = Guid.NewGuid();
+        var sitemap = new XmlSiteMap();
+        _defaultXmlSiteMapService.GetByRootKeyAsync(rootKey).Returns(sitemap);
+
+        var result = await _sut.GetByRootKeyAsync(rootKey);
+
+        Assert.That(result, Is.SameAs(sitemap));
+        await _defaultXmlSiteMapService.Received(1).GetByRootKeyAsync(rootKey);
+        await _xmlSitemapDataSource.DidNotReceiveWithAnyArgs().ReadAsync(default!);
+        await _xmlSitemapStorageRefreshService.DidNotReceiveWithAnyArgs().RefreshConfiguredAsync(default!);
+        await _xmlSitemapStorageRefreshService.DidNotReceiveWithAnyArgs().RefreshCustomAsync(default!);
+        await _xmlSitemapStorageRefreshService.DidNotReceiveWithAnyArgs().RefreshIndexAsync(default!);
     }
 
     [Test]

@@ -23,8 +23,8 @@ public class XmlSitemapApiComposer : IComposer
 {
     public void Compose(IUmbracoBuilder builder)
     {
-        builder.Services.AddMvc()
-            .AddApplicationPart(typeof(CharlieTangoUmbracoXmlSitemapApiController).Assembly);
+        builder.Services.AddControllers()
+            .AddApplicationPart(typeof(XmlSitemapsApiController).Assembly);
 
         builder.Services.AddSingleton<IOperationIdHandler, CaskoSitemapsForUmbracoOperationHandler>();
 
@@ -36,7 +36,7 @@ public class XmlSitemapApiComposer : IComposer
                 {
                     if (HttpMethods.IsGet(context.Request.Method)
                         && context.Request.Path.Equals(
-                            "/umbraco/backoffice/charlietangoumbracoxmlsitemap/api/v1/configuration",
+                            "/umbraco/backoffice/xmlsitemapsforumbraco/api/v1/configuration",
                             StringComparison.OrdinalIgnoreCase))
                     {
                         if (context.User.Identity?.IsAuthenticated is not true)

@@ -1,12 +1,12 @@
 {
   "name": "xml-sitemaps-for-umbraco",
-  "private": true,
+  "private": false,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "watch": "tsc && vite build --watch",
     "build": "tsc && vite build",
-    "generate-client": "node scripts/generate-openapi.js https://localhost:44341/umbraco/swagger/charlietangoumbracoxmlsitemap/swagger.json"
+    "generate-client": "node scripts/generate-openapi.js https://localhost:44341/umbraco/swagger/xmlsitemapsforumbraco/swagger.json"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.85.0",
