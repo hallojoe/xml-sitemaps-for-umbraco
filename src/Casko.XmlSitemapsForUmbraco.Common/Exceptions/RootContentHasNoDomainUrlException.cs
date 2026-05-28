@@ -1,6 +1,6 @@
 namespace Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 
-public class RootContentHasNoDomainUrlException : Exception
+public class RootContentHasNoDomainUrlException : XmlSiteMapException
 {
     public RootContentHasNoDomainUrlException() 
         : base("No domain found on root.") { }
