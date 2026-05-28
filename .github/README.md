@@ -8,6 +8,8 @@ XML Sitemaps for Umbraco adds configurable XML sitemap and sitemap index deliver
 
 The package is built for teams that want sitemap behavior controlled from configuration while still keeping room for custom implementation when a site needs it.
 
+Most sitemap behavior is registered behind interfaces, so projects can replace package services through dependency injection when the default implementation is not enough. This includes rendering, URL building, content collection, XML serialization, storage, and custom sitemap providers.
+
 ## Installation
 
 Install the NuGet package:
@@ -29,6 +31,8 @@ Add an `XmlSiteMaps` section to `appsettings.json`:
     "RewritesEnabled": true,
     "IncludedCultures": [ "en", "da" ],
     "ExcludedCultures": [],
+    "ExcludingUrlPropertyAlias": "metaRobots",
+    "ExcludingUrlPropertyValue": "noindex",
     "RenderAlternateLinksForSingleCultureSitemaps": true,
     "Indexes": {
       "xmlsitemap": {
@@ -102,6 +106,8 @@ Important settings:
 - `IncludedDocumentTypeAliases` and `ExcludedDocumentTypeAliases`: per-sitemap document type filtering.
 
 Root-level culture and document type settings apply to all configured sitemaps unless a sitemap entry narrows them further.
+
+Set `ExcludingUrlPropertyAlias` and `ExcludingUrlPropertyValue` at the root level to exclude content when a property contains a specific value. For example, setting `ExcludingUrlPropertyAlias` to `metaRobots` and `ExcludingUrlPropertyValue` to `noindex` excludes any content item whose `metaRobots` value contains `noindex`, ignoring casing. The filter is only active when both settings are configured.
 
 ## Sitemap Indexes
 
@@ -289,6 +295,8 @@ Common root settings:
 - `ExcludedContentTypeAliases`: global document type deny list.
 - `IncludedCultures`: global culture allow list.
 - `ExcludedCultures`: global culture deny list.
+- `ExcludingUrlPropertyAlias`: content property alias used for URL exclusion.
+- `ExcludingUrlPropertyValue`: property value that excludes a content URL when found in `ExcludingUrlPropertyAlias`.
 - `RenderAlternateLinksForSingleCultureSitemaps`: controls alternate link rendering for single-culture sitemaps.
 - `Sitemaps`: generated sitemap configurations.
 - `CustomSitemaps`: custom provider-backed sitemap configurations.
