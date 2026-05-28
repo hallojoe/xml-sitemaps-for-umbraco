@@ -1,3 +1,4 @@
+using Casko.XmlSitemapsForUmbraco.Common;
 using Asp.Versioning;
 using Casko.XmlSitemapsForUmbraco.Common.Http;
 using Casko.XmlSitemapsForUmbraco.Common.Services;

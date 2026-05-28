@@ -1,4 +1,5 @@
-namespace Casko.XmlSitemapsForUmbraco.Delivery;
+namespace Casko.XmlSitemapsForUmbraco.Common;
+
 public static class XmlSitemapApiConstants
 {
     public const string ApiName = "sitemap-api";

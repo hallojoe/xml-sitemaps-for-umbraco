@@ -1,3 +1,4 @@
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Delivery.Controllers;
 using Casko.XmlSitemapsForUmbraco.Delivery.Rewriting;
