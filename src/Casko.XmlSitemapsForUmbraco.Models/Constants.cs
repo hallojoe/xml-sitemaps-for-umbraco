@@ -22,4 +22,5 @@ public static class Constants
     public const string HrefLang = "hreflang";
     public const string HrefLangDefaultCulture = "x-default";
     public const string RouteBase = "api/xml-sitemaps";
+    public const string RequireDeliveryApiKey = "RequireDeliveryApiKey";
 }

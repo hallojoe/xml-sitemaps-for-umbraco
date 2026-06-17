@@ -66,7 +66,7 @@ export type GetConfigurationData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/xmlsitemapsforumbraco/api/configuration';
+    url: '/umbraco/xmlsitemapsforumbraco/api/v1/configuration';
 };
 
 export type GetConfigurationErrors = {
@@ -74,10 +74,6 @@ export type GetConfigurationErrors = {
      * The resource is protected and requires an authentication token
      */
     401: unknown;
-    /**
-     * The authenticated user does not have access to this resource
-     */
-    403: unknown;
 };
 
 export type GetConfigurationResponses = {

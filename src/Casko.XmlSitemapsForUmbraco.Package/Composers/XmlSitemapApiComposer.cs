@@ -1,9 +1,4 @@
 using Asp.Versioning;
-using Casko.XmlSitemapsForUmbraco.Package.Controllers;
-using Casko.XmlSitemapsForUmbraco.Common.Configuration;
-using Casko.XmlSitemapsForUmbraco.Package.Models;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,8 +9,6 @@ using Umbraco.Cms.Api.Common.OpenApi;
 using Umbraco.Cms.Api.Management.OpenApi;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
-using Umbraco.Cms.Web.Common.ApplicationBuilder;
-using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Casko.XmlSitemapsForUmbraco.Package.Composers;
 
@@ -23,53 +16,8 @@ public class XmlSitemapApiComposer : IComposer
 {
     public void Compose(IUmbracoBuilder builder)
     {
-        builder.Services.AddControllers()
-            .AddApplicationPart(typeof(XmlSitemapsApiController).Assembly);
-
-        builder.Services.AddSingleton<IOperationIdHandler, CaskoSitemapsForUmbracoOperationHandler>();
-
-        builder.Services.Configure<UmbracoPipelineOptions>(options =>
-        {
-            options.AddFilter(new UmbracoPipelineFilter(
-                $"{XmlSitemapConstants.ApiName}-configuration-api",
-                postPipeline: app => app.Use(async (context, next) =>
-                {
-                    if (HttpMethods.IsGet(context.Request.Method)
-                        && context.Request.Path.Equals(
-                            "/umbraco/backoffice/xmlsitemapsforumbraco/api/v1/configuration",
-                            StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (context.User.Identity?.IsAuthenticated is not true)
-                        {
-                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            return;
-                        }
-
-                        XmlSitemapsOptions xmlSitemapOptions = context.RequestServices
-                            .GetRequiredService<IOptions<XmlSitemapsOptions>>()
-                            .Value;
-
-                        await context.Response.WriteAsJsonAsync(
-                            XmlSitemapConfigurationResponse.FromOptions(xmlSitemapOptions));
-                        return;
-                    }
-
-                    await next();
-                }),
-                endpoints: app => app.UseEndpoints(endpoints =>
-                {
-                    endpoints
-                        .MapGet(
-                            "/umbraco/backoffice/charlietangoumbracoxmlsitemap/api/v1/configuration",
-                            (IOptions<XmlSitemapsOptions> xmlSitemapOptions) =>
-                                Results.Ok(XmlSitemapConfigurationResponse.FromOptions(xmlSitemapOptions.Value)))
-                        .RequireAuthorization(AuthorizationPolicies.SectionAccessContent)
-                        .WithGroupName(XmlSitemapConstants.ApiName)
-                        .WithName("GetConfiguration")
-                        .Produces<XmlSitemapConfigurationResponse>();
-                })));
-        });
-
+        builder.Services.AddSingleton<IOperationIdHandler, XmlSitemapsForUmbracoOperationHandler>();
+        
         builder.Services.Configure<SwaggerGenOptions>(opt =>
         {
             // Related documentation:
@@ -92,12 +40,11 @@ public class XmlSitemapApiComposer : IComposer
 
             // Enable Umbraco authentication for the Swagger document
             // PR: https://github.com/umbraco/Umbraco-CMS/pull/15699
-            opt.OperationFilter<CharlieTangoUmbracoXmlSitemapOperationSecurityFilter>();
+            opt.OperationFilter<XmlSitemapsForUmbracoOperationSecurityFilter>();
         });
     }
 
-    public class
-        CharlieTangoUmbracoXmlSitemapOperationSecurityFilter : BackOfficeSecurityRequirementsOperationFilterBase
+    public class XmlSitemapsForUmbracoOperationSecurityFilter : BackOfficeSecurityRequirementsOperationFilterBase
     {
         protected override string ApiName => XmlSitemapConstants.ApiName;
     }
@@ -105,9 +52,9 @@ public class XmlSitemapApiComposer : IComposer
     // This is used to generate pretty operation IDs in our swagger JSON file.
     // So the generated TypeScript client has pretty method names and not too verbose
     // URL: https://docs.umbraco.com/umbraco-cms/tutorials/creating-a-backoffice-api/umbraco-schema-and-operation-ids#operation-ids
-    public class CaskoSitemapsForUmbracoOperationHandler : OperationIdHandler
+    public class XmlSitemapsForUmbracoOperationHandler : OperationIdHandler
     {
-        public CaskoSitemapsForUmbracoOperationHandler(IOptions<ApiVersioningOptions> apiVersioningOptions) :
+        public XmlSitemapsForUmbracoOperationHandler(IOptions<ApiVersioningOptions> apiVersioningOptions) :
             base(apiVersioningOptions)
         {
         }
