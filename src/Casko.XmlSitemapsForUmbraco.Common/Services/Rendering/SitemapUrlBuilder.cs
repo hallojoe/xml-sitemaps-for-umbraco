@@ -1,3 +1,4 @@
+using Casko.XmlSitemapsForUmbraco.Common;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
 
@@ -19,9 +20,7 @@ public sealed class SitemapUrlBuilder : ISitemapUrlBuilder
 
     public string BuildSitemapApiUrl(string sitemapAlias, string? hostname)
     {
-        // TODO: Get api route from elsewhere...
-        var apiRoute = "api/sitemap";
-        var relativeUrl = $"/{apiRoute}?name={Uri.EscapeDataString(sitemapAlias)}";
+        var relativeUrl = $"/{XmlSitemapApiConstants.ApiRoute}?name={Uri.EscapeDataString(sitemapAlias)}";
         return CombineWithHostname(relativeUrl, hostname);
     }
 

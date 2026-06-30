@@ -1,3 +1,4 @@
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Delivery.Rewriting;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
@@ -19,7 +20,7 @@ public class SitemapRewriteMiddlewareTests
             {
                 callInfo[2] = new SitemapRewriteDefinition(
                     "/xmlsitemap-host-dk-en.xml",
-                    "/api/sitemap/key?key=xmlsitemap-host-dk-en",
+                    $"/{XmlSitemapApiConstants.ApiRoute}/key?key=xmlsitemap-host-dk-en",
                     "xmlsitemap-host-dk-en",
                     "xmlsitemap-host-dk-en",
                     SitemapRewriteKind.Sitemap,
@@ -33,7 +34,7 @@ public class SitemapRewriteMiddlewareTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(context.Request.Path.Value, Is.EqualTo("/api/sitemap/key"));
+            Assert.That(context.Request.Path.Value, Is.EqualTo($"/{XmlSitemapApiConstants.ApiRoute}/key"));
             Assert.That(context.Request.QueryString.Value, Is.EqualTo("?key=xmlsitemap-host-dk-en"));
         });
     }
@@ -49,7 +50,7 @@ public class SitemapRewriteMiddlewareTests
             {
                 callInfo[2] = new SitemapRewriteDefinition(
                     "/xmlsitemap.xml",
-                    "/api/sitemap/index/key?key=xmlsitemap",
+                    $"/{XmlSitemapApiConstants.ApiRoute}/index/key?key=xmlsitemap",
                     "xmlsitemap",
                     "xmlsitemap",
                     SitemapRewriteKind.SitemapIndex,
@@ -63,7 +64,7 @@ public class SitemapRewriteMiddlewareTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(context.Request.Path.Value, Is.EqualTo("/api/sitemap/index/key"));
+            Assert.That(context.Request.Path.Value, Is.EqualTo($"/{XmlSitemapApiConstants.ApiRoute}/index/key"));
             Assert.That(context.Request.QueryString.Value, Is.EqualTo("?key=xmlsitemap"));
         });
     }

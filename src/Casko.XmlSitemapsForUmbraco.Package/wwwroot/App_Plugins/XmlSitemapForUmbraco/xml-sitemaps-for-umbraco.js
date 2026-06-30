@@ -22,7 +22,7 @@ const o = [
     type: "workspaceView",
     name: "XML Sitemaps Configuration Workspace View",
     alias: "Casko.XmlSitemapsForUmbraco.WorkspaceView.Configuration",
-    element: () => import("./configuration-workspace-view.element-DomFTY_c.js"),
+    element: () => import("./configuration-workspace-view.element-5ASKvGqj.js"),
     weight: 500,
     meta: {
       label: "Configuration",
@@ -42,7 +42,7 @@ const o = [
     alias: "Casko.XmlSitemapsForUmbraco.MenuItem.XmlSitemap",
     weight: 500,
     meta: {
-      label: "XML Sitemap",
+      label: "XML Sitemaps",
       icon: "icon-code",
       entityType: a,
       menus: [t]

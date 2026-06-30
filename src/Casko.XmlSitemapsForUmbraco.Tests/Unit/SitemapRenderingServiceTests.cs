@@ -1,5 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Common.Services.Rendering;
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Models;
 using NSubstitute;
 using NUnit.Framework;
@@ -179,8 +180,8 @@ public class SitemapRenderingServiceTests
 
         Assert.That(result.Locations.Select(location => location.Location), Is.EqualTo(new[]
         {
-            "https://example.com/api/sitemap?name=products",
-            "https://example.com/api/sitemap?name=news"
+            $"https://example.com/{XmlSitemapApiConstants.ApiRoute}?name=products",
+            $"https://example.com/{XmlSitemapApiConstants.ApiRoute}?name=news"
         }));
     }
 

@@ -8,7 +8,7 @@ public sealed class XmlSitemapsOptions
     /// <summary>
     /// Key.
     /// </summary>
-    public const string Key = "XmlSiteMaps";
+    public const string Key = "XmlSitemaps";
 
     /// <summary>
     /// Gets or sets a value indicating whether XML sitemaps are enabled.
@@ -56,6 +56,11 @@ public sealed class XmlSitemapsOptions
     public bool RenderAlternateLinksForSingleCultureSitemaps { get; set; }
 
     /// <summary>
+    /// Gets or sets the level where routed root nodes are resolved.
+    /// </summary>
+    public int RootNodeSearchLevel { get; set; }
+
+    /// <summary>
     /// Dictionary of sitemap configurations keyed by sitemap name.
     /// </summary>
     public Dictionary<string, SitemapOptions> Sitemaps { get; set; } = [];
@@ -74,6 +79,11 @@ public sealed class XmlSitemapsOptions
     /// Gets or sets storage refresh settings.
     /// </summary>
     public XmlSitemapStorageOptions Storage { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to use the Delivery API access policy.
+    /// </summary>
+    public bool UseDeliveryApiAccessPolicy { get; set; } = true;
 }
 
 /// <summary>

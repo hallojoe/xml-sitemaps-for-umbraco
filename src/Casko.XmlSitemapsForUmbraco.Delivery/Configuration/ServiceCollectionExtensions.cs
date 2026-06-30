@@ -1,3 +1,4 @@
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Delivery.Controllers;
 using Casko.XmlSitemapsForUmbraco.Delivery.Rewriting;
@@ -14,10 +15,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddXmlSitemapDeliveryApi(this IServiceCollection services,
         IConfiguration configuration, bool addRewritePipeline = true)
     {
-        services.AddControllers()
-            .AddApplicationPart(typeof(XmlSitemapDeliveryApiController).Assembly);
-
         services.AddXmlSitemap(configuration);
+        services
+            .AddControllers()
+            .AddApplicationPart(typeof(XmlSitemapDeliveryApiController).Assembly);
 
         services.ConfigureOptions<SiteMapApiConfigureSwaggerGenOptions>();
         services.Configure<UmbracoPipelineOptions>(options =>

@@ -3,7 +3,7 @@ namespace Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 /// <summary>
 /// Thrown when a root content exists but contains no content.
 /// </summary>
-public class RootContentHasNoContentException : Exception
+public class RootContentHasNoContentException : XmlSiteMapException
 {
     public RootContentHasNoContentException() 
         : base("No content found under root content.") { }

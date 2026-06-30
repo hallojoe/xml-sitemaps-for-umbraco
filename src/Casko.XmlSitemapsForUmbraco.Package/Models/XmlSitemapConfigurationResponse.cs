@@ -23,6 +23,11 @@ public sealed record XmlSitemapConfigurationResponse
     public required bool RenderAlternateLinksForSingleCultureSitemaps { get; init; }
 
     /// <summary>
+    /// Gets the configured root node search level.
+    /// </summary>
+    public required int RootNodeSearchLevel { get; init; }
+
+    /// <summary>
     /// Gets the number of configured content sitemaps.
     /// </summary>
     public required int SitemapCount { get; init; }
@@ -73,6 +78,7 @@ public sealed record XmlSitemapConfigurationResponse
             RewritesEnabled = options.RewritesEnabled,
             RenderAlternateLinksForSingleCultureSitemaps =
                 options.RenderAlternateLinksForSingleCultureSitemaps,
+            RootNodeSearchLevel = options.RootNodeSearchLevel,
             SitemapCount = options.Sitemaps.Count,
             CustomSitemapCount = options.CustomSitemaps.Count,
             IndexCount = options.Indexes.Count,

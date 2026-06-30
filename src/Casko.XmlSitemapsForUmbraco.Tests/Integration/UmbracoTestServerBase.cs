@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Asp.Versioning;
-using Casko.XmlSitemapsForUmbraco.Delivery.Controllers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,10 +14,6 @@ public abstract class UmbracoTestServerBase : UmbracoTestServerTestBase
 {
     protected override void CustomTestSetup(IUmbracoBuilder builder)
     {
-        builder.Services
-            .AddControllers()
-            .AddApplicationPart(typeof(XmlSitemapDeliveryApiController).Assembly);
-
         builder.Services.AddApiVersioning(options =>
         {
             options.DefaultApiVersion = new ApiVersion(1.0);

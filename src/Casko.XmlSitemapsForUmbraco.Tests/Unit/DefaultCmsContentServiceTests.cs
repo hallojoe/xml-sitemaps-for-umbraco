@@ -1,0 +1,297 @@
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common.Services.Cms;
+using Microsoft.Extensions.Options;
+using NSubstitute;
+using NUnit.Framework;
+using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Services.Navigation;
+using Umbraco.Cms.Core.Web;
+
+namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
+
+[TestFixture]
+public sealed class DefaultCmsContentServiceTests
+{
+    private IUmbracoContextFactory _umbracoContextFactory = null!;
+    private IDocumentUrlService _documentUrlService = null!;
+    private IDocumentNavigationQueryService _documentNavigationQueryService = null!;
+    private ILanguageService _languageService = null!;
+    private IPublishedUrlProvider _publishedUrlProvider = null!;
+    private IPublishedContentCache _publishedContentCache = null!;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _umbracoContextFactory = Substitute.For<IUmbracoContextFactory>();
+        _documentUrlService = Substitute.For<IDocumentUrlService>();
+        _documentNavigationQueryService = Substitute.For<IDocumentNavigationQueryService>();
+        _languageService = Substitute.For<ILanguageService>();
+        _publishedUrlProvider = Substitute.For<IPublishedUrlProvider>();
+        _publishedContentCache = Substitute.For<IPublishedContentCache>();
+
+        var umbracoContext = Substitute.For<IUmbracoContext>();
+        umbracoContext.Content.Returns(_publishedContentCache);
+
+        var contextAccessor = Substitute.For<IUmbracoContextAccessor>();
+        var contextReference = new UmbracoContextReference(umbracoContext, false, contextAccessor);
+        _umbracoContextFactory.EnsureUmbracoContext().Returns(contextReference);
+    }
+
+    [Test]
+    public void GetRootContents_WhenRootNodeSearchLevelIsZero_ReturnsDirectRoots()
+    {
+        var root = CreateContent(100, "home");
+        ConfigureNavigationRoots(root);
+        var sut = CreateService(new XmlSitemapsOptions());
+
+        var result = sut.GetRootContents().ToArray();
+
+        Assert.That(result, Is.EqualTo(new[] { root }));
+    }
+
+    [Test]
+    public void GetRootContents_WhenRootNodeSearchLevelIsZeroAndContentTypeAliasIsSet_FiltersDirectRoots()
+    {
+        var includedRoot = CreateContent(100, "home");
+        var excludedRoot = CreateContent(101, "landingPage");
+        ConfigureNavigationRoots(includedRoot, excludedRoot);
+        var sut = CreateService(new XmlSitemapsOptions());
+
+        var result = sut.GetRootContents("home").ToArray();
+
+        Assert.That(result, Is.EqualTo(new[] { includedRoot }));
+    }
+
+    [Test]
+    public void GetRootContents_WhenRootNodeSearchLevelIsOne_ReturnsFirstLevelChildrenOfNavigationRoots()
+    {
+        var childOne = CreateContent(200, "home");
+        var childTwo = CreateContent(201, "home");
+        var rootContainer = CreateContent(100, "container");
+        ConfigureNavigationRoots(rootContainer);
+        ConfigureChildRoots(rootContainer, childOne, childTwo);
+        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+
+        var result = sut.GetRootContents().ToArray();
+
+        Assert.That(result, Is.EqualTo(new[] { childOne, childTwo }));
+    }
+
+    [Test]
+    public void GetRootContents_WhenRootNodeSearchLevelIsOneAndChildrenAreMissing_ReturnsNoRoots()
+    {
+        var rootContainer = CreateContent(100, "container");
+        ConfigureNavigationRoots(rootContainer);
+        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+
+        var result = sut.GetRootContents().ToArray();
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public void GetRootContents_WhenRootNodeSearchLevelIsAboveOne_ThrowsClearException()
+    {
+        var root = CreateContent(100, "home");
+        ConfigureNavigationRoots(root);
+        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 2 });
+
+        TestDelegate action = () => _ = sut.GetRootContents().ToArray();
+
+        Assert.That(
+            action,
+            Throws.TypeOf<InvalidOperationException>()
+                .With.Message.EqualTo(
+                    "The default ICmsContentService implementation only supports RootNodeSearchLevel values 0 and 1. Configure a custom ICmsContentService for deeper root structures."));
+    }
+
+    [Test]
+    public void GetContentByPath_WhenHostnameIsEmpty_UsesTheFirstResolvedRoot()
+    {
+        var root = CreateContent(100, "home");
+        ConfigureNavigationRoots(root);
+        var expectedContentKey = Guid.NewGuid();
+        _documentUrlService
+            .GetDocumentKeyByRoute("/", null, root.Id, false)
+            .Returns(expectedContentKey);
+        _publishedContentCache.GetById(false, expectedContentKey).Returns(root);
+        var sut = CreateService(new XmlSitemapsOptions());
+
+        var result = sut.GetContentByPath("/", hostname: null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.SameAs(root));
+            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, root.Id, false);
+        });
+    }
+
+    [Test]
+    public void GetContentByPath_WhenMultipleDirectRootsMatchHostname_UsesTheMatchingRoot()
+    {
+        var firstRoot = CreateContent(100, "home");
+        var matchingRoot = CreateContent(101, "home");
+        ConfigureNavigationRoots(firstRoot, matchingRoot);
+        _publishedUrlProvider.GetUrl(firstRoot, UrlMode.Absolute, null, null).Returns("https://first.example.com/");
+        _publishedUrlProvider.GetUrl(matchingRoot, UrlMode.Absolute, null, null).Returns("https://match.example.com/");
+        var expectedContentKey = Guid.NewGuid();
+        _documentUrlService
+            .GetDocumentKeyByRoute("/", null, matchingRoot.Id, false)
+            .Returns(expectedContentKey);
+        _publishedContentCache.GetById(false, expectedContentKey).Returns(matchingRoot);
+        var sut = CreateService(new XmlSitemapsOptions());
+
+        var result = sut.GetContentByPath("/", hostname: "match.example.com");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.SameAs(matchingRoot));
+            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, matchingRoot.Id, false);
+        });
+    }
+
+    [Test]
+    public void GetContentByPath_WhenRootNodeSearchLevelIsOneAndHostnameMatchesAChild_UsesTheMatchingChildRoot()
+    {
+        var firstChild = CreateContent(200, "home");
+        var matchingChild = CreateContent(201, "home");
+        var container = CreateContent(100, "container");
+        ConfigureNavigationRoots(container);
+        ConfigureChildRoots(container, firstChild, matchingChild);
+        _publishedUrlProvider.GetUrl(firstChild, UrlMode.Absolute, null, null).Returns("https://first.example.com/");
+        _publishedUrlProvider.GetUrl(matchingChild, UrlMode.Absolute, null, null).Returns("https://match.example.com/");
+        var expectedContentKey = Guid.NewGuid();
+        _documentUrlService
+            .GetDocumentKeyByRoute("/", null, matchingChild.Id, false)
+            .Returns(expectedContentKey);
+        _publishedContentCache.GetById(false, expectedContentKey).Returns(matchingChild);
+        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+
+        var result = sut.GetContentByPath("/", hostname: "https://match.example.com");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.SameAs(matchingChild));
+            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, matchingChild.Id, false);
+        });
+    }
+
+    [Test]
+    public void GetContentByPath_WhenRootNodeSearchLevelIsOneAndHostnameIsEmpty_UsesTheFirstResolvedChildRoot()
+    {
+        var firstChild = CreateContent(200, "home");
+        var secondChild = CreateContent(201, "home");
+        var container = CreateContent(100, "container");
+        ConfigureNavigationRoots(container);
+        ConfigureChildRoots(container, firstChild, secondChild);
+        var expectedContentKey = Guid.NewGuid();
+        _documentUrlService
+            .GetDocumentKeyByRoute("/", null, firstChild.Id, false)
+            .Returns(expectedContentKey);
+        _publishedContentCache.GetById(false, expectedContentKey).Returns(firstChild);
+        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+
+        var result = sut.GetContentByPath("/", hostname: "");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.SameAs(firstChild));
+            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, firstChild.Id, false);
+        });
+    }
+
+    [Test]
+    public void GetContentByPath_WhenRootNodeSearchLevelIsOneAndHostnameDoesNotMatch_FallsBackToTheFirstResolvedChildRoot()
+    {
+        var firstChild = CreateContent(200, "home");
+        var secondChild = CreateContent(201, "home");
+        var container = CreateContent(100, "container");
+        ConfigureNavigationRoots(container);
+        ConfigureChildRoots(container, firstChild, secondChild);
+        _publishedUrlProvider.GetUrl(firstChild, UrlMode.Absolute, null, null).Returns("https://first.example.com/");
+        _publishedUrlProvider.GetUrl(secondChild, UrlMode.Absolute, null, null).Returns("https://second.example.com/");
+        var expectedContentKey = Guid.NewGuid();
+        _documentUrlService
+            .GetDocumentKeyByRoute("/", null, firstChild.Id, false)
+            .Returns(expectedContentKey);
+        _publishedContentCache.GetById(false, expectedContentKey).Returns(firstChild);
+        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+
+        var result = sut.GetContentByPath("/", hostname: "unknown.example.com");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.SameAs(firstChild));
+            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, firstChild.Id, false);
+        });
+    }
+
+    [Test]
+    public void GetContentByPath_WhenRootNodeSearchLevelIsOneAndNoChildrenExist_ThrowsNoRootContentException()
+    {
+        var container = CreateContent(100, "container");
+        ConfigureNavigationRoots(container);
+        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+
+        TestDelegate action = () => sut.GetContentByPath("/", hostname: "missing.example.com");
+
+        Assert.That(action, Throws.TypeOf<InvalidOperationException>().With.Message.EqualTo("No content found at root."));
+    }
+
+    private DefaultCmsContentService CreateService(XmlSitemapsOptions options)
+    {
+        return new DefaultCmsContentService(
+            Options.Create(options),
+            _umbracoContextFactory,
+            _documentUrlService,
+            _documentNavigationQueryService,
+            _languageService,
+            _publishedUrlProvider);
+    }
+
+    private void ConfigureNavigationRoots(params IPublishedContent[] roots)
+    {
+        _documentNavigationQueryService.TryGetRootKeys(out Arg.Any<IEnumerable<Guid>>())
+            .Returns(callInfo =>
+            {
+                callInfo[0] = roots.Select(root => root.Key).ToArray();
+                return true;
+            });
+
+        foreach (var root in roots)
+        {
+            _publishedContentCache.GetById(root.Key).Returns(root);
+        }
+    }
+
+    private void ConfigureChildRoots(IPublishedContent parent, params IPublishedContent[] children)
+    {
+        _documentNavigationQueryService.TryGetChildrenKeys(parent.Key, out Arg.Any<IEnumerable<Guid>>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = children.Select(child => child.Key).ToArray();
+                return true;
+            });
+
+        foreach (var child in children)
+        {
+            _publishedContentCache.GetById(child.Key).Returns(child);
+        }
+    }
+
+    private static IPublishedContent CreateContent(int id, string contentTypeAlias)
+    {
+        var content = Substitute.For<IPublishedContent>();
+        var contentType = Substitute.For<IPublishedContentType>();
+        var contentKey = Guid.NewGuid();
+        content.Id.Returns(id);
+        content.Key.Returns(contentKey);
+        contentType.Alias.Returns(contentTypeAlias);
+        content.ContentType.Returns(contentType);
+        return content;
+    }
+}

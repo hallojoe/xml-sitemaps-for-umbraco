@@ -1,3 +1,4 @@
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;

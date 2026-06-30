@@ -3,7 +3,7 @@ namespace Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 /// <summary>
 /// Thrown when no root content is found under the specified key.
 /// </summary>
-public class RootContentNotFoundException : Exception
+public class RootContentNotFoundException : XmlSiteMapException
 {
     public RootContentNotFoundException() 
         : base("No root found under key.") { }

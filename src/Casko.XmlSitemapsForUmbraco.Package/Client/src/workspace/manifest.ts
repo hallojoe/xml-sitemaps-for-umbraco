@@ -39,7 +39,7 @@ export const manifests: Array<UmbExtensionManifest> = [
     alias: "Casko.XmlSitemapsForUmbraco.MenuItem.XmlSitemap",
     weight: 500,
     meta: {
-      label: "XML Sitemap",
+      label: "XML Sitemaps",
       icon: "icon-code",
       entityType: XML_SITEMAPS_ENTITY_TYPE,
       menus: [UMB_ADVANCED_SETTINGS_MENU_ALIAS],
