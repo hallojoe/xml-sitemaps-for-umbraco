@@ -1,4 +1,5 @@
 using System.Net;
+using Casko.XmlSitemapsForUmbraco.Common;
 using NUnit.Framework;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Integration;
@@ -9,7 +10,7 @@ public sealed class XmlSitemapDeliveryApiIntegrationTests : UmbracoTestServerBas
     [Test]
     public async Task DirectRoute_ReturnsControllerResponse_InsteadOfWebsite404()
     {
-        using var response = await Client.GetAsync(PrepareUrl("/api/sitemap/key?key=missing-sitemap"));
+        using var response = await Client.GetAsync(PrepareUrl($"/{XmlSitemapApiConstants.ApiRoute}/key?key=missing-sitemap"));
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Multiple(() =>
@@ -35,7 +36,7 @@ public sealed class XmlSitemapDeliveryApiIntegrationTests : UmbracoTestServerBas
     [Test]
     public async Task SwaggerDocument_ContainsDeliveryApiPaths()
     {
-        using var response = await Client.GetAsync(PrepareUrl("/umbraco/swagger/sitemap-api/swagger.json"));
+        using var response = await Client.GetAsync(PrepareUrl($"/umbraco/swagger/{XmlSitemapApiConstants.ApiName}/swagger.json"));
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Multiple(() =>
@@ -43,8 +44,8 @@ public sealed class XmlSitemapDeliveryApiIntegrationTests : UmbracoTestServerBas
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(response.Content.Headers.ContentType, Is.Not.Null);
             Assert.That(response.Content.Headers.ContentType!.MediaType, Is.EqualTo("application/json"));
-            Assert.That(body, Does.Contain("\"/api/sitemap/key\""));
-            Assert.That(body, Does.Contain("\"/api/sitemap/path\""));
+            Assert.That(body, Does.Contain($"\"/{XmlSitemapApiConstants.ApiRoute}/key\""));
+            Assert.That(body, Does.Contain($"\"/{XmlSitemapApiConstants.ApiRoute}/path\""));
         });
     }
 }

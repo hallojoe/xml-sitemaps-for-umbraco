@@ -1,4 +1,5 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Delivery.Rewriting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -37,19 +38,19 @@ public class SitemapRewriteDefinitionServiceTests
         Assert.That(result, Has.Count.EqualTo(3));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap.xml" &&
-            definition.TargetPath == "/api/sitemap/index/key?key=xmlsitemap" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/index/key?key=xmlsitemap" &&
             definition.PublicName == "xmlsitemap" &&
             definition.Kind == SitemapRewriteKind.SitemapIndex &&
             definition.HostName == "host.dk"));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap-host-dk-en.xml" &&
-            definition.TargetPath == "/api/sitemap/key?key=xmlsitemap-host-dk-en" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/key?key=xmlsitemap-host-dk-en" &&
             definition.PublicName == "xmlsitemap-host-dk-en" &&
             definition.Kind == SitemapRewriteKind.Sitemap &&
             definition.HostName == "host.dk"));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/external-products.xml" &&
-            definition.TargetPath == "/api/sitemap/key?key=external-products" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/key?key=external-products" &&
             definition.PublicName == "external-products" &&
             definition.Kind == SitemapRewriteKind.Sitemap &&
             definition.HostName == "custom.dk"));
@@ -105,11 +106,11 @@ public class SitemapRewriteDefinitionServiceTests
         Assert.That(result, Has.Count.EqualTo(2));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap.xml" &&
-            definition.TargetPath == "/api/sitemap/key?key=regular-sitemap" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/key?key=regular-sitemap" &&
             definition.HostName == "regular.dk"));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap.xml" &&
-            definition.TargetPath == "/api/sitemap/key?key=custom-sitemap" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/key?key=custom-sitemap" &&
             definition.HostName == "custom.dk"));
     }
 
