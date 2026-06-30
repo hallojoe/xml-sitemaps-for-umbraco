@@ -17,6 +17,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(result.Enabled, Is.True);
             Assert.That(result.RewritesEnabled, Is.False);
             Assert.That(result.RenderAlternateLinksForSingleCultureSitemaps, Is.False);
+            Assert.That(result.RootNodeSearchLevel, Is.Zero);
             Assert.That(result.SitemapCount, Is.Zero);
             Assert.That(result.CustomSitemapCount, Is.Zero);
             Assert.That(result.IndexCount, Is.Zero);
@@ -37,6 +38,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             Enabled = false,
             RewritesEnabled = true,
             RenderAlternateLinksForSingleCultureSitemaps = true,
+            RootNodeSearchLevel = 1,
             IncludedContentTypeAliases = ["homePage"],
             ExcludedContentTypeAliases = ["hiddenPage"],
             IncludedCultures = ["en", "da"],
@@ -59,6 +61,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(result.Enabled, Is.False);
             Assert.That(result.RewritesEnabled, Is.True);
             Assert.That(result.RenderAlternateLinksForSingleCultureSitemaps, Is.True);
+            Assert.That(result.RootNodeSearchLevel, Is.EqualTo(1));
             Assert.That(result.GlobalFilters.IncludedContentTypeAliases, Is.EqualTo(new[] { "homePage" }));
             Assert.That(result.GlobalFilters.ExcludedContentTypeAliases, Is.EqualTo(new[] { "hiddenPage" }));
             Assert.That(result.GlobalFilters.IncludedCultures, Is.EqualTo(new[] { "en", "da" }));

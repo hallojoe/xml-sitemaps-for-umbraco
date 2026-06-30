@@ -1,22 +1,33 @@
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Casko.XmlSitemapsForUmbraco.Common.Services.Cms;
 
 public class DefaultCmsContentService(
+    IOptions<XmlSitemapsOptions> xmlSitemapsOptions,
     IUmbracoContextFactory umbracoContextFactory,
     IDocumentUrlService documentUrlService,
     IDocumentNavigationQueryService documentNavigationQueryService,
-    ILanguageService languageService)
+    ILanguageService languageService,
+    IPublishedUrlProvider publishedUrlProvider)
     : ICmsContentService
 {
     private IPublishedContent? GetRootContentByHostname(string? hostname = null, string? culture = null)
     {
-        var rootContents = GetRootContents();
+        var rootContents = GetRootContents().ToArray();
+
+        if (rootContents.Length == 0)
+        {
+            return null;
+        }
 
         if (string.IsNullOrWhiteSpace(hostname))
         {
@@ -25,14 +36,16 @@ public class DefaultCmsContentService(
 
         foreach (var rootContent in rootContents)
         {
-            var rootContentUrl = rootContent.Url(culture, UrlMode.Absolute);
+            var rootContentUrl = publishedUrlProvider.GetUrl(rootContent, UrlMode.Absolute, culture, current: null);
             if (IsHostnameMatch(hostname, rootContentUrl))
             {
                 return rootContent;
             }
         }
 
-        return null;
+        return GetConfiguredRootNodeSearchLevel() == 1
+            ? rootContents.FirstOrDefault()
+            : null;
     }
 
     public IPublishedContent? GetContentByPath(
@@ -113,13 +126,36 @@ public class DefaultCmsContentService(
             return [];
         }
 
-        var siteRoots = rootKeys
+        var navigationRoots = rootKeys
             .Select(key => publishedContentCache.GetById(key))
-            .WhereNotNull();
+            .WhereNotNull()
+            .ToArray();
+
+        var siteRoots = GetConfiguredRootNodeSearchLevel() switch
+        {
+            0 => navigationRoots,
+            1 => navigationRoots.SelectMany(root => GetChildContents(root.Key, publishedContentCache)).ToArray(),
+            _ => throw new InvalidOperationException(
+                "The default ICmsContentService implementation only supports RootNodeSearchLevel values 0 and 1. Configure a custom ICmsContentService for deeper root structures.")
+        };
 
         return string.IsNullOrWhiteSpace(contentTypeAlias)
             ? siteRoots
             : siteRoots.Where(content => content.ContentType.Alias == contentTypeAlias);
+    }
+
+    private int GetConfiguredRootNodeSearchLevel() => xmlSitemapsOptions.Value.RootNodeSearchLevel;
+
+    private IEnumerable<IPublishedContent> GetChildContents(Guid parentKey, IPublishedContentCache publishedContentCache)
+    {
+        if (documentNavigationQueryService.TryGetChildrenKeys(parentKey, out IEnumerable<Guid> childKeys) is false)
+        {
+            return [];
+        }
+
+        return childKeys
+            .Select(key => publishedContentCache.GetById(key))
+            .WhereNotNull();
     }
 
     private static string NormalizePath(string path)
@@ -139,9 +175,9 @@ public class DefaultCmsContentService(
         return path;
     }
 
-    private static bool IsHostnameMatch(string hostname, string absoluteContentUrl)
+    private static bool IsHostnameMatch(string hostname, string? absoluteContentUrl)
     {
-        if (absoluteContentUrl.EndsWith('#'))
+        if (string.IsNullOrWhiteSpace(absoluteContentUrl) || absoluteContentUrl.EndsWith('#'))
         {
             return false;
         }

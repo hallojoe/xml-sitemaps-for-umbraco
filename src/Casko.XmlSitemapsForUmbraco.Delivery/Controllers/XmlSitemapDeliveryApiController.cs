@@ -2,26 +2,22 @@ using Casko.XmlSitemapsForUmbraco.Common;
 using Asp.Versioning;
 using Casko.XmlSitemapsForUmbraco.Common.Http;
 using Casko.XmlSitemapsForUmbraco.Common.Services;
+using Casko.XmlSitemapsForUmbraco.Delivery.Authorization;
 using Casko.XmlSitemapsForUmbraco.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Api.Common.Attributes;
-using Umbraco.Cms.Api.Delivery.Filters;
 
 namespace Casko.XmlSitemapsForUmbraco.Delivery.Controllers;
 
-[ApiExplorerSettings(GroupName = XmlSitemapApiConstants.ApiTitle)]
+[ApiExplorerSettings(GroupName = XmlSitemapApiConstants.ApiName)]
 [ApiController]
 [ApiVersion(XmlSitemapApiConstants.ApiVersion)]
 [MapToApi($"{XmlSitemapApiConstants.ApiName}")]
 [Route(XmlSitemapApiConstants.ApiRoute)]
-[DeliveryApiAccess]
-public class XmlSitemapDeliveryApiController(
-    IXmlSitemapService xmlSitemapService) : ControllerBase
+[XmlSitemapsDeliveryApiAccess]
+public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapService) : ControllerBase
 {
-    private const string ApiKey = "Api-Key";
-
     /// <summary>
     /// Returns the XML sitemap or sitemap index for the specified alias.
     /// </summary>
@@ -29,9 +25,7 @@ public class XmlSitemapDeliveryApiController(
     [HttpGet("")]
     public async Task<IResult> GetXmlSiteMap(
         [FromQuery(Name = "name")]
-        string sitemapName,
-        [FromHeader(Name = ApiKey)]
-        string? apiKey = null)
+        string sitemapName)
     {
         try
         {
@@ -59,10 +53,7 @@ public class XmlSitemapDeliveryApiController(
         string path,
         [FromQuery(Name = "hostname")]
         string? hostname = null,
-        [FromHeader(Name = "culture")]
-        string? culture = null,
-        [FromHeader(Name = ApiKey)]
-        string? apiKey = null)
+        [FromHeader(Name = "culture")] string? culture = null)
     {
         try
         {
@@ -85,10 +76,7 @@ public class XmlSitemapDeliveryApiController(
     /// </summary>
     [Produces(Constants.XmlMimeType)]
     [HttpGet("key")]
-    public async Task<IResult> GetXmlSiteMapByKey(
-        [FromQuery(Name = "key")] string key,
-        [FromHeader(Name = ApiKey)]
-        string? apiKey = null)
+    public async Task<IResult> GetXmlSiteMapByKey([FromQuery(Name = "key")] string key)
     {
         try
         {
@@ -111,10 +99,7 @@ public class XmlSitemapDeliveryApiController(
     /// </summary>
     [Produces(Constants.XmlMimeType)]
     [HttpGet("root-key")]
-    public async Task<IResult> GetXmlSiteMapByRootKey(
-        [FromQuery(Name = "key")] Guid key,        
-        [FromHeader(Name = ApiKey)]
-        string? apiKey = null)
+    public async Task<IResult> GetXmlSiteMapByRootKey([FromQuery(Name = "key")] Guid key)
     {
         try
         {
@@ -137,11 +122,7 @@ public class XmlSitemapDeliveryApiController(
     /// </summary>
     [Produces(Constants.XmlMimeType)]
     [HttpGet("index/key")]
-    public IResult GetXmlSiteMapIndexByKey(
-        [FromQuery(Name = "key")] 
-        string key,
-        [FromHeader(Name = ApiKey)]
-        string? apiKey = null)
+    public IResult GetXmlSiteMapIndexByKey([FromQuery(Name = "key")] string key)
     {
         try
         {
