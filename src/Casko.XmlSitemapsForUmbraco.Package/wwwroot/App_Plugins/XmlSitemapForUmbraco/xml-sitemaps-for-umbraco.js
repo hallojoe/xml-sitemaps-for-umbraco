@@ -42,7 +42,7 @@ const o = [
     alias: "Casko.XmlSitemapsForUmbraco.MenuItem.XmlSitemap",
     weight: 500,
     meta: {
-      label: "XML Sitemap",
+      label: "XML Sitemaps",
       icon: "icon-code",
       entityType: a,
       menus: [t]
