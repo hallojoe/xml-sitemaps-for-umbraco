@@ -43,12 +43,12 @@ The package is configured in `appsettings.json` and can expose sitemap files dir
 - Which parts of the content tree should appear in each sitemap.
 - Whether pages marked with values such as `noindex` should be excluded.
 - Which sitemap files should be grouped into a sitemap index.
-- Whether additional custom sitemap feeds should be provided by project code.
+- Additional custom XML sitemap providers can easily be implemented for project-specific needs.
 
 ## Good Fit If
 
 - You want a reusable sitemap solution for Umbraco.
-- You need more control than a very simple one-file sitemap.
+- You need more control than a simple one-file sitemap.
 - You want sitemap behavior to be configuration-led rather than hardcoded.
 
 ## Full Documentation
