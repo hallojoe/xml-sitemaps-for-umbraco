@@ -1,5 +1,5 @@
 import { UmbLitElement as G } from "@umbraco-cms/backoffice/lit-element";
-import { html as f, css as Q, state as T, customElement as Y } from "@umbraco-cms/backoffice/external/lit";
+import { html as f, css as Q, state as L, customElement as Y } from "@umbraco-cms/backoffice/external/lit";
 import { umbHttpClient as Z } from "@umbraco-cms/backoffice/http-client";
 const ee = {
   bodySerializer: (e) => JSON.stringify(
@@ -45,23 +45,23 @@ const ee = {
           );
         if (!b.body) throw new Error("No body in SSE response");
         const S = b.body.pipeThrough(new TextDecoderStream()).getReader();
-        let A = "";
-        const L = () => {
+        let N = "";
+        const T = () => {
           try {
             S.cancel();
           } catch {
           }
         };
-        $.addEventListener("abort", L);
+        $.addEventListener("abort", T);
         try {
           for (; ; ) {
             const { done: J, value: K } = await S.read();
             if (J) break;
-            A += K;
-            const P = A.split(`
+            N += K;
+            const P = N.split(`
 
 `);
-            A = P.pop() ?? "";
+            N = P.pop() ?? "";
             for (const M of P) {
               const X = M.split(`
 `), k = [];
@@ -99,7 +99,7 @@ const ee = {
             }
           }
         } finally {
-          $.removeEventListener("abort", L), S.releaseLock();
+          $.removeEventListener("abort", T), S.releaseLock();
         }
         break;
       } catch (x) {
@@ -405,7 +405,7 @@ const de = async (e, r) => {
   }
   return r;
 };
-class N {
+class A {
   constructor() {
     this.fns = [];
   }
@@ -432,9 +432,9 @@ class N {
   }
 }
 const pe = () => ({
-  error: new N(),
-  request: new N(),
-  response: new N()
+  error: new A(),
+  request: new A(),
+  response: new A()
 }), me = H({
   allowReserved: !1,
   array: {
@@ -648,6 +648,7 @@ let w = class extends G {
           ${this._renderSummaryItem("Configured sitemaps", e.sitemapCount)}
           ${this._renderSummaryItem("Custom sitemaps", e.customSitemapCount)}
           ${this._renderSummaryItem("Indexes", e.indexCount)}
+          ${this._renderSummaryItem("Root search level", e.rootNodeSearchLevel)}
           ${this._renderSummaryItem("Stale after", this._formatSeconds(e.storage?.refreshStaleAfterSeconds))}
           ${this._renderSummaryItem("Background job", this._formatBoolean(e.storage?.backgroundJobEnabled))}
           ${this._renderSummaryItem("Job interval", this._formatSeconds(e.storage?.backgroundJobIntervalSeconds))}
@@ -993,13 +994,13 @@ w.styles = [
     `
 ];
 I([
-  T()
+  L()
 ], w.prototype, "_configuration", 2);
 I([
-  T()
+  L()
 ], w.prototype, "_error", 2);
 I([
-  T()
+  L()
 ], w.prototype, "_isLoading", 2);
 w = I([
   Y("casko-xml-sitemaps-configuration-workspace-view")
@@ -1009,4 +1010,4 @@ export {
   w as CaskoXmlSitemapsConfigurationWorkspaceViewElement,
   ze as default
 };
-//# sourceMappingURL=configuration-workspace-view.element-C3vn0oPi.js.map
+//# sourceMappingURL=configuration-workspace-view.element-5ASKvGqj.js.map

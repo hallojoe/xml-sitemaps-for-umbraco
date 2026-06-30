@@ -8,6 +8,7 @@ export type XmlSitemapConfigurationResponse = {
     enabled: boolean;
     rewritesEnabled: boolean;
     renderAlternateLinksForSingleCultureSitemaps: boolean;
+    rootNodeSearchLevel: number;
     sitemapCount: number;
     customSitemapCount: number;
     indexCount: number;
