@@ -55,4 +55,4 @@ The package is configured in `appsettings.json` and can expose sitemap files dir
 
 For setup examples and technical configuration details, see the main README:
 
-[README.md](../.github/README.md)
+[README.md](https://github.com/hallojoe/xml-sitemaps-for-umbraco/blob/main/.github/README.md)
