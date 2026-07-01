@@ -5,10 +5,10 @@
   "allowTelemetry": true,
   "extensions": [
     {
-      "name": "Umbraco Xml Sitemaps Bundle",
+      "name": "Xml Sitemaps for Umbraco Bundle",
       "alias": "Casko.XmlSitemapsForUmbraco.Bundle",
       "type": "bundle",
-      "js": "/App_Plugins/CharlieTangoUmbracoXmlSitemap/charlie-tango-umbraco-xml-sitemap.js"
+      "js": "/App_Plugins/XmlSitemapsForUmbraco/xml-sitemaps-for-umbraco.js"
     }
   ]
 }
