@@ -2,7 +2,7 @@
 
 [![Downloads](https://img.shields.io/nuget/dt/Casko.XmlSitemapsForUmbraco?color=cc9900)](https://www.nuget.org/packages/Casko.XmlSitemapsForUmbraco/)
 [![NuGet](https://img.shields.io/nuget/vpre/Casko.XmlSitemapsForUmbraco?color=0273B3)](https://www.nuget.org/packages/Casko.XmlSitemapsForUmbraco)
-[![GitHub license](https://img.shields.io/github/license/charlie-tango/umbraco-xmlsitemap?color=8AB803)](https://github.com/charlie-tango/umbraco-xmlsitemap/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/hallojoe/xml-sitemaps-for-umbraco?color=8AB803)](https://img.shields.io/github/license/hallojoe/xml-sitemaps-for-umbraco)
 
 XML Sitemaps for Umbraco helps Umbraco projects publish XML sitemaps in a structured, configurable way. It is designed for teams that want reliable sitemap delivery for search engines without having to build and maintain the full solution themselves.
 

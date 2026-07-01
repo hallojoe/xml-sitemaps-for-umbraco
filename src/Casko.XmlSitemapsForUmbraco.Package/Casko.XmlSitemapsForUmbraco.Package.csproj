@@ -10,8 +10,8 @@
     <PropertyGroup>
         <Product>Casko.XmlSitemapsForUmbraco</Product>
         <PackageId>Casko.XmlSitemapsForUmbraco</PackageId>
-        <Title>XNL Sitemaps for Umbraco</Title>
-        <Description>Xml Sitemaps package for Umbraco CMS.</Description>
+        <Title>XML Sitemaps for Umbraco</Title>
+        <Description>XML Sitemaps for Umbraco helps Umbraco projects publish XML sitemaps in a structured, configurable way. It is designed for teams that want reliable sitemap delivery for search engines without having to build and maintain the full solution themselves.</Description>
         <PackageTags>umbraco;umbraco-marketplace;xml-sitemap</PackageTags>
         <Authors>Casper Korsgaard</Authors>
         <Copyright>$([System.DateTime]::UtcNow.ToString(`yyyy`)) © Casper Korsgaard</Copyright>
