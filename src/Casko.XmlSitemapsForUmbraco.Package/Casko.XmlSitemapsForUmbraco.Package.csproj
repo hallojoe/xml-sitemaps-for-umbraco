@@ -53,6 +53,10 @@
       <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" PrivateAssets="all" />
       <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" PrivateAssets="all" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="wwwroot\App_Plugins\" />
+    </ItemGroup>
 
     <Target Name="IncludeProjectReferenceBuildOutput" DependsOnTargets="ResolveReferences">
         <ItemGroup>

@@ -7,7 +7,7 @@ export default defineConfig({
       formats: ["es"],
       fileName: "xml-sitemaps-for-umbraco",
     },
-    outDir: "../wwwroot/App_Plugins/XmlSitemapForUmbraco", // your web component will be saved in this location
+    outDir: "../wwwroot/App_Plugins/XmlSitemapsForUmbraco", // your web component will be saved in this location
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
