@@ -15,7 +15,7 @@ public sealed class XmlSitemapXmlSerializer : IXmlSitemapXmlSerializer
 
         if (model is XmlSiteMap siteMap)
         {
-            serializer.Serialize(stream, model, siteMap.Namespaces);
+            serializer.Serialize(stream, model, siteMap.GetNamespaces());
         }
         else
         {

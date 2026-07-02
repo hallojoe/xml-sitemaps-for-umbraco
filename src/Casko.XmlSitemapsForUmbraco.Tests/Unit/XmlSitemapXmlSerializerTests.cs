@@ -26,11 +26,11 @@ public class XmlSitemapXmlSerializerTests
 
         Assert.That(result, Does.Contain("<urlset"));
         Assert.That(result, Does.Contain($"xmlns=\"{Constants.Namespace}\""));
-        Assert.That(result, Does.Contain($"xmlns:{Constants.XhtmlPrefix}=\"{Constants.XhtmlNamespace}\""));
-        Assert.That(result, Does.Contain($"xmlns:{Constants.ImagePrefix}=\"{Constants.ImageNamespace}\""));
-        Assert.That(result, Does.Contain($"xmlns:{Constants.VideoPrefix}=\"{Constants.VideoNamespace}\""));
-        Assert.That(result, Does.Contain($"xmlns:{Constants.NewsPrefix}=\"{Constants.NewsNamespace}\""));
         Assert.That(result, Does.Contain("<loc>https://www.example.com/</loc>"));
+        Assert.That(result, Does.Not.Contain($"xmlns:{Constants.XhtmlPrefix}="));
+        Assert.That(result, Does.Not.Contain($"xmlns:{Constants.ImagePrefix}="));
+        Assert.That(result, Does.Not.Contain($"xmlns:{Constants.VideoPrefix}="));
+        Assert.That(result, Does.Not.Contain($"xmlns:{Constants.NewsPrefix}="));
     }
 
     [Test]
@@ -105,6 +105,10 @@ public class XmlSitemapXmlSerializerTests
         });
 
         Assert.That(result, Does.Contain("<xhtml:link"));
+        Assert.That(result, Does.Contain($"xmlns:{Constants.XhtmlPrefix}=\"{Constants.XhtmlNamespace}\""));
+        Assert.That(result, Does.Contain($"xmlns:{Constants.ImagePrefix}=\"{Constants.ImageNamespace}\""));
+        Assert.That(result, Does.Contain($"xmlns:{Constants.VideoPrefix}=\"{Constants.VideoNamespace}\""));
+        Assert.That(result, Does.Contain($"xmlns:{Constants.NewsPrefix}=\"{Constants.NewsNamespace}\""));
         Assert.That(result, Does.Contain("rel=\"alternate\""));
         Assert.That(result, Does.Contain("<image:image>"));
         Assert.That(result, Does.Contain("<image:loc>https://cdn.example.com/image-1.jpg</image:loc>"));
@@ -153,6 +157,10 @@ public class XmlSitemapXmlSerializerTests
         });
 
         Assert.That(result, Does.Contain("<video:player_loc>https://www.example.com/player/example</video:player_loc>"));
+        Assert.That(result, Does.Contain($"xmlns:{Constants.VideoPrefix}=\"{Constants.VideoNamespace}\""));
+        Assert.That(result, Does.Not.Contain($"xmlns:{Constants.XhtmlPrefix}="));
+        Assert.That(result, Does.Not.Contain($"xmlns:{Constants.ImagePrefix}="));
+        Assert.That(result, Does.Not.Contain($"xmlns:{Constants.NewsPrefix}="));
         Assert.That(result, Does.Not.Contain("<video:content_loc>"));
         Assert.That(result, Does.Not.Contain("<video:duration>"));
         Assert.That(result, Does.Not.Contain("<video:publication_date>"));

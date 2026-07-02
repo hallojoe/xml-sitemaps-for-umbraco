@@ -13,7 +13,14 @@ public class XmlResult<T>(T result) : IResult
     {
         await using var fileBufferingWriteStream = new FileBufferingWriteStream();
 
-        _serializer.Serialize(fileBufferingWriteStream, result);
+        if (result is XmlSiteMap siteMap)
+        {
+            _serializer.Serialize(fileBufferingWriteStream, result, siteMap.GetNamespaces());
+        }
+        else
+        {
+            _serializer.Serialize(fileBufferingWriteStream, result);
+        }
 
         httpContext.Response.ContentType = Constants.XmlMimeType;
 

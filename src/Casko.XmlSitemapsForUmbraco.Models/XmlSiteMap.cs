@@ -13,7 +13,7 @@ public sealed class XmlSiteMap : IXmlSiteMapModel
     /// Gets the XML namespaces used when serializing sitemap extension elements.
     /// </summary>
     [XmlNamespaceDeclarations]
-    public XmlSerializerNamespaces Namespaces { get; } = CreateNamespaces();
+    public XmlSerializerNamespaces Namespaces => CreateNamespaces();
 
     /// <summary>
     /// Gets or sets the list of URLs included in the sitemap.
@@ -22,14 +22,36 @@ public sealed class XmlSiteMap : IXmlSiteMapModel
     [XmlElement(Constants.UrlElement, Type = typeof(XmlSiteMapUrl))]
     public List<XmlSiteMapUrl> Urls { get; set; } = new();
 
-    private static XmlSerializerNamespaces CreateNamespaces()
+    public XmlSerializerNamespaces GetNamespaces()
+    {
+        return CreateNamespaces();
+    }
+
+    private XmlSerializerNamespaces CreateNamespaces()
     {
         var namespaces = new XmlSerializerNamespaces();
         namespaces.Add(Constants.Empty, Constants.Namespace);
-        namespaces.Add(Constants.XhtmlPrefix, Constants.XhtmlNamespace);
-        namespaces.Add(Constants.ImagePrefix, Constants.ImageNamespace);
-        namespaces.Add(Constants.VideoPrefix, Constants.VideoNamespace);
-        namespaces.Add(Constants.NewsPrefix, Constants.NewsNamespace);
+
+        if (Urls.Any(url => url.CultureLinks is { Count: > 0 }))
+        {
+            namespaces.Add(Constants.XhtmlPrefix, Constants.XhtmlNamespace);
+        }
+
+        if (Urls.Any(url => url.Images is { Count: > 0 }))
+        {
+            namespaces.Add(Constants.ImagePrefix, Constants.ImageNamespace);
+        }
+
+        if (Urls.Any(url => url.Videos is { Count: > 0 }))
+        {
+            namespaces.Add(Constants.VideoPrefix, Constants.VideoNamespace);
+        }
+
+        if (Urls.Any(url => url.News is not null))
+        {
+            namespaces.Add(Constants.NewsPrefix, Constants.NewsNamespace);
+        }
+
         return namespaces;
     }
 }
