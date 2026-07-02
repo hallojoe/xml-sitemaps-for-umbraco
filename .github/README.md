@@ -217,6 +217,134 @@ The provider context contains the configured sitemap key, host name, and flat st
 
 `Settings` is the provider-specific string dictionary for a custom sitemap. Each entry is passed through to the provider context unchanged so project code can read whatever named values it needs.
 
+### Extension Models For Custom Sitemaps
+
+The package also exposes `image`, `video`, and `news` XML sitemap model types in `Casko.XmlSitemapsForUmbraco.Models`:
+
+- `XmlSiteMapImage`
+- `XmlSiteMapVideo`, `XmlSiteMapVideoRestriction`, `XmlSiteMapVideoPlatform`, and `XmlSiteMapVideoUploader`
+- `XmlSiteMapNews` and `XmlSiteMapNewsPublication`
+
+These types are available for custom sitemap implementations, but the package's default Umbraco content-tree renderer does not populate `XmlSiteMapUrl.Images`, `XmlSiteMapUrl.Videos`, or `XmlSiteMapUrl.News`.
+
+If a project needs `image`, `video`, or `news` sitemap output, implement `IXmlSitemapCustomProvider` or replace the package rendering services with a custom implementation.
+
+Minimal image sitemap example:
+
+```csharp
+using Casko.XmlSitemapsForUmbraco.Common.Services;
+using Casko.XmlSitemapsForUmbraco.Models;
+
+public sealed class ProductImagesSitemapProvider : IXmlSitemapCustomProvider
+{
+    public string Alias => "product-images-provider";
+
+    public Task<XmlSiteMap> GetSitemapAsync(
+        XmlSitemapCustomProviderContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new XmlSiteMap
+        {
+            Urls =
+            [
+                new XmlSiteMapUrl
+                {
+                    Location = "https://www.example.com/products/example-product",
+                    LastModified = new DateTime(2026, 7, 2, 12, 0, 0, DateTimeKind.Utc),
+                    Images =
+                    [
+                        new XmlSiteMapImage
+                        {
+                            Location = "https://cdn.example.com/products/example-product/main-image.jpg"
+                        }
+                    ]
+                }
+            ]
+        });
+    }
+}
+```
+
+Minimal video sitemap example:
+
+```csharp
+using Casko.XmlSitemapsForUmbraco.Common.Services;
+using Casko.XmlSitemapsForUmbraco.Models;
+
+public sealed class VideoLibrarySitemapProvider : IXmlSitemapCustomProvider
+{
+    public string Alias => "video-library-provider";
+
+    public Task<XmlSiteMap> GetSitemapAsync(
+        XmlSitemapCustomProviderContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new XmlSiteMap
+        {
+            Urls =
+            [
+                new XmlSiteMapUrl
+                {
+                    Location = "https://www.example.com/videos/example-video",
+                    LastModified = new DateTime(2026, 7, 2, 12, 0, 0, DateTimeKind.Utc),
+                    Videos =
+                    [
+                        new XmlSiteMapVideo
+                        {
+                            ThumbnailLocation = "https://cdn.example.com/videos/example-video/thumbnail.jpg",
+                            Title = "Example Product Walkthrough",
+                            Description = "Short walkthrough of the example product.",
+                            ContentLocation = "https://cdn.example.com/videos/example-video/video.mp4"
+                        }
+                    ]
+                }
+            ]
+        });
+    }
+}
+```
+
+Minimal news sitemap example:
+
+```csharp
+using Casko.XmlSitemapsForUmbraco.Common.Services;
+using Casko.XmlSitemapsForUmbraco.Models;
+
+public sealed class NewsArticlesSitemapProvider : IXmlSitemapCustomProvider
+{
+    public string Alias => "news-articles-provider";
+
+    public Task<XmlSiteMap> GetSitemapAsync(
+        XmlSitemapCustomProviderContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new XmlSiteMap
+        {
+            Urls =
+            [
+                new XmlSiteMapUrl
+                {
+                    Location = "https://www.example.com/news/example-story",
+                    LastModified = new DateTime(2026, 7, 2, 12, 0, 0, DateTimeKind.Utc),
+                    News = new XmlSiteMapNews
+                    {
+                        Publication = new XmlSiteMapNewsPublication
+                        {
+                            Name = "Example News",
+                            Language = "en"
+                        },
+                        PublicationDate = new DateTimeOffset(2026, 7, 2, 12, 0, 0, TimeSpan.Zero),
+                        Title = "Example Story Headline"
+                    }
+                }
+            ]
+        });
+    }
+}
+```
+
+These examples are intentionally minimal. A single custom provider can combine regular URL metadata with `image`, `video`, and `news` sitemap metadata when a project needs multiple sitemap extensions in the same sitemap.
+
 Important settings:
 
 - `PublicName`: public XML file name without `.xml`. Defaults to the entry key.
