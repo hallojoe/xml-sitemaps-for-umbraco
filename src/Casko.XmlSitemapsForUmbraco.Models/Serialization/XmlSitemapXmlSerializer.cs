@@ -12,7 +12,16 @@ public sealed class XmlSitemapXmlSerializer : IXmlSitemapXmlSerializer
     {
         var serializer = new XmlSerializer(typeof(T));
         using var stream = new MemoryStream();
-        serializer.Serialize(stream, model);
+
+        if (model is XmlSiteMap siteMap)
+        {
+            serializer.Serialize(stream, model, siteMap.Namespaces);
+        }
+        else
+        {
+            serializer.Serialize(stream, model);
+        }
+
         return Encoding.UTF8.GetString(stream.ToArray());
     }
 }

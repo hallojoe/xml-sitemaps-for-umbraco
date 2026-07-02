@@ -99,6 +99,26 @@ public sealed class XmlSiteMapUrl
     /// Gets or sets a list of alternate versions, of the URL in different languages or regions.
     /// Each link is represented by an instance of the <see cref="XHtmlLink"/> class.
     /// </summary>
-    [XmlElement(Type = typeof(XHtmlLink), ElementName = Constants.XhtmlLinkElement, Namespace = Constants.XhtmlLinkNamespace)]
+    [XmlElement(Type = typeof(XHtmlLink), ElementName = Constants.XhtmlLinkElement, Namespace = Constants.XhtmlNamespace)]
     public List<XHtmlLink>? CultureLinks { get; set; }
+
+    /// <summary>
+    /// Gets or sets the images associated with this URL.
+    /// Each image is represented by an instance of the <see cref="XmlSiteMapImage"/> class.
+    /// </summary>
+    [XmlElement(Type = typeof(XmlSiteMapImage), ElementName = Constants.ImageElement, Namespace = Constants.ImageNamespace)]
+    public List<XmlSiteMapImage>? Images { get; set; }
+
+    /// <summary>
+    /// Gets or sets the videos associated with this URL.
+    /// Each video is represented by an instance of the <see cref="XmlSiteMapVideo"/> class.
+    /// </summary>
+    [XmlElement(Type = typeof(XmlSiteMapVideo), ElementName = Constants.VideoElement, Namespace = Constants.VideoNamespace)]
+    public List<XmlSiteMapVideo>? Videos { get; set; }
+
+    /// <summary>
+    /// Gets or sets the news metadata associated with this URL.
+    /// </summary>
+    [XmlElement(Constants.NewsElement, Namespace = Constants.NewsNamespace)]
+    public XmlSiteMapNews? News { get; set; }
 }
