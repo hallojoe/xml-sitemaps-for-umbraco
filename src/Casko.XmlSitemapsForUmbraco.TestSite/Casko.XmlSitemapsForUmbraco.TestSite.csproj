@@ -11,6 +11,8 @@
 
     <ItemGroup>
         <PackageReference Include="Umbraco.Cms" />
+        <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice"/>
+        <PackageReference Include="Casko.XmlSitemapsForUmbraco" />
     </ItemGroup>
 
     <ItemGroup>
