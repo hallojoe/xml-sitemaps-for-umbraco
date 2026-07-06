@@ -1,8 +1,18 @@
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Services;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Models.Enums;
+using Umbraco.Cms.Core.Composing;
 
 namespace Casko.XmlSitemapsForUmbraco.DemoSite;
+
+public sealed class SitemapProviderComposer : IComposer
+{
+    public void Compose(IUmbracoBuilder builder)
+    {
+        builder.Services.AddXmlSitemapCustomProvider<CustomSitemapProvider>();
+    }
+}
 
 public sealed class CustomSitemapProvider : IXmlSitemapCustomProvider
 {
