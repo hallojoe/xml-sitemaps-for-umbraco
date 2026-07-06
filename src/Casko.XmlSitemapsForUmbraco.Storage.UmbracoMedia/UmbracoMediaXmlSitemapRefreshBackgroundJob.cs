@@ -12,8 +12,8 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
 {
     public TimeSpan Period => TimeSpan.FromSeconds(GetIntervalSeconds());
 
-    public TimeSpan Delay => TimeSpan.FromSeconds(10);
-
+    public TimeSpan Delay => TimeSpan.FromSeconds(GetDelaySeconds());
+    
     public ServerRole[] ServerRoles => IRecurringBackgroundJob.DefaultServerRoles;
 
     public event EventHandler? PeriodChanged
@@ -39,4 +39,12 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
         var intervalSeconds = xmlSitemapOptions.Value.Storage.BackgroundJob.IntervalSeconds;
         return intervalSeconds > 0 ? intervalSeconds : 3600;
     }
+
+    private int GetDelaySeconds()
+    {
+        return xmlSitemapOptions.Value.Storage.BackgroundJob.RefreshJobDelayInSeconds < 10
+            ? 10
+            : xmlSitemapOptions.Value.Storage.BackgroundJob.RefreshJobDelayInSeconds;
+    }
+
 }

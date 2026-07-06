@@ -116,6 +116,12 @@ public sealed class XmlSitemapStorageBackgroundJobOptions
     /// Gets or sets the number of seconds between background refresh job runs.
     /// </summary>
     public int IntervalSeconds { get; set; } = 3600;
+    
+    /// <summary>
+    /// Gets or sets the number of seconds to delay the background refresh job.
+    /// </summary>
+    public int RefreshJobDelayInSeconds { get; set; } = 10;
+    
 }
 
 /// <summary>
