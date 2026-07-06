@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
+  <Project Path="Casko.XmlSitemapsForUmbraco.DemoSite/Casko.XmlSitemapsForUmbraco.DemoSite.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj" />
