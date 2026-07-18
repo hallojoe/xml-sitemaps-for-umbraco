@@ -1,4 +1,4 @@
-using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Providers.Configuration;
 using Casko.XmlSitemapsForUmbraco.TestSite;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

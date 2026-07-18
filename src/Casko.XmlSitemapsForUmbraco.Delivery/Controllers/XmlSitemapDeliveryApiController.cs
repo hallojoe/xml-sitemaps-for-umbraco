@@ -1,9 +1,8 @@
-using Casko.XmlSitemapsForUmbraco.Common;
 using Asp.Versioning;
-using Casko.XmlSitemapsForUmbraco.Common.Http;
-using Casko.XmlSitemapsForUmbraco.Common.Services;
 using Casko.XmlSitemapsForUmbraco.Delivery.Authorization;
+using Casko.XmlSitemapsForUmbraco.Http;
 using Casko.XmlSitemapsForUmbraco.Models;
+using Casko.XmlSitemapsForUmbraco.Providers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Api.Common.Attributes;
@@ -16,7 +15,7 @@ namespace Casko.XmlSitemapsForUmbraco.Delivery.Controllers;
 [MapToApi($"{XmlSitemapApiConstants.ApiName}")]
 [Route(XmlSitemapApiConstants.ApiRoute)]
 [XmlSitemapsDeliveryApiAccess]
-public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapService) : ControllerBase
+public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvider) : ControllerBase
 {
     /// <summary>
     /// Returns the XML sitemap or sitemap index for the specified alias.
@@ -29,7 +28,7 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapServic
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapService.GetConfiguredAsync(sitemapName) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetConfiguredAsync(sitemapName) as XmlSiteMap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
@@ -57,7 +56,7 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapServic
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapService.GetByPathAsync(path, culture, hostname) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetByPathAsync(path, culture, hostname) as XmlSiteMap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
@@ -80,7 +79,7 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapServic
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapService.GetConfiguredAsync(key) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetConfiguredAsync(key) as XmlSiteMap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
@@ -103,7 +102,7 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapServic
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapService.GetByRootKeyAsync(key) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetByRootKeyAsync(key) as XmlSiteMap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
@@ -126,7 +125,7 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapServic
     {
         try
         {
-            var xmlSiteMap = xmlSitemapService.GetIndex(key) as XmlSiteMapIndex;
+            var xmlSiteMap = xmlSitemapProvider.GetIndex(key) as XmlSiteMapIndex;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();

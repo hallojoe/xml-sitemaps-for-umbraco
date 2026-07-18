@@ -1,7 +1,7 @@
 using System.Text;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
-using UmbracoConstants = Umbraco.Cms.Core.Constants;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia;
 
@@ -72,7 +72,7 @@ public sealed class UmbracoMediaXmlSitemapDataSource(
             }
         }
 
-        media ??= mediaService.CreateMedia(fileName, folder, UmbracoConstants.Conventions.MediaTypes.File);
+        media ??= mediaService.CreateMedia(fileName, folder, Constants.Conventions.MediaTypes.File);
 
         using var createStream = CreateStream(xml);
         mediaFileAccessor.SetInitialFile(media, fileName, createStream);
@@ -98,8 +98,8 @@ public sealed class UmbracoMediaXmlSitemapDataSource(
 
         var folder = mediaService.CreateMedia(
             RootFolderName,
-            UmbracoConstants.System.Root,
-            UmbracoConstants.Conventions.MediaTypes.Folder);
+            Constants.System.Root,
+            Constants.Conventions.MediaTypes.Folder);
         mediaService.Save(folder);
 
         return folder;

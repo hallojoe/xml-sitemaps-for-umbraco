@@ -1,22 +1,19 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
-using Casko.XmlSitemapsForUmbraco.Common.Services;
-using Casko.XmlSitemapsForUmbraco.Common.Services.Cms;
-using Casko.XmlSitemapsForUmbraco.Common.Services.Rendering;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Models.Serialization;
+using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Storage;
 using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
-using Umbraco.Cms.Core.Routing;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
 [TestFixture]
 public class XmlSitemapStorageRefreshServiceTests
 {
-    private DefaultXmlSiteMapService _defaultXmlSiteMapService = null!;
+    private IXmlSitemapSourceProvider _sourceProvider = null!;
     private IXmlSitemapDataSource _xmlSitemapDataSource = null!;
     private IXmlSitemapXmlSerializer _xmlSitemapXmlSerializer = null!;
     private XmlSitemapStorageRefreshService _sut = null!;
@@ -24,13 +21,7 @@ public class XmlSitemapStorageRefreshServiceTests
     [SetUp]
     public void SetUp()
     {
-        _defaultXmlSiteMapService = Substitute.For<DefaultXmlSiteMapService>(
-            Options.Create(new XmlSitemapsOptions()),
-            Substitute.For<ICmsContentService>(),
-            Substitute.For<IXmlSitemapRenderer>(),
-            Substitute.For<IXmlSitemapIndexRenderer>(),
-            Substitute.For<IPublishedUrlProvider>(),
-            Array.Empty<IXmlSitemapCustomProvider>());
+        _sourceProvider = Substitute.For<IXmlSitemapSourceProvider>();
         _xmlSitemapDataSource = Substitute.For<IXmlSitemapDataSource>();
         _xmlSitemapXmlSerializer = Substitute.For<IXmlSitemapXmlSerializer>();
         _sut = CreateService(new XmlSitemapsOptions
@@ -63,7 +54,7 @@ public class XmlSitemapStorageRefreshServiceTests
     public async Task RefreshConfiguredAsync_RebuildsConfiguredSitemapAndWritesStorageKey()
     {
         var sitemap = new XmlSiteMap();
-        _defaultXmlSiteMapService.GetConfiguredAsync("products").Returns(sitemap);
+        _sourceProvider.GetConfiguredAsync("products").Returns(sitemap);
         _xmlSitemapXmlSerializer.Serialize(sitemap).Returns("<urlset />");
 
         var result = await _sut.RefreshConfiguredAsync("products");
@@ -81,7 +72,7 @@ public class XmlSitemapStorageRefreshServiceTests
     public async Task RefreshIndexAsync_RebuildsConfiguredIndexAndWritesStorageKey()
     {
         var index = new XmlSiteMapIndex();
-        _defaultXmlSiteMapService.GetIndexAsync("main").Returns(index);
+        _sourceProvider.GetIndexAsync("main").Returns(index);
         _xmlSitemapXmlSerializer.Serialize(index).Returns("<sitemapindex />");
 
         var result = await _sut.RefreshIndexAsync("main");
@@ -99,7 +90,7 @@ public class XmlSitemapStorageRefreshServiceTests
     public async Task RefreshCustomAsync_RebuildsConfiguredCustomSitemapAndWritesStorageKey()
     {
         var sitemap = new XmlSiteMap();
-        _defaultXmlSiteMapService.GetConfiguredAsync("external-products").Returns(sitemap);
+        _sourceProvider.GetConfiguredAsync("external-products").Returns(sitemap);
         _xmlSitemapXmlSerializer.Serialize(sitemap).Returns("<custom-urlset />");
 
         var result = await _sut.RefreshCustomAsync("external-products");
@@ -120,10 +111,10 @@ public class XmlSitemapStorageRefreshServiceTests
         var articles = new XmlSiteMap();
         var externalProducts = new XmlSiteMap();
         var index = new XmlSiteMapIndex();
-        _defaultXmlSiteMapService.GetConfiguredAsync("products").Returns(products);
-        _defaultXmlSiteMapService.GetConfiguredAsync("articles").Returns(articles);
-        _defaultXmlSiteMapService.GetConfiguredAsync("external-products").Returns(externalProducts);
-        _defaultXmlSiteMapService.GetIndexAsync("main").Returns(index);
+        _sourceProvider.GetConfiguredAsync("products").Returns(products);
+        _sourceProvider.GetConfiguredAsync("articles").Returns(articles);
+        _sourceProvider.GetConfiguredAsync("external-products").Returns(externalProducts);
+        _sourceProvider.GetIndexAsync("main").Returns(index);
         _xmlSitemapXmlSerializer.Serialize(products).Returns("<products />");
         _xmlSitemapXmlSerializer.Serialize(articles).Returns("<articles />");
         _xmlSitemapXmlSerializer.Serialize(externalProducts).Returns("<external-products />");
@@ -151,7 +142,7 @@ public class XmlSitemapStorageRefreshServiceTests
     private XmlSitemapStorageRefreshService CreateService(XmlSitemapsOptions options)
     {
         return new XmlSitemapStorageRefreshService(
-            _defaultXmlSiteMapService,
+            _sourceProvider,
             _xmlSitemapDataSource,
             _xmlSitemapXmlSerializer,
             Options.Create(options));

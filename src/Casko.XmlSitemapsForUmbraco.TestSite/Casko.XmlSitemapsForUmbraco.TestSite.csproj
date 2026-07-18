@@ -12,7 +12,7 @@
     <ItemGroup>
         <PackageReference Include="Umbraco.Cms" />
         <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice"/>
-        <PackageReference Include="Casko.XmlSitemapsForUmbraco" />
+<!--        <PackageReference Include="Casko.XmlSitemapsForUmbraco" />-->
     </ItemGroup>
 
     <ItemGroup>
@@ -23,9 +23,9 @@
     </ItemGroup>
     
     <ItemGroup>
-        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj"/>
-        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Models\Casko.XmlSitemapsForUmbraco.Models.csproj"/>
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Models\Casko.XmlSitemapsForUmbraco.Models.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Package\Casko.XmlSitemapsForUmbraco.Package.csproj"/>
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers\Casko.XmlSitemapsForUmbraco.Providers.csproj" />
     </ItemGroup>
 
     <PropertyGroup>

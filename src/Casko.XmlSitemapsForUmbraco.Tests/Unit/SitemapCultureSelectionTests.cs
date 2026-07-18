@@ -1,5 +1,5 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
-using Casko.XmlSitemapsForUmbraco.Common.Services.Cms;
+using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using NUnit.Framework;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;

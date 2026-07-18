@@ -1,4 +1,7 @@
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Delivery.Configuration;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Configuration;
+using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.Configuration;
 using Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.Composing;
@@ -12,8 +15,18 @@ public sealed class XmlSitemapComposer: IComposer
     {
         builder.Services.AddHybridCache();
 
-        builder.AddXmlSitemapDeliveryApi();
+        builder.Services.AddXmlSitemapConfiguration(builder.Config);
 
-        builder.AddXmlSitemapsUmbracoMediaStorage();
+        // XML Sitemaps IPublishedContent provider and source fallback.
+        builder.Services.AddXmlSitemapPublishedContentProvider();
+
+        // XML Sitemaps Examine provider and preferred live source.
+        builder.Services.AddXmlSitemapExamineProvider();
+
+        // This wraps the live source and becomes the public IXmlSitemapProvider.
+        builder.Services.AddXmlSitemapsUmbracoMediaStorage();
+        
+        // Delivery API
+        builder.Services.AddXmlSitemapDeliveryApi(builder.Config);
     }
 }

@@ -1,6 +1,6 @@
-using Casko.XmlSitemapsForUmbraco.Common.Services;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Models.Enums;
+using Casko.XmlSitemapsForUmbraco.Providers;
 
 namespace Casko.XmlSitemapsForUmbraco.TestSite;
 

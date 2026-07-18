@@ -1,9 +1,10 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
-using Casko.XmlSitemapsForUmbraco.Common.Services;
-using Casko.XmlSitemapsForUmbraco.Common.Services.Cms;
-using Casko.XmlSitemapsForUmbraco.Common.Services.Rendering;
 using Casko.XmlSitemapsForUmbraco.Models;
+using Casko.XmlSitemapsForUmbraco.Providers;
+using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent;
+using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
+using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.SitemapRendering;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
@@ -15,17 +16,17 @@ namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 [TestFixture]
 public class DefaultXmlSiteMapServiceCustomProviderTests
 {
-    private ICmsContentService _cmsContentService = null!;
-    private IXmlSitemapRenderer _sitemapRenderer = null!;
-    private IXmlSitemapIndexRenderer _sitemapIndexRenderer = null!;
+    private IPublishedContentService _publishedContentService = null!;
+    private IPublishedContentRenderer _sitemapRenderer = null!;
+    private IPublishedContentIndexRenderer _sitemapIndexRenderer = null!;
     private IXmlSitemapCustomProvider _customProvider = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _cmsContentService = Substitute.For<ICmsContentService>();
-        _sitemapRenderer = Substitute.For<IXmlSitemapRenderer>();
-        _sitemapIndexRenderer = Substitute.For<IXmlSitemapIndexRenderer>();
+        _publishedContentService = Substitute.For<IPublishedContentService>();
+        _sitemapRenderer = Substitute.For<IPublishedContentRenderer>();
+        _sitemapIndexRenderer = Substitute.For<IPublishedContentIndexRenderer>();
         _customProvider = Substitute.For<IXmlSitemapCustomProvider>();
         _customProvider.Alias.Returns("external-products-provider");
     }
@@ -88,8 +89,8 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
     [Test]
     public void GetConfiguredAsync_WhenRegularAndCustomKeysCollide_UsesRegularSitemap()
     {
-        _cmsContentService.GetLanguagesAsync().Returns([]);
-        _cmsContentService
+        _publishedContentService.GetLanguagesAsync().Returns([]);
+        _publishedContentService
             .GetContentByPath(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<string?>())
             .Returns((IPublishedContent?)null);
         var sut = CreateService(new XmlSitemapsOptions
@@ -113,13 +114,13 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
         _customProvider.DidNotReceive().GetSitemapAsync(Arg.Any<XmlSitemapCustomProviderContext>());
     }
 
-    private DefaultXmlSiteMapService CreateService(
+    private PublishedContentXmlSitemapProvider CreateService(
         XmlSitemapsOptions options,
         IEnumerable<IXmlSitemapCustomProvider> customProviders)
     {
-        return new DefaultXmlSiteMapService(
+        return new PublishedContentXmlSitemapProvider(
             Options.Create(options),
-            _cmsContentService,
+            _publishedContentService,
             _sitemapRenderer,
             _sitemapIndexRenderer,
             Substitute.For<IPublishedUrlProvider>(),

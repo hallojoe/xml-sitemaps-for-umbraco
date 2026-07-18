@@ -1,9 +1,10 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
-using Casko.XmlSitemapsForUmbraco.Common.Services;
-using Casko.XmlSitemapsForUmbraco.Common.Services.Cms;
-using Casko.XmlSitemapsForUmbraco.Common.Services.Rendering;
 using Casko.XmlSitemapsForUmbraco.Models;
+using Casko.XmlSitemapsForUmbraco.Providers;
+using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent;
+using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
+using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.SitemapRendering;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
@@ -15,17 +16,17 @@ namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 [TestFixture]
 public class DefaultXmlSiteMapServiceRootKeyTests
 {
-    private ICmsContentService _cmsContentService = null!;
-    private IXmlSitemapRenderer _sitemapRenderer = null!;
-    private IXmlSitemapIndexRenderer _sitemapIndexRenderer = null!;
+    private IPublishedContentService _publishedContentService = null!;
+    private IPublishedContentRenderer _sitemapRenderer = null!;
+    private IPublishedContentIndexRenderer _sitemapIndexRenderer = null!;
     private IPublishedUrlProvider _publishedUrlProvider = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _cmsContentService = Substitute.For<ICmsContentService>();
-        _sitemapRenderer = Substitute.For<IXmlSitemapRenderer>();
-        _sitemapIndexRenderer = Substitute.For<IXmlSitemapIndexRenderer>();
+        _publishedContentService = Substitute.For<IPublishedContentService>();
+        _sitemapRenderer = Substitute.For<IPublishedContentRenderer>();
+        _sitemapIndexRenderer = Substitute.For<IPublishedContentIndexRenderer>();
         _publishedUrlProvider = Substitute.For<IPublishedUrlProvider>();
         _publishedUrlProvider
             .GetUrl(Arg.Any<IPublishedContent>(), UrlMode.Absolute, Arg.Any<string?>(), Arg.Any<Uri?>())
@@ -40,11 +41,11 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         var hidden = CreateContent("hidden");
         var noIndex = CreateContent("root", "metaRobots", "noindex,nofollow");
         var sitemap = new XmlSiteMap();
-        XmlSitemapRenderContext? context = null;
-        _cmsContentService.GetContent(rootKey).Returns(root);
-        _cmsContentService.GetLanguagesAsync().Returns(["en-US", "da-DK"]);
+        PublishedContentRenderContext? context = null;
+        _publishedContentService.GetContent(rootKey).Returns(root);
+        _publishedContentService.GetLanguagesAsync().Returns(["en-US", "da-DK"]);
         _sitemapRenderer
-            .Render(Arg.Do<XmlSitemapRenderContext>(value => context = value))
+            .Render(Arg.Do<PublishedContentRenderContext>(value => context = value))
             .Returns(sitemap);
         var sut = CreateService(new XmlSitemapsOptions
         {
@@ -74,7 +75,7 @@ public class DefaultXmlSiteMapServiceRootKeyTests
     public void GetByRootKeyAsync_WhenContentDoesNotExist_ThrowsRootContentNotFoundException()
     {
         var rootKey = Guid.NewGuid();
-        _cmsContentService.GetContent(rootKey).Returns((IPublishedContent?)null);
+        _publishedContentService.GetContent(rootKey).Returns((IPublishedContent?)null);
         var sut = CreateService(new XmlSitemapsOptions());
 
         AsyncTestDelegate action = async () => await sut.GetByRootKeyAsync(rootKey);
@@ -82,11 +83,11 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         Assert.That(action, Throws.TypeOf<RootContentNotFoundException>());
     }
 
-    private DefaultXmlSiteMapService CreateService(XmlSitemapsOptions options)
+    private PublishedContentXmlSitemapProvider CreateService(XmlSitemapsOptions options)
     {
-        return new DefaultXmlSiteMapService(
+        return new PublishedContentXmlSitemapProvider(
             Options.Create(options),
-            _cmsContentService,
+            _publishedContentService,
             _sitemapRenderer,
             _sitemapIndexRenderer,
             _publishedUrlProvider,

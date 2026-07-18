@@ -1,13 +1,13 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
-using Casko.XmlSitemapsForUmbraco.Common.Services;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Models.Serialization;
+using Casko.XmlSitemapsForUmbraco.Providers;
 using Microsoft.Extensions.Options;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.Services;
 
 public sealed class XmlSitemapStorageRefreshService(
-    DefaultXmlSiteMapService defaultXmlSiteMapService,
+    IXmlSitemapSourceProvider sourceProvider,
     IXmlSitemapDataSource xmlSitemapDataSource,
     IXmlSitemapXmlSerializer xmlSitemapXmlSerializer,
     IOptions<XmlSitemapsOptions> xmlSitemapOptions) : IXmlSitemapStorageRefreshService
@@ -42,7 +42,7 @@ public sealed class XmlSitemapStorageRefreshService(
             throw new InvalidOperationException("Invalid key.");
         }
 
-        var xmlSiteMap = await defaultXmlSiteMapService.GetConfiguredAsync(key);
+        var xmlSiteMap = await sourceProvider.GetConfiguredAsync(key);
         if (xmlSiteMap is XmlSiteMap sitemap)
         {
             var storageKey = new XmlSitemapStorageKey(
@@ -64,7 +64,7 @@ public sealed class XmlSitemapStorageRefreshService(
             throw new InvalidOperationException("Invalid key.");
         }
 
-        var xmlSiteMap = await defaultXmlSiteMapService.GetConfiguredAsync(key);
+        var xmlSiteMap = await sourceProvider.GetConfiguredAsync(key);
         if (xmlSiteMap is XmlSiteMap sitemap)
         {
             var storageKey = new XmlSitemapStorageKey(
@@ -86,7 +86,7 @@ public sealed class XmlSitemapStorageRefreshService(
             throw new InvalidOperationException("Invalid key.");
         }
 
-        var xmlSiteMap = await defaultXmlSiteMapService.GetIndexAsync(key);
+        var xmlSiteMap = await sourceProvider.GetIndexAsync(key);
         if (xmlSiteMap is XmlSiteMapIndex sitemapIndex)
         {
             var storageKey = new XmlSitemapStorageKey(
