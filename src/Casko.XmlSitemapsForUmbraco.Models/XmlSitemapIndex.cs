@@ -7,12 +7,12 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// This class is used to serialize and deserialize the sitemap index, allowing a website to provide multiple sitemap files, each containing its own set of URLs.
 /// </summary>
 [XmlRoot(Constants.SiteMapIndexElement, Namespace = Constants.Namespace)]
-public sealed class XmlSiteMapIndex : IXmlSiteMapModel
+public sealed class XmlSitemapIndex : IXmlSitemapModel
 {
     /// <summary>
     /// Gets or sets the list of sitemap locations included in the sitemap index.
-    /// Each location is represented by an instance of the <see cref="XmlSiteMapIndexLocation"/> class, which specifies the URL of an individual sitemap.
+    /// Each location is represented by an instance of the <see cref="XmlSitemapIndexLocation"/> class, which specifies the URL of an individual sitemap.
     /// </summary>
-    [XmlElement(Constants.SiteMapElement, Type = typeof(XmlSiteMapIndexLocation))]
-    public List<XmlSiteMapIndexLocation> Locations { get; set; } = null!;
+    [XmlElement(Constants.SiteMapElement, Type = typeof(XmlSitemapIndexLocation))]
+    public List<XmlSitemapIndexLocation> Locations { get; set; } = null!;
 }

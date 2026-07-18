@@ -8,12 +8,12 @@ public sealed class DummyCustomSitemapProvider : IXmlSitemapCustomProvider
 {
     public string Alias => "dummy-custom-sitemap-provider";
 
-    public Task<XmlSiteMap> GetSitemapAsync(
+    public Task<XmlSitemap> GetSitemapAsync(
         XmlSitemapCustomProviderContext context,
         CancellationToken cancellationToken = default)
     {
         var lastModified = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
-        var sitemap = new XmlSiteMap
+        var sitemap = new XmlSitemap
         {
             Urls =
             [
@@ -26,13 +26,13 @@ public sealed class DummyCustomSitemapProvider : IXmlSitemapCustomProvider
         return Task.FromResult(sitemap);
     }
 
-    private static XmlSiteMapUrl CreateUrl(
+    private static XmlSitemapUrl CreateUrl(
         string location,
         DateTime lastModified,
         ChangeFrequency changeFrequency,
         double priority)
     {
-        return new XmlSiteMapUrl
+        return new XmlSitemapUrl
         {
             Location = location,
             LastModified = lastModified,

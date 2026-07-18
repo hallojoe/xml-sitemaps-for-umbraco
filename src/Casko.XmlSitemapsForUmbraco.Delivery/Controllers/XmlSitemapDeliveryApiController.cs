@@ -28,13 +28,13 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapProvider.GetConfiguredAsync(sitemapName) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetConfiguredAsync(sitemapName) as XmlSitemap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
             }
 
-            return new XmlResult<XmlSiteMap>(xmlSiteMap);
+            return new XmlResult<XmlSitemap>(xmlSiteMap);
         }
         catch (Exception exception)
         {
@@ -56,13 +56,13 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapProvider.GetByPathAsync(path, culture, hostname) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetByPathAsync(path, culture, hostname) as XmlSitemap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
             }
 
-            return new XmlResult<XmlSiteMap>(xmlSiteMap);
+            return new XmlResult<XmlSitemap>(xmlSiteMap);
         }
         catch (Exception exception)
         {
@@ -79,13 +79,13 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapProvider.GetConfiguredAsync(key) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetConfiguredAsync(key) as XmlSitemap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
             }
 
-            return new XmlResult<XmlSiteMap>(xmlSiteMap);
+            return new XmlResult<XmlSitemap>(xmlSiteMap);
         }
         catch (Exception exception)
         {
@@ -102,13 +102,13 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapProvider.GetByRootKeyAsync(key) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetByRootKeyAsync(key) as XmlSitemap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
             }
 
-            return new XmlResult<XmlSiteMap>(xmlSiteMap);
+            return new XmlResult<XmlSitemap>(xmlSiteMap);
         }
         catch (Exception exception)
         {
@@ -125,13 +125,13 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
     {
         try
         {
-            var xmlSiteMap = xmlSitemapProvider.GetIndex(key) as XmlSiteMapIndex;
+            var xmlSiteMap = xmlSitemapProvider.GetIndex(key) as XmlSitemapIndex;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
             }
 
-            return new XmlResult<XmlSiteMapIndex>(xmlSiteMap);
+            return new XmlResult<XmlSitemapIndex>(xmlSiteMap);
         }
         catch (Exception exception)
         {

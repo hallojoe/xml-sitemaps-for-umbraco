@@ -13,7 +13,7 @@ public class XmlResult<T>(T result) : IResult
     {
         await using var fileBufferingWriteStream = new FileBufferingWriteStream();
 
-        if (result is XmlSiteMap siteMap)
+        if (result is XmlSitemap siteMap)
         {
             _serializer.Serialize(fileBufferingWriteStream, result, siteMap.GetNamespaces());
         }

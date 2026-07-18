@@ -22,9 +22,9 @@ public class SitemapRenderingServiceTests
         contentCollector.Collect(Arg.Any<PublishedContentRenderContext>()).Returns([root, child]);
         var urlRenderer = Substitute.For<IPublishedContentUrlRenderer>();
         urlRenderer.Render(root, Arg.Any<XmlSitemapUrlRenderContext>())
-            .Returns(new XmlSiteMapUrl { Location = "/root" });
+            .Returns(new XmlSitemapUrl { Location = "/root" });
         urlRenderer.Render(child, Arg.Any<XmlSitemapUrlRenderContext>())
-            .Returns(new XmlSiteMapUrl { Location = "/child" });
+            .Returns(new XmlSitemapUrl { Location = "/child" });
         var sut = new PublishedContentRenderer(contentCollector, urlRenderer);
 
         var result = sut.Render(new PublishedContentRenderContext([root], "en", ["en"], "example.com"));
@@ -41,7 +41,7 @@ public class SitemapRenderingServiceTests
         contentCollector.Collect(Arg.Any<PublishedContentRenderContext>()).Returns([root, child]);
         var urlRenderer = Substitute.For<IPublishedContentUrlRenderer>();
         urlRenderer.Render(root, Arg.Any<XmlSitemapUrlRenderContext>())
-            .Returns(new XmlSiteMapUrl { Location = "/root" });
+            .Returns(new XmlSitemapUrl { Location = "/root" });
         var sut = new PublishedContentRenderer(contentCollector, urlRenderer);
 
         var result = sut.Render(new PublishedContentRenderContext(
@@ -85,9 +85,9 @@ public class SitemapRenderingServiceTests
         contentCollector.Collect(Arg.Any<PublishedContentRenderContext>()).Returns([root, child]);
         var urlRenderer = Substitute.For<IPublishedContentUrlRenderer>();
         urlRenderer.Render(root, Arg.Any<XmlSitemapUrlRenderContext>())
-            .Returns(new XmlSiteMapUrl { Location = "/same" });
+            .Returns(new XmlSitemapUrl { Location = "/same" });
         urlRenderer.Render(child, Arg.Any<XmlSitemapUrlRenderContext>())
-            .Returns(new XmlSiteMapUrl { Location = "/SAME" });
+            .Returns(new XmlSitemapUrl { Location = "/SAME" });
         var sut = new PublishedContentRenderer(contentCollector, urlRenderer);
 
         var result = sut.Render(new PublishedContentRenderContext([root], "en", ["en"], Hostname: null));

@@ -7,7 +7,7 @@ public sealed class ExamineXmlSitemapRenderer(
     IExamineUrlRenderer urlRenderer,
     IXmlSitemapUrlSetRenderer urlSetRenderer) : IExamineXmlSitemapRenderer
 {
-    public XmlSiteMap Render(ExamineXmlSitemapRenderContext context)
+    public XmlSitemap Render(ExamineXmlSitemapRenderContext context)
     {
         return urlSetRenderer.Render(urlRenderer.Render(
             context.Urls,

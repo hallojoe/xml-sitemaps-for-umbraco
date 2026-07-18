@@ -9,5 +9,5 @@ public interface IXmlSitemapXmlSerializer
     /// Serializes the supplied sitemap model to XML.
     /// </summary>
     string Serialize<T>(T model)
-        where T : IXmlSiteMapModel;
+        where T : IXmlSitemapModel;
 }

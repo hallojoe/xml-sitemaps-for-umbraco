@@ -40,7 +40,7 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         var root = CreateContent("root");
         var hidden = CreateContent("hidden");
         var noIndex = CreateContent("root", "metaRobots", "noindex,nofollow");
-        var sitemap = new XmlSiteMap();
+        var sitemap = new XmlSitemap();
         PublishedContentRenderContext? context = null;
         _publishedContentService.GetContent(rootKey).Returns(root);
         _publishedContentService.GetLanguagesAsync().Returns(["en-US", "da-DK"]);

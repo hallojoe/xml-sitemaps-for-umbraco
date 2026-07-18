@@ -15,37 +15,37 @@ public sealed class StoredXmlSitemapProvider(
     TimeProvider timeProvider) : IXmlSitemapProvider
 {
     /// <inheritdoc />
-    public IXmlSiteMapModel GetByRootKey(Guid rootKey)
+    public IXmlSitemapModel GetByRootKey(Guid rootKey)
     {
         return sourceProvider.GetByRootKey(rootKey);
     }
 
     /// <inheritdoc />
-    public Task<IXmlSiteMapModel> GetByRootKeyAsync(Guid rootKey)
+    public Task<IXmlSitemapModel> GetByRootKeyAsync(Guid rootKey)
     {
         return sourceProvider.GetByRootKeyAsync(rootKey);
     }
 
     /// <inheritdoc />
-    public IXmlSiteMapModel GetByPath(string path, string? culture = null, string? hostname = null)
+    public IXmlSitemapModel GetByPath(string path, string? culture = null, string? hostname = null)
     {
         return sourceProvider.GetByPath(path, culture, hostname);
     }
 
     /// <inheritdoc />
-    public Task<IXmlSiteMapModel> GetByPathAsync(string path, string? culture = null, string? hostname = null)
+    public Task<IXmlSitemapModel> GetByPathAsync(string path, string? culture = null, string? hostname = null)
     {
         return sourceProvider.GetByPathAsync(path, culture, hostname);
     }
 
     /// <inheritdoc />
-    public IXmlSiteMapModel GetConfigured(string key)
+    public IXmlSitemapModel GetConfigured(string key)
     {
         return GetConfiguredAsync(key).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
-    public async Task<IXmlSiteMapModel> GetConfiguredAsync(string key)
+    public async Task<IXmlSitemapModel> GetConfiguredAsync(string key)
     {
         if (xmlSitemapOptions.Value.Sitemaps.TryGetValue(key, out var sitemapOptions))
         {
@@ -66,10 +66,10 @@ public sealed class StoredXmlSitemapProvider(
         throw new InvalidOperationException("Invalid key.");
     }
 
-    private async Task<IXmlSiteMapModel> GetStoredSitemapAsync(
+    private async Task<IXmlSitemapModel> GetStoredSitemapAsync(
         string key,
         string? hostName,
-        Func<Task<IXmlSiteMapModel>> refresh)
+        Func<Task<IXmlSitemapModel>> refresh)
     {
         var storageKey = new XmlSitemapStorageKey(
             XmlSitemapDocumentKind.Sitemap,
@@ -79,20 +79,20 @@ public sealed class StoredXmlSitemapProvider(
         var storedDocument = await xmlSitemapDataSource.ReadAsync(storageKey);
         if (storedDocument is not null && !IsStale(storedDocument))
         {
-            return xmlSitemapXmlDeserializer.Deserialize<XmlSiteMap>(storedDocument.Xml);
+            return xmlSitemapXmlDeserializer.Deserialize<XmlSitemap>(storedDocument.Xml);
         }
 
         return await refresh();
     }
 
     /// <inheritdoc />
-    public IXmlSiteMapModel GetIndex(string key)
+    public IXmlSitemapModel GetIndex(string key)
     {
         return GetIndexAsync(key).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
-    public async Task<IXmlSiteMapModel> GetIndexAsync(string key)
+    public async Task<IXmlSitemapModel> GetIndexAsync(string key)
     {
         if (!xmlSitemapOptions.Value.Indexes.TryGetValue(key, out var sitemapIndexOptions))
         {
@@ -107,7 +107,7 @@ public sealed class StoredXmlSitemapProvider(
         var storedDocument = await xmlSitemapDataSource.ReadAsync(storageKey);
         if (storedDocument is not null && !IsStale(storedDocument))
         {
-            return xmlSitemapXmlDeserializer.Deserialize<XmlSiteMapIndex>(storedDocument.Xml);
+            return xmlSitemapXmlDeserializer.Deserialize<XmlSitemapIndex>(storedDocument.Xml);
         }
 
         return await xmlSitemapStorageRefreshService.RefreshIndexAsync(key);

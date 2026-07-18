@@ -16,7 +16,7 @@ public sealed class PublishedContentRenderer(
     {
     }
 
-    public XmlSiteMap Render(PublishedContentRenderContext context)
+    public XmlSitemap Render(PublishedContentRenderContext context)
     {
         var includedContentItems = contentCollector
             .Collect(context)

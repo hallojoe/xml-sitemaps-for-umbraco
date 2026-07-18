@@ -6,7 +6,7 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// <summary>
 /// Represents a video entry within an XML sitemap URL.
 /// </summary>
-public sealed class XmlSiteMapVideo
+public sealed class XmlSitemapVideo
 {
     /// <summary>
     /// Gets or sets the thumbnail URL for the video.
@@ -140,13 +140,13 @@ public sealed class XmlSiteMapVideo
     /// Gets or sets the country restriction metadata for the video.
     /// </summary>
     [XmlElement(Constants.RestrictionElement, Namespace = Constants.VideoNamespace)]
-    public XmlSiteMapVideoRestriction? Restriction { get; set; }
+    public XmlSitemapVideoRestriction? Restriction { get; set; }
 
     /// <summary>
     /// Gets or sets the platform restriction metadata for the video.
     /// </summary>
     [XmlElement(Constants.PlatformElement, Namespace = Constants.VideoNamespace)]
-    public XmlSiteMapVideoPlatform? Platform { get; set; }
+    public XmlSitemapVideoPlatform? Platform { get; set; }
 
     /// <summary>
     /// Gets or sets whether a subscription is required to view the video.
@@ -168,7 +168,7 @@ public sealed class XmlSiteMapVideo
     /// Gets or sets the uploader metadata for the video.
     /// </summary>
     [XmlElement(Constants.UploaderElement, Namespace = Constants.VideoNamespace)]
-    public XmlSiteMapVideoUploader? Uploader { get; set; }
+    public XmlSitemapVideoUploader? Uploader { get; set; }
 
     /// <summary>
     /// Gets or sets whether the video is a livestream.
@@ -214,7 +214,7 @@ public sealed class XmlSiteMapVideo
 
     private static string? FormatDate(DateTimeOffset? value)
     {
-        return value?.ToString(Constants.W3cDateTimeFormat, CultureInfo.InvariantCulture);
+        return value?.ToString(Constants.W3CDateTimeFormat, CultureInfo.InvariantCulture);
     }
 
     private static DateTimeOffset? ParseDate(string? value)

@@ -10,41 +10,41 @@ public interface IXmlSitemapProvider
     /// <summary>
     /// Gets an XML sitemap by its root content key.
     /// </summary>
-    public IXmlSiteMapModel GetByRootKey(Guid rootKey);
+    public IXmlSitemapModel GetByRootKey(Guid rootKey);
 
     /// <summary>
     /// Gets an XML sitemap by its root content key.
     /// </summary>
-    public Task<IXmlSiteMapModel> GetByRootKeyAsync(Guid rootKey);
+    public Task<IXmlSitemapModel> GetByRootKeyAsync(Guid rootKey);
 
     /// <summary>
     /// Gets an XML sitemap by resolving a content path, optionally scoped by culture and host name.
     /// </summary>
-    public IXmlSiteMapModel GetByPath(string path, string? culture = null, string? hostname = null);
+    public IXmlSitemapModel GetByPath(string path, string? culture = null, string? hostname = null);
 
     /// <summary>
     /// Gets an XML sitemap by resolving a content path, optionally scoped by culture and host name.
     /// </summary>
-    public Task<IXmlSiteMapModel> GetByPathAsync(string path, string? culture = null, string? hostname = null);
+    public Task<IXmlSitemapModel> GetByPathAsync(string path, string? culture = null, string? hostname = null);
 
     /// <summary>
     /// Gets a configured XML sitemap by its configuration key.
     /// </summary>
-    public IXmlSiteMapModel GetConfigured(string key);
+    public IXmlSitemapModel GetConfigured(string key);
 
     /// <summary>
     /// Gets a configured XML sitemap by its configuration key.
     /// </summary>
-    public Task<IXmlSiteMapModel> GetConfiguredAsync(string key);
+    public Task<IXmlSitemapModel> GetConfiguredAsync(string key);
 
     /// <summary>
     /// Gets a configured XML sitemap index by its configuration key.
     /// </summary>
-    public IXmlSiteMapModel GetIndex(string key);
+    public IXmlSitemapModel GetIndex(string key);
 
     /// <summary>
     /// Gets a configured XML sitemap index by its configuration key.
     /// </summary>
-    public Task<IXmlSiteMapModel> GetIndexAsync(string key);
+    public Task<IXmlSitemapModel> GetIndexAsync(string key);
 
 }

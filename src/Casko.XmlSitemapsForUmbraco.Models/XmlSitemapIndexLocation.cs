@@ -6,7 +6,7 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// Represents a single sitemap location within an XML sitemap index.
 /// This class is used to specify the URL of an individual sitemap file that is part of a sitemap index.
 /// </summary>
-public sealed class XmlSiteMapIndexLocation
+public sealed class XmlSitemapIndexLocation
 {
     /// <summary>
     /// Gets or sets the URL of the sitemap file referenced by the sitemap index.

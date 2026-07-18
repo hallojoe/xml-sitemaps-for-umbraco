@@ -8,7 +8,7 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// Represents a single URL entry in an XML sitemap.
 /// This class is used to serialize and deserialize individual URLs, along with their metadata, such as the last modified date, change frequency, priority, and any alternate language versions.
 /// </summary>
-public sealed class XmlSiteMapUrl
+public sealed class XmlSitemapUrl
 {
     /// <summary>
     /// Gets or sets the URL of the page.
@@ -104,21 +104,21 @@ public sealed class XmlSiteMapUrl
 
     /// <summary>
     /// Gets or sets the images associated with this URL.
-    /// Each image is represented by an instance of the <see cref="XmlSiteMapImage"/> class.
+    /// Each image is represented by an instance of the <see cref="XmlSitemapImage"/> class.
     /// </summary>
-    [XmlElement(Type = typeof(XmlSiteMapImage), ElementName = Constants.ImageElement, Namespace = Constants.ImageNamespace)]
-    public List<XmlSiteMapImage>? Images { get; set; }
+    [XmlElement(Type = typeof(XmlSitemapImage), ElementName = Constants.ImageElement, Namespace = Constants.ImageNamespace)]
+    public List<XmlSitemapImage>? Images { get; set; }
 
     /// <summary>
     /// Gets or sets the videos associated with this URL.
-    /// Each video is represented by an instance of the <see cref="XmlSiteMapVideo"/> class.
+    /// Each video is represented by an instance of the <see cref="XmlSitemapVideo"/> class.
     /// </summary>
-    [XmlElement(Type = typeof(XmlSiteMapVideo), ElementName = Constants.VideoElement, Namespace = Constants.VideoNamespace)]
-    public List<XmlSiteMapVideo>? Videos { get; set; }
+    [XmlElement(Type = typeof(XmlSitemapVideo), ElementName = Constants.VideoElement, Namespace = Constants.VideoNamespace)]
+    public List<XmlSitemapVideo>? Videos { get; set; }
 
     /// <summary>
     /// Gets or sets the news metadata associated with this URL.
     /// </summary>
     [XmlElement(Constants.NewsElement, Namespace = Constants.NewsNamespace)]
-    public XmlSiteMapNews? News { get; set; }
+    public XmlSitemapNews? News { get; set; }
 }

@@ -58,7 +58,7 @@ public class StoredXmlSitemapProviderTests
     public async Task GetByRootKeyAsync_DelegatesToDefaultServiceWithoutUsingStorage()
     {
         var rootKey = Guid.NewGuid();
-        var sitemap = new XmlSiteMap();
+        var sitemap = new XmlSitemap();
         _sourceProvider.GetByRootKeyAsync(rootKey).Returns(sitemap);
 
         var result = await _sut.GetByRootKeyAsync(rootKey);
@@ -82,7 +82,7 @@ public class StoredXmlSitemapProviderTests
     [Test]
     public async Task GetConfiguredAsync_WhenStoredSitemapExists_ReturnsDeserializedSitemap()
     {
-        var storedSitemap = new XmlSiteMap();
+        var storedSitemap = new XmlSitemap();
         _xmlSitemapDataSource
             .ReadAsync(Arg.Is<XmlSitemapStorageKey>(key =>
                 key.Kind == XmlSitemapDocumentKind.Sitemap &&
@@ -96,7 +96,7 @@ public class StoredXmlSitemapProviderTests
                 "/media/sitemaps/products.xml",
                 "<urlset />",
                 DateTimeOffset.UtcNow));
-        _xmlSitemapXmlDeserializer.Deserialize<XmlSiteMap>("<urlset />").Returns(storedSitemap);
+        _xmlSitemapXmlDeserializer.Deserialize<XmlSitemap>("<urlset />").Returns(storedSitemap);
 
         var result = await _sut.GetConfiguredAsync("products");
 
@@ -108,7 +108,7 @@ public class StoredXmlSitemapProviderTests
     [Test]
     public async Task GetConfiguredAsync_WhenStoredSitemapIsMissing_RefreshesSitemap()
     {
-        var generatedSitemap = new XmlSiteMap();
+        var generatedSitemap = new XmlSitemap();
         _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
             .Returns(Task.FromResult<XmlSitemapStoredDocument?>(null));
         _xmlSitemapStorageRefreshService.RefreshConfiguredAsync("products").Returns(generatedSitemap);
@@ -122,7 +122,7 @@ public class StoredXmlSitemapProviderTests
     [Test]
     public async Task GetConfiguredAsync_WhenStoredSitemapIsStale_RefreshesSitemap()
     {
-        var generatedSitemap = new XmlSiteMap();
+        var generatedSitemap = new XmlSitemap();
         _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
             .Returns(CreateStoredDocument(CreateSitemapStorageKey(), "<old-urlset />", DateTimeOffset.UtcNow.AddHours(-2)));
         _xmlSitemapStorageRefreshService.RefreshConfiguredAsync("products").Returns(generatedSitemap);
@@ -130,14 +130,14 @@ public class StoredXmlSitemapProviderTests
         var result = await _sut.GetConfiguredAsync("products");
 
         Assert.That(result, Is.SameAs(generatedSitemap));
-        _xmlSitemapXmlDeserializer.DidNotReceive().Deserialize<XmlSiteMap>(Arg.Any<string>());
+        _xmlSitemapXmlDeserializer.DidNotReceive().Deserialize<XmlSitemap>(Arg.Any<string>());
         await _xmlSitemapStorageRefreshService.Received(1).RefreshConfiguredAsync("products");
     }
 
     [Test]
     public async Task GetConfiguredAsync_WhenStaleCheckIsDisabled_ReturnsStoredSitemap()
     {
-        var storedSitemap = new XmlSiteMap();
+        var storedSitemap = new XmlSitemap();
         _sut = CreateService(new XmlSitemapsOptions
         {
             Storage = new XmlSitemapStorageOptions
@@ -154,7 +154,7 @@ public class StoredXmlSitemapProviderTests
         });
         _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
             .Returns(CreateStoredDocument(CreateSitemapStorageKey(), "<urlset />", DateTimeOffset.UtcNow.AddYears(-1)));
-        _xmlSitemapXmlDeserializer.Deserialize<XmlSiteMap>("<urlset />").Returns(storedSitemap);
+        _xmlSitemapXmlDeserializer.Deserialize<XmlSitemap>("<urlset />").Returns(storedSitemap);
 
         var result = await _sut.GetConfiguredAsync("products");
 
@@ -165,7 +165,7 @@ public class StoredXmlSitemapProviderTests
     [Test]
     public async Task GetConfiguredAsync_WhenStoredCustomSitemapExists_ReturnsDeserializedSitemap()
     {
-        var storedSitemap = new XmlSiteMap();
+        var storedSitemap = new XmlSitemap();
         _xmlSitemapDataSource
             .ReadAsync(Arg.Is<XmlSitemapStorageKey>(key =>
                 key.Kind == XmlSitemapDocumentKind.Sitemap &&
@@ -179,7 +179,7 @@ public class StoredXmlSitemapProviderTests
                 "/media/sitemaps/external-products.xml",
                 "<urlset />",
                 DateTimeOffset.UtcNow));
-        _xmlSitemapXmlDeserializer.Deserialize<XmlSiteMap>("<urlset />").Returns(storedSitemap);
+        _xmlSitemapXmlDeserializer.Deserialize<XmlSitemap>("<urlset />").Returns(storedSitemap);
 
         var result = await _sut.GetConfiguredAsync("external-products");
 
@@ -190,7 +190,7 @@ public class StoredXmlSitemapProviderTests
     [Test]
     public async Task GetConfiguredAsync_WhenStoredCustomSitemapIsMissing_RefreshesCustomSitemap()
     {
-        var generatedSitemap = new XmlSiteMap();
+        var generatedSitemap = new XmlSitemap();
         _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
             .Returns(Task.FromResult<XmlSitemapStoredDocument?>(null));
         _xmlSitemapStorageRefreshService.RefreshCustomAsync("external-products").Returns(generatedSitemap);
@@ -204,7 +204,7 @@ public class StoredXmlSitemapProviderTests
     [Test]
     public async Task GetConfiguredAsync_WhenStoredCustomSitemapIsStale_RefreshesCustomSitemap()
     {
-        var generatedSitemap = new XmlSiteMap();
+        var generatedSitemap = new XmlSitemap();
         _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
             .Returns(CreateStoredDocument(CreateCustomSitemapStorageKey(), "<old-urlset />", DateTimeOffset.UtcNow.AddHours(-2)));
         _xmlSitemapStorageRefreshService.RefreshCustomAsync("external-products").Returns(generatedSitemap);
@@ -212,14 +212,14 @@ public class StoredXmlSitemapProviderTests
         var result = await _sut.GetConfiguredAsync("external-products");
 
         Assert.That(result, Is.SameAs(generatedSitemap));
-        _xmlSitemapXmlDeserializer.DidNotReceive().Deserialize<XmlSiteMap>(Arg.Any<string>());
+        _xmlSitemapXmlDeserializer.DidNotReceive().Deserialize<XmlSitemap>(Arg.Any<string>());
         await _xmlSitemapStorageRefreshService.Received(1).RefreshCustomAsync("external-products");
     }
 
     [Test]
     public async Task GetIndexAsync_WhenStoredIndexExists_ReturnsDeserializedIndex()
     {
-        var storedIndex = new XmlSiteMapIndex();
+        var storedIndex = new XmlSitemapIndex();
         _xmlSitemapDataSource
             .ReadAsync(Arg.Is<XmlSitemapStorageKey>(key =>
                 key.Kind == XmlSitemapDocumentKind.SitemapIndex &&
@@ -233,7 +233,7 @@ public class StoredXmlSitemapProviderTests
                 "/media/sitemaps/main.xml",
                 "<sitemapindex />",
                 DateTimeOffset.UtcNow));
-        _xmlSitemapXmlDeserializer.Deserialize<XmlSiteMapIndex>("<sitemapindex />").Returns(storedIndex);
+        _xmlSitemapXmlDeserializer.Deserialize<XmlSitemapIndex>("<sitemapindex />").Returns(storedIndex);
 
         var result = await _sut.GetIndexAsync("main");
 
@@ -245,7 +245,7 @@ public class StoredXmlSitemapProviderTests
     [Test]
     public async Task GetIndexAsync_WhenStoredIndexIsMissing_RefreshesIndex()
     {
-        var generatedIndex = new XmlSiteMapIndex();
+        var generatedIndex = new XmlSitemapIndex();
         _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
             .Returns(Task.FromResult<XmlSitemapStoredDocument?>(null));
         _xmlSitemapStorageRefreshService.RefreshIndexAsync("main").Returns(generatedIndex);
@@ -259,7 +259,7 @@ public class StoredXmlSitemapProviderTests
     [Test]
     public async Task GetIndexAsync_WhenStoredIndexIsStale_RefreshesIndex()
     {
-        var generatedIndex = new XmlSiteMapIndex();
+        var generatedIndex = new XmlSitemapIndex();
         _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
             .Returns(CreateStoredDocument(CreateIndexStorageKey(), "<old-index />", DateTimeOffset.UtcNow.AddHours(-2)));
         _xmlSitemapStorageRefreshService.RefreshIndexAsync("main").Returns(generatedIndex);
@@ -267,7 +267,7 @@ public class StoredXmlSitemapProviderTests
         var result = await _sut.GetIndexAsync("main");
 
         Assert.That(result, Is.SameAs(generatedIndex));
-        _xmlSitemapXmlDeserializer.DidNotReceive().Deserialize<XmlSiteMapIndex>(Arg.Any<string>());
+        _xmlSitemapXmlDeserializer.DidNotReceive().Deserialize<XmlSitemapIndex>(Arg.Any<string>());
         await _xmlSitemapStorageRefreshService.Received(1).RefreshIndexAsync("main");
     }
 

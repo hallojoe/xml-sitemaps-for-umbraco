@@ -53,7 +53,7 @@ public class XmlSitemapStorageRefreshServiceTests
     [Test]
     public async Task RefreshConfiguredAsync_RebuildsConfiguredSitemapAndWritesStorageKey()
     {
-        var sitemap = new XmlSiteMap();
+        var sitemap = new XmlSitemap();
         _sourceProvider.GetConfiguredAsync("products").Returns(sitemap);
         _xmlSitemapXmlSerializer.Serialize(sitemap).Returns("<urlset />");
 
@@ -71,7 +71,7 @@ public class XmlSitemapStorageRefreshServiceTests
     [Test]
     public async Task RefreshIndexAsync_RebuildsConfiguredIndexAndWritesStorageKey()
     {
-        var index = new XmlSiteMapIndex();
+        var index = new XmlSitemapIndex();
         _sourceProvider.GetIndexAsync("main").Returns(index);
         _xmlSitemapXmlSerializer.Serialize(index).Returns("<sitemapindex />");
 
@@ -89,7 +89,7 @@ public class XmlSitemapStorageRefreshServiceTests
     [Test]
     public async Task RefreshCustomAsync_RebuildsConfiguredCustomSitemapAndWritesStorageKey()
     {
-        var sitemap = new XmlSiteMap();
+        var sitemap = new XmlSitemap();
         _sourceProvider.GetConfiguredAsync("external-products").Returns(sitemap);
         _xmlSitemapXmlSerializer.Serialize(sitemap).Returns("<custom-urlset />");
 
@@ -107,10 +107,10 @@ public class XmlSitemapStorageRefreshServiceTests
     [Test]
     public async Task RefreshAllAsync_RefreshesSitemapsBeforeCustomSitemapsBeforeIndexes()
     {
-        var products = new XmlSiteMap();
-        var articles = new XmlSiteMap();
-        var externalProducts = new XmlSiteMap();
-        var index = new XmlSiteMapIndex();
+        var products = new XmlSitemap();
+        var articles = new XmlSitemap();
+        var externalProducts = new XmlSitemap();
+        var index = new XmlSitemapIndex();
         _sourceProvider.GetConfiguredAsync("products").Returns(products);
         _sourceProvider.GetConfiguredAsync("articles").Returns(articles);
         _sourceProvider.GetConfiguredAsync("external-products").Returns(externalProducts);

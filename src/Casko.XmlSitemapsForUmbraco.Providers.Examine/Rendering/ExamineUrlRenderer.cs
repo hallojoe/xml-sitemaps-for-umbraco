@@ -6,7 +6,7 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;
 
 public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExamineUrlRenderer
 {
-    public IEnumerable<XmlSiteMapUrl> Render(
+    public IEnumerable<XmlSitemapUrl> Render(
         IEnumerable<CmsUrl> urls,
         string defaultLanguageCode,
         IReadOnlyCollection<string> alternativeLanguageCodes,
@@ -26,7 +26,7 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
                 continue;
             }
 
-            yield return new XmlSiteMapUrl
+            yield return new XmlSitemapUrl
             {
                 Location = BuildUrl(primaryUrl, hostname),
                 LastModified = primaryUrl.LastUpdate,

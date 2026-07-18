@@ -4,7 +4,7 @@ public static class Constants
 {
     public const string Empty = "";
     public const string DateFormat = "yyyy-MM-dd";
-    public const string W3cDateTimeFormat = "yyyy-MM-ddTHH:mm:sszzz";
+    public const string W3CDateTimeFormat = "yyyy-MM-ddTHH:mm:sszzz";
     public const string XmlMimeType = "text/xml";
     public const string Namespace = "http://www.sitemaps.org/schemas/sitemap/0.9";
     public const string XhtmlNamespace = "http://www.w3.org/1999/xhtml";

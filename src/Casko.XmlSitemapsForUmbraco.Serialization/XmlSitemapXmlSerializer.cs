@@ -8,12 +8,12 @@ public sealed class XmlSitemapXmlSerializer : IXmlSitemapXmlSerializer
 {
     /// <inheritdoc />
     public string Serialize<T>(T model)
-        where T : IXmlSiteMapModel
+        where T : IXmlSitemapModel
     {
         var serializer = new XmlSerializer(typeof(T));
         using var stream = new MemoryStream();
 
-        if (model is XmlSiteMap siteMap)
+        if (model is XmlSitemap siteMap)
         {
             serializer.Serialize(stream, model, siteMap.GetNamespaces());
         }

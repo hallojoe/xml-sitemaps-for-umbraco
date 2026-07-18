@@ -6,13 +6,13 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// <summary>
 /// Represents the news metadata attached to a sitemap URL.
 /// </summary>
-public sealed class XmlSiteMapNews
+public sealed class XmlSitemapNews
 {
     /// <summary>
     /// Gets or sets the publication metadata for the news article.
     /// </summary>
     [XmlElement(Constants.PublicationElement, Namespace = Constants.NewsNamespace)]
-    public required XmlSiteMapNewsPublication Publication { get; set; }
+    public required XmlSitemapNewsPublication Publication { get; set; }
 
     /// <summary>
     /// Gets or sets the original publication date of the article.
@@ -26,7 +26,7 @@ public sealed class XmlSiteMapNews
     [XmlElement(Constants.PublicationDateElement, Namespace = Constants.NewsNamespace)]
     public string PublicationDateSerialized
     {
-        get => PublicationDate.ToString(Constants.W3cDateTimeFormat, CultureInfo.InvariantCulture);
+        get => PublicationDate.ToString(Constants.W3CDateTimeFormat, CultureInfo.InvariantCulture);
         set => PublicationDate = DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
             ? date
             : default;

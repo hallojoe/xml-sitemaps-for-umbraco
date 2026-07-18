@@ -35,7 +35,7 @@ public sealed class XmlSitemapStorageRefreshService(
     }
 
     /// <inheritdoc />
-    public async Task<IXmlSiteMapModel> RefreshConfiguredAsync(string key, CancellationToken cancellationToken = default)
+    public async Task<IXmlSitemapModel> RefreshConfiguredAsync(string key, CancellationToken cancellationToken = default)
     {
         if (!xmlSitemapOptions.Value.Sitemaps.TryGetValue(key, out var sitemapOptions))
         {
@@ -43,7 +43,7 @@ public sealed class XmlSitemapStorageRefreshService(
         }
 
         var xmlSiteMap = await sourceProvider.GetConfiguredAsync(key);
-        if (xmlSiteMap is XmlSiteMap sitemap)
+        if (xmlSiteMap is XmlSitemap sitemap)
         {
             var storageKey = new XmlSitemapStorageKey(
                 XmlSitemapDocumentKind.Sitemap,
@@ -57,7 +57,7 @@ public sealed class XmlSitemapStorageRefreshService(
     }
 
     /// <inheritdoc />
-    public async Task<IXmlSiteMapModel> RefreshCustomAsync(string key, CancellationToken cancellationToken = default)
+    public async Task<IXmlSitemapModel> RefreshCustomAsync(string key, CancellationToken cancellationToken = default)
     {
         if (!xmlSitemapOptions.Value.CustomSitemaps.TryGetValue(key, out var sitemapOptions))
         {
@@ -65,7 +65,7 @@ public sealed class XmlSitemapStorageRefreshService(
         }
 
         var xmlSiteMap = await sourceProvider.GetConfiguredAsync(key);
-        if (xmlSiteMap is XmlSiteMap sitemap)
+        if (xmlSiteMap is XmlSitemap sitemap)
         {
             var storageKey = new XmlSitemapStorageKey(
                 XmlSitemapDocumentKind.Sitemap,
@@ -79,7 +79,7 @@ public sealed class XmlSitemapStorageRefreshService(
     }
 
     /// <inheritdoc />
-    public async Task<IXmlSiteMapModel> RefreshIndexAsync(string key, CancellationToken cancellationToken = default)
+    public async Task<IXmlSitemapModel> RefreshIndexAsync(string key, CancellationToken cancellationToken = default)
     {
         if (!xmlSitemapOptions.Value.Indexes.TryGetValue(key, out var sitemapIndexOptions))
         {
@@ -87,7 +87,7 @@ public sealed class XmlSitemapStorageRefreshService(
         }
 
         var xmlSiteMap = await sourceProvider.GetIndexAsync(key);
-        if (xmlSiteMap is XmlSiteMapIndex sitemapIndex)
+        if (xmlSiteMap is XmlSitemapIndex sitemapIndex)
         {
             var storageKey = new XmlSitemapStorageKey(
                 XmlSitemapDocumentKind.SitemapIndex,

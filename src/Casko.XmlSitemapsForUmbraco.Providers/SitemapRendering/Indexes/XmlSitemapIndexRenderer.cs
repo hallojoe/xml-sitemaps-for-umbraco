@@ -6,14 +6,14 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
 
 public sealed class XmlSitemapIndexRenderer(IXmlSitemapUrlBuilder urlBuilder) : IXmlSitemapIndexRenderer
 {
-    public XmlSiteMapIndex Render(XmlSitemapIndexRenderContext context)
+    public XmlSitemapIndex Render(XmlSitemapIndexRenderContext context)
     {
-        return new XmlSiteMapIndex
+        return new XmlSitemapIndex
         {
             Locations = context.SitemapAliases
                 .Select(alias => ResolvePublicAlias(alias, context.PublicSitemapAliases))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select(publicAlias => new XmlSiteMapIndexLocation
+                .Select(publicAlias => new XmlSitemapIndexLocation
                 {
                     Location = context.LocationMode == XmlSitemapIndexLocationMode.LegacyXmlFile
                         ? urlBuilder.BuildLegacySitemapFileUrl(publicAlias, context.Hostname)

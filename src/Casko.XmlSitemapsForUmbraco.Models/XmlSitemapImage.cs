@@ -5,7 +5,7 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// <summary>
 /// Represents an image entry within an XML sitemap URL.
 /// </summary>
-public sealed class XmlSiteMapImage
+public sealed class XmlSitemapImage
 {
     /// <summary>
     /// Gets or sets the URL of the image.

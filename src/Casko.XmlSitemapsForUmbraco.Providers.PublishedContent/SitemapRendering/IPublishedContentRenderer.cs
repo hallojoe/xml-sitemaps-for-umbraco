@@ -10,5 +10,5 @@ public interface IPublishedContentRenderer
     /// <summary>
     /// Builds a sitemap from the supplied render context.
     /// </summary>
-    public XmlSiteMap Render(PublishedContentRenderContext context);
+    public XmlSitemap Render(PublishedContentRenderContext context);
 }

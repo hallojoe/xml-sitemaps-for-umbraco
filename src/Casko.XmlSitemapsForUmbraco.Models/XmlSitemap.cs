@@ -7,7 +7,7 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// This class is used to serialize and deserialize the sitemap, which helps search engines understand the structure of a website.
 /// </summary>
 [XmlRoot(Constants.UrlSetElement, Namespace = Constants.Namespace)]
-public sealed class XmlSiteMap : IXmlSiteMapModel
+public sealed class XmlSitemap : IXmlSitemapModel
 {
     /// <summary>
     /// Gets the XML namespaces used when serializing sitemap extension elements.
@@ -17,10 +17,10 @@ public sealed class XmlSiteMap : IXmlSiteMapModel
 
     /// <summary>
     /// Gets or sets the list of URLs included in the sitemap.
-    /// Each URL is represented by an instance of the <see cref="XmlSiteMapUrl"/> class, which contains the details of a single page.
+    /// Each URL is represented by an instance of the <see cref="XmlSitemapUrl"/> class, which contains the details of a single page.
     /// </summary>
-    [XmlElement(Constants.UrlElement, Type = typeof(XmlSiteMapUrl))]
-    public List<XmlSiteMapUrl> Urls { get; set; } = new();
+    [XmlElement(Constants.UrlElement, Type = typeof(XmlSitemapUrl))]
+    public List<XmlSitemapUrl> Urls { get; set; } = new();
 
     public XmlSerializerNamespaces GetNamespaces()
     {

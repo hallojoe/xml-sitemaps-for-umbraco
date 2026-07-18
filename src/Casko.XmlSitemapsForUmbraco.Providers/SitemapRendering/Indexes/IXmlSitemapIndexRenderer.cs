@@ -11,5 +11,5 @@ public interface IXmlSitemapIndexRenderer
     /// <summary>
     /// Builds a sitemap index from the supplied render context.
     /// </summary>
-    public XmlSiteMapIndex Render(XmlSitemapIndexRenderContext context);
+    public XmlSitemapIndex Render(XmlSitemapIndexRenderContext context);
 }

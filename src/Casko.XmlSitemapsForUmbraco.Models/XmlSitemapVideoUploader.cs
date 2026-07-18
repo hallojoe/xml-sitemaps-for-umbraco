@@ -5,7 +5,7 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// <summary>
 /// Represents uploader metadata for a video sitemap entry.
 /// </summary>
-public sealed class XmlSiteMapVideoUploader
+public sealed class XmlSitemapVideoUploader
 {
     /// <summary>
     /// Gets or sets the URL with more information about the uploader.

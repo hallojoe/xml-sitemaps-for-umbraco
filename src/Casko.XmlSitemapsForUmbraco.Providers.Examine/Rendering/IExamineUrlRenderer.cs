@@ -11,7 +11,7 @@ public interface IExamineUrlRenderer
     /// <summary>
     /// Builds sitemap URLs from the supplied CMS URLs.
     /// </summary>
-    public IEnumerable<XmlSiteMapUrl> Render(
+    public IEnumerable<XmlSitemapUrl> Render(
         IEnumerable<CmsUrl> urls,
         string defaultLanguageCode,
         IReadOnlyCollection<string> alternativeLanguageCodes,

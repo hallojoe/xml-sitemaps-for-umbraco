@@ -16,11 +16,11 @@ public class XmlResultTests
         await using var responseStream = new MemoryStream();
         httpContext.Response.Body = responseStream;
 
-        var result = new XmlResult<XmlSiteMap>(new XmlSiteMap
+        var result = new XmlResult<XmlSitemap>(new XmlSitemap
         {
             Urls =
             [
-                new XmlSiteMapUrl
+                new XmlSitemapUrl
                 {
                     Location = "https://www.example.com/",
                     CultureLinks =

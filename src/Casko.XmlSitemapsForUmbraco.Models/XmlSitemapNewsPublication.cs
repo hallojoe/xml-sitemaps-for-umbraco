@@ -5,7 +5,7 @@ namespace Casko.XmlSitemapsForUmbraco.Models;
 /// <summary>
 /// Represents publication metadata for a news sitemap entry.
 /// </summary>
-public sealed class XmlSiteMapNewsPublication
+public sealed class XmlSitemapNewsPublication
 {
     /// <summary>
     /// Gets or sets the name of the publication.

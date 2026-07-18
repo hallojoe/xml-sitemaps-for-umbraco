@@ -20,25 +20,25 @@ public sealed class ExamineXmlSitemapProvider(
     IEnumerable<IXmlSitemapCustomProvider> customProviders) : IXmlSitemapSourceProvider
 {
     /// <inheritdoc />
-    public IXmlSiteMapModel GetByRootKey(Guid rootKey)
+    public IXmlSitemapModel GetByRootKey(Guid rootKey)
     {
         return GetByRootKeyAsync(rootKey).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
-    public async Task<IXmlSiteMapModel> GetByRootKeyAsync(Guid rootKey)
+    public async Task<IXmlSitemapModel> GetByRootKeyAsync(Guid rootKey)
     {
         return await RenderXmlSiteMapAsync(rootKey, hostname: null, culture: null, sitemapOptions: null);
     }
 
     /// <inheritdoc />
-    public IXmlSiteMapModel GetByPath(string path, string? culture = null, string? hostname = null)
+    public IXmlSitemapModel GetByPath(string path, string? culture = null, string? hostname = null)
     {
         return GetByPathAsync(path, culture, hostname).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
-    public async Task<IXmlSiteMapModel> GetByPathAsync(string path, string? culture = null, string? hostname = null)
+    public async Task<IXmlSitemapModel> GetByPathAsync(string path, string? culture = null, string? hostname = null)
     {
         var rootContent = publishedContentService.GetContentByPath(path, hostname, culture);
         if (rootContent is null)
@@ -50,13 +50,13 @@ public sealed class ExamineXmlSitemapProvider(
     }
 
     /// <inheritdoc />
-    public IXmlSiteMapModel GetConfigured(string key)
+    public IXmlSitemapModel GetConfigured(string key)
     {
         return GetConfiguredAsync(key).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
-    public async Task<IXmlSiteMapModel> GetConfiguredAsync(string key)
+    public async Task<IXmlSitemapModel> GetConfiguredAsync(string key)
     {
         var configuredSitemaps = xmlSitemapOptions.Value;
         if (!configuredSitemaps.Sitemaps.TryGetValue(key, out var sitemapOptions))
@@ -78,7 +78,7 @@ public sealed class ExamineXmlSitemapProvider(
     }
 
     /// <inheritdoc />
-    public IXmlSiteMapModel GetIndex(string key)
+    public IXmlSitemapModel GetIndex(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
         {
@@ -99,12 +99,12 @@ public sealed class ExamineXmlSitemapProvider(
     }
 
     /// <inheritdoc />
-    public Task<IXmlSiteMapModel> GetIndexAsync(string key)
+    public Task<IXmlSitemapModel> GetIndexAsync(string key)
     {
         return Task.FromResult(GetIndex(key));
     }
 
-    private async Task<XmlSiteMap> GetCustomConfiguredAsync(string sitemapKey)
+    private async Task<XmlSitemap> GetCustomConfiguredAsync(string sitemapKey)
     {
         var configuredSitemaps = xmlSitemapOptions.Value;
         if (!configuredSitemaps.CustomSitemaps.TryGetValue(sitemapKey, out var sitemapOptions))
@@ -130,7 +130,7 @@ public sealed class ExamineXmlSitemapProvider(
             sitemapOptions.Settings));
     }
 
-    private async Task<XmlSiteMap> RenderXmlSiteMapAsync(
+    private async Task<XmlSitemap> RenderXmlSiteMapAsync(
         Guid rootKey,
         string? hostname,
         string? culture,

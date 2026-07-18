@@ -10,5 +10,5 @@ public interface IExamineXmlSitemapRenderer
     /// <summary>
     /// Builds a sitemap from the supplied render context.
     /// </summary>
-    public XmlSiteMap Render(ExamineXmlSitemapRenderContext context);
+    public XmlSitemap Render(ExamineXmlSitemapRenderContext context);
 }

@@ -15,15 +15,15 @@ public interface IXmlSitemapStorageRefreshService
     /// <summary>
     /// Rebuilds and stores a configured XML sitemap.
     /// </summary>
-    public Task<IXmlSiteMapModel> RefreshConfiguredAsync(string key, CancellationToken cancellationToken = default);
+    public Task<IXmlSitemapModel> RefreshConfiguredAsync(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Rebuilds and stores a configured custom XML sitemap.
     /// </summary>
-    public Task<IXmlSiteMapModel> RefreshCustomAsync(string key, CancellationToken cancellationToken = default);
+    public Task<IXmlSitemapModel> RefreshCustomAsync(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Rebuilds and stores a configured XML sitemap index.
     /// </summary>
-    public Task<IXmlSiteMapModel> RefreshIndexAsync(string key, CancellationToken cancellationToken = default);
+    public Task<IXmlSitemapModel> RefreshIndexAsync(string key, CancellationToken cancellationToken = default);
 }

@@ -10,5 +10,5 @@ public interface IXmlSitemapUrlSetRenderer
     /// <summary>
     /// Builds a sitemap from the supplied URLs.
     /// </summary>
-    public XmlSiteMap Render(IEnumerable<XmlSiteMapUrl> urls);
+    public XmlSitemap Render(IEnumerable<XmlSitemapUrl> urls);
 }
