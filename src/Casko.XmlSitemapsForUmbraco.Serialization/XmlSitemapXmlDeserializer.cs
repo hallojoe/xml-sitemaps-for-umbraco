@@ -1,6 +1,7 @@
 using System.Xml.Serialization;
+using Casko.XmlSitemapsForUmbraco.Models;
 
-namespace Casko.XmlSitemapsForUmbraco.Models.Serialization;
+namespace Casko.XmlSitemapsForUmbraco.Serialization;
 
 /// <inheritdoc />
 public sealed class XmlSitemapXmlDeserializer : IXmlSitemapXmlDeserializer
