@@ -1,4 +1,4 @@
-namespace Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Indexing;
+namespace Casko.XmlSitemapsForUmbraco.Providers.Examine.Indexing;
 
 internal class ExternalIndexFieldNameConstants
 {

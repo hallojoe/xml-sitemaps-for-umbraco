@@ -8,9 +8,9 @@ public sealed class PublishedContentUrlRenderer(
     IPublishedContentUrlBuilder urlBuilder,
     IPublishedContentUrlCultureLinkRenderer cultureLinkRenderer) : IPublishedContentUrlRenderer
 {
-    public XmlSiteMapUrl Render(IPublishedContent content, XmlSitemapUrlRenderContext context)
+    public XmlSitemapUrl Render(IPublishedContent content, XmlSitemapUrlRenderContext context)
     {
-        return new XmlSiteMapUrl
+        return new XmlSitemapUrl
         {
             Location = urlBuilder.BuildContentUrl(content, context.DefaultLanguageCode, context.Hostname),
             LastModified = content.UpdateDate,

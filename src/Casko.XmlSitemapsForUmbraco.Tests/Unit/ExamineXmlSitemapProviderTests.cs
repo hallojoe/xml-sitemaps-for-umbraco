@@ -1,10 +1,11 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
-using Casko.XmlSitemapsForUmbraco.Common.Exceptions; 
-using Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Urls;
+using Casko.XmlSitemapsForUmbraco.Common;
+using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
@@ -12,7 +13,9 @@ using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.UrlSets;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -42,7 +45,7 @@ public class ExamineXmlSitemapProviderTests
         ]);
         var sut = CreateProvider(new XmlSitemapsOptions());
 
-        var result = await sut.GetByRootKeyAsync(rootKey) as XmlSiteMap;
+        var result = await sut.GetByRootKeyAsync(rootKey) as XmlSitemap;
 
         Assert.That(result, Is.Not.Null);
         Assert.Multiple(() =>
@@ -76,7 +79,7 @@ public class ExamineXmlSitemapProviderTests
         ]);
         var sut = CreateProvider(new XmlSitemapsOptions());
 
-        var result = await sut.GetByPathAsync("/products", "da", "https://example.com") as XmlSiteMap;
+        var result = await sut.GetByPathAsync("/products", "da", "https://example.com") as XmlSitemap;
 
         Assert.That(result!.Urls[0].Location, Is.EqualTo("https://example.com/da/produkter"));
         await _cmsUrlService.Received(1).GetUrlsByKeyAsync(rootKey);
@@ -104,7 +107,7 @@ public class ExamineXmlSitemapProviderTests
             }
         });
 
-        var result = await sut.GetConfiguredAsync("products") as XmlSiteMap;
+        var result = await sut.GetConfiguredAsync("products") as XmlSitemap;
 
         Assert.That(result!.Urls[0].Location, Is.EqualTo("https://example.com/da/produkter"));
         _publishedContentService.Received(1).GetContentByPath("/products", "https://example.com", "da");
@@ -121,9 +124,31 @@ public class ExamineXmlSitemapProviderTests
     }
 
     [Test]
+    public async Task GetConfiguredAsync_WhenSingleModeUsesImplicitSitemapKey_ResolvesRootPath()
+    {
+        var rootKey = Guid.NewGuid();
+        var root = CreateContent(rootKey);
+        _publishedContentService.GetContentByPath("/").Returns(root);
+        _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
+            new CmsUrl("/", new DateTime(2026, 5, 14), "https://ignored.example.com", "en", Id: 10)
+        ]);
+        var sut = CreateProvider(
+            new XmlSitemapsOptions(),
+            webRoutingSettings: new WebRoutingSettings
+            {
+                UmbracoApplicationUrl = "https://example.com"
+            });
+
+        var result = await sut.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey) as XmlSitemap;
+
+        Assert.That(result!.Urls[0].Location, Is.EqualTo("https://example.com/"));
+        _publishedContentService.Received(1).GetContentByPath("/");
+    }
+
+    [Test]
     public async Task GetConfiguredAsync_WhenKeyIsCustomSitemap_CallsConfiguredProviderWithContext()
     {
-        var sitemap = new XmlSiteMap();
+        var sitemap = new XmlSitemap();
         XmlSitemapCustomProviderContext? context = null;
         _customProvider
             .GetSitemapAsync(Arg.Do<XmlSitemapCustomProviderContext>(value => context = value))
@@ -177,7 +202,7 @@ public class ExamineXmlSitemapProviderTests
             }
         });
 
-        var result = sut.GetIndex("main") as XmlSiteMapIndex;
+        var result = sut.GetIndex("main") as XmlSitemapIndex;
 
         Assert.That(result!.Locations.Select(location => location.Location), Is.EqualTo(new[]
         {
@@ -224,7 +249,7 @@ public class ExamineXmlSitemapProviderTests
             IncludedCultures = ["da"]
         });
 
-        var result = await sut.GetByRootKeyAsync(rootKey) as XmlSiteMap;
+        var result = await sut.GetByRootKeyAsync(rootKey) as XmlSitemap;
 
         Assert.That(result!.Urls[0].CultureLinks, Is.Empty);
     }
@@ -239,7 +264,7 @@ public class ExamineXmlSitemapProviderTests
         ]);
         var sut = CreateProvider(new XmlSitemapsOptions());
 
-        var result = await sut.GetByRootKeyAsync(rootKey) as XmlSiteMap;
+        var result = await sut.GetByRootKeyAsync(rootKey) as XmlSitemap;
 
         Assert.That(result!.Urls, Has.Count.EqualTo(1));
         Assert.That(result.Urls[0].Location, Is.EqualTo("/SAME"));
@@ -247,12 +272,14 @@ public class ExamineXmlSitemapProviderTests
 
     private ExamineXmlSitemapProvider CreateProvider(
         XmlSitemapsOptions options,
-        IEnumerable<IXmlSitemapCustomProvider>? customProviders = null)
+        IEnumerable<IXmlSitemapCustomProvider>? customProviders = null,
+        WebRoutingSettings? webRoutingSettings = null)
     {
         var urlBuilder = new XmlSitemapUrlBuilder();
         var urlSetRenderer = new XmlSitemapUrlSetRenderer();
 
         return new ExamineXmlSitemapProvider(
+            Options.Create(webRoutingSettings ?? new WebRoutingSettings()),
             Options.Create(options),
             _publishedContentService,
             _cmsUrlService,

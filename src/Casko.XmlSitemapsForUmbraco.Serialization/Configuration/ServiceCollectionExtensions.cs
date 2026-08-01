@@ -1,4 +1,3 @@
-using Casko.XmlSitemapsForUmbraco.Models.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Casko.XmlSitemapsForUmbraco.Serialization.Configuration;

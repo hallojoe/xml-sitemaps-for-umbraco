@@ -34,7 +34,7 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
     [Test]
     public async Task GetConfiguredAsync_WhenKeyIsCustomSitemap_CallsConfiguredProviderWithContext()
     {
-        var sitemap = new XmlSiteMap();
+        var sitemap = new XmlSitemap();
         XmlSitemapCustomProviderContext? context = null;
         _customProvider
             .GetSitemapAsync(Arg.Do<XmlSitemapCustomProviderContext>(value => context = value))

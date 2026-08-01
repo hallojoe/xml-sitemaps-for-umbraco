@@ -1,6 +1,6 @@
 using System.Globalization;
 using Casko.XmlSitemapsForUmbraco.Models;
-using Casko.XmlSitemapsForUmbraco.Models.Serialization;
+using Casko.XmlSitemapsForUmbraco.Serialization;
 using NUnit.Framework;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
@@ -13,11 +13,11 @@ public class XmlSitemapXmlSerializerTests
     [Test]
     public void Serialize_WhenSitemapModelIsProvided_ReturnsUrlSetXml()
     {
-        var result = _sut.Serialize(new XmlSiteMap
+        var result = _sut.Serialize(new XmlSitemap
         {
             Urls =
             [
-                new XmlSiteMapUrl
+                new XmlSitemapUrl
                 {
                     Location = "https://www.example.com/"
                 }
@@ -36,11 +36,11 @@ public class XmlSitemapXmlSerializerTests
     [Test]
     public void Serialize_WhenSitemapIndexModelIsProvided_ReturnsSitemapIndexXml()
     {
-        var result = _sut.Serialize(new XmlSiteMapIndex
+        var result = _sut.Serialize(new XmlSitemapIndex
         {
             Locations =
             [
-                new XmlSiteMapIndexLocation
+                new XmlSitemapIndexLocation
                 {
                     Location = "https://www.example.com/sitemap.xml"
                 }
@@ -55,11 +55,11 @@ public class XmlSitemapXmlSerializerTests
     public void Serialize_WhenSitemapContainsExtensions_ReturnsExtensionXml()
     {
         var publicationDate = new DateTimeOffset(2026, 7, 2, 14, 30, 45, TimeSpan.FromHours(2));
-        var result = _sut.Serialize(new XmlSiteMap
+        var result = _sut.Serialize(new XmlSitemap
         {
             Urls =
             [
-                new XmlSiteMapUrl
+                new XmlSitemapUrl
                 {
                     Location = "https://www.example.com/articles/example",
                     CultureLinks =
@@ -72,12 +72,12 @@ public class XmlSitemapXmlSerializerTests
                     ],
                     Images =
                     [
-                        new XmlSiteMapImage { Location = "https://cdn.example.com/image-1.jpg" },
-                        new XmlSiteMapImage { Location = "https://cdn.example.com/image-2.jpg" }
+                        new XmlSitemapImage { Location = "https://cdn.example.com/image-1.jpg" },
+                        new XmlSitemapImage { Location = "https://cdn.example.com/image-2.jpg" }
                     ],
                     Videos =
                     [
-                        new XmlSiteMapVideo
+                        new XmlSitemapVideo
                         {
                             ThumbnailLocation = "https://cdn.example.com/video-thumb.jpg",
                             Title = "Example video",
@@ -90,9 +90,9 @@ public class XmlSitemapXmlSerializerTests
                             Tags = ["first-tag", "second-tag"]
                         }
                     ],
-                    News = new XmlSiteMapNews
+                    News = new XmlSitemapNews
                     {
-                        Publication = new XmlSiteMapNewsPublication
+                        Publication = new XmlSitemapNewsPublication
                         {
                             Name = "The Example Times",
                             Language = "en"
@@ -128,23 +128,23 @@ public class XmlSitemapXmlSerializerTests
         Assert.That(result, Does.Contain("<news:name>The Example Times</news:name>"));
         Assert.That(result, Does.Contain("<news:language>en</news:language>"));
         Assert.That(result, Does.Contain("<news:title>Companies A, B in Merger Talks</news:title>"));
-        Assert.That(result, Does.Contain($"<video:publication_date>{publicationDate.ToString(Constants.W3cDateTimeFormat, CultureInfo.InvariantCulture)}</video:publication_date>"));
-        Assert.That(result, Does.Contain($"<news:publication_date>{publicationDate.ToString(Constants.W3cDateTimeFormat, CultureInfo.InvariantCulture)}</news:publication_date>"));
+        Assert.That(result, Does.Contain($"<video:publication_date>{publicationDate.ToString(Constants.W3CDateTimeFormat, CultureInfo.InvariantCulture)}</video:publication_date>"));
+        Assert.That(result, Does.Contain($"<news:publication_date>{publicationDate.ToString(Constants.W3CDateTimeFormat, CultureInfo.InvariantCulture)}</news:publication_date>"));
     }
 
     [Test]
     public void Serialize_WhenVideoContainsOnlyRequiredFields_OmitsUnsetOptionalElements()
     {
-        var result = _sut.Serialize(new XmlSiteMap
+        var result = _sut.Serialize(new XmlSitemap
         {
             Urls =
             [
-                new XmlSiteMapUrl
+                new XmlSitemapUrl
                 {
                     Location = "https://www.example.com/videos/example",
                     Videos =
                     [
-                        new XmlSiteMapVideo
+                        new XmlSitemapVideo
                         {
                             ThumbnailLocation = "https://cdn.example.com/required-thumb.jpg",
                             Title = "Required only",
@@ -176,7 +176,7 @@ public class XmlSitemapXmlSerializerTests
         var publicationDate = new DateTimeOffset(2026, 7, 2, 8, 9, 10, TimeSpan.FromHours(2));
         var expirationDate = new DateTimeOffset(2026, 7, 5, 11, 12, 13, TimeSpan.FromHours(2));
 
-        var video = new XmlSiteMapVideo
+        var video = new XmlSitemapVideo
         {
             ThumbnailLocation = "https://cdn.example.com/thumb.jpg",
             Title = "Formatting example",
@@ -189,8 +189,8 @@ public class XmlSitemapXmlSerializerTests
             Live = true
         };
 
-        Assert.That(video.PublicationDateSerialized, Is.EqualTo(publicationDate.ToString(Constants.W3cDateTimeFormat, CultureInfo.InvariantCulture)));
-        Assert.That(video.ExpirationDateSerialized, Is.EqualTo(expirationDate.ToString(Constants.W3cDateTimeFormat, CultureInfo.InvariantCulture)));
+        Assert.That(video.PublicationDateSerialized, Is.EqualTo(publicationDate.ToString(Constants.W3CDateTimeFormat, CultureInfo.InvariantCulture)));
+        Assert.That(video.ExpirationDateSerialized, Is.EqualTo(expirationDate.ToString(Constants.W3CDateTimeFormat, CultureInfo.InvariantCulture)));
         Assert.That(video.FamilyFriendlySerialized, Is.EqualTo(Constants.NoValue));
         Assert.That(video.RequiresSubscriptionSerialized, Is.EqualTo(Constants.YesValue));
         Assert.That(video.LiveSerialized, Is.EqualTo(Constants.YesValue));

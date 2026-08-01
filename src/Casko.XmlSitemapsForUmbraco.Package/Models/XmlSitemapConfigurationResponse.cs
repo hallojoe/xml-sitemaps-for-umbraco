@@ -1,4 +1,5 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common;
 
 namespace Casko.XmlSitemapsForUmbraco.Package.Models;
 
@@ -18,6 +19,11 @@ public sealed record XmlSitemapConfigurationResponse
     public required bool RewritesEnabled { get; init; }
 
     /// <summary>
+    /// Gets the configured sitemap mode.
+    /// </summary>
+    public required XmlSitemapsMode Mode { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether alternate links are rendered for single-culture sitemaps.
     /// </summary>
     public required bool RenderAlternateLinksForSingleCultureSitemaps { get; init; }
@@ -26,6 +32,11 @@ public sealed record XmlSitemapConfigurationResponse
     /// Gets the configured root node search level.
     /// </summary>
     public required int RootNodeSearchLevel { get; init; }
+
+    /// <summary>
+    /// Gets document type aliases used to discover the root node in single mode.
+    /// </summary>
+    public required IReadOnlyList<string> RootContentTypeAliases { get; init; }
 
     /// <summary>
     /// Gets the number of configured content sitemaps.
@@ -76,10 +87,12 @@ public sealed record XmlSitemapConfigurationResponse
         {
             Enabled = options.Enabled,
             RewritesEnabled = options.RewritesEnabled,
+            Mode = options.Mode,
             RenderAlternateLinksForSingleCultureSitemaps =
                 options.RenderAlternateLinksForSingleCultureSitemaps,
             RootNodeSearchLevel = options.RootNodeSearchLevel,
-            SitemapCount = options.Sitemaps.Count,
+            RootContentTypeAliases = options.RootContentTypeAliases,
+            SitemapCount = ResolveSitemapRows(options).Count,
             CustomSitemapCount = options.CustomSitemaps.Count,
             IndexCount = options.Indexes.Count,
             GlobalFilters = new XmlSitemapGlobalFiltersResponse
@@ -97,10 +110,7 @@ public sealed record XmlSitemapConfigurationResponse
                 BackgroundJobEnabled = options.Storage.BackgroundJob.Enabled,
                 BackgroundJobIntervalSeconds = options.Storage.BackgroundJob.IntervalSeconds
             },
-            Sitemaps = options.Sitemaps
-                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                .Select(pair => XmlSitemapConfigurationRowResponse.FromOptions(pair.Key, pair.Value))
-                .ToArray(),
+            Sitemaps = ResolveSitemapRows(options),
             CustomSitemaps = options.CustomSitemaps
                 .OrderBy(pair => pair.Key, StringComparer.Ordinal)
                 .Select(pair => XmlSitemapCustomConfigurationRowResponse.FromOptions(pair.Key, pair.Value))
@@ -110,6 +120,27 @@ public sealed record XmlSitemapConfigurationResponse
                 .Select(pair => XmlSitemapIndexConfigurationRowResponse.FromOptions(pair.Key, pair.Value, options))
                 .ToArray()
         };
+    }
+
+    private static IReadOnlyList<XmlSitemapConfigurationRowResponse> ResolveSitemapRows(XmlSitemapsOptions options)
+    {
+        var rows = options.Sitemaps
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .Select(pair => XmlSitemapConfigurationRowResponse.FromOptions(pair.Key, pair.Value))
+            .ToList();
+
+        if (options.Mode == XmlSitemapsMode.Single && rows.Count == 0)
+        {
+            rows.Add(XmlSitemapConfigurationRowResponse.FromOptions(
+                XmlSitemapApiConstants.DefaultSitemapKey,
+                new SitemapOptions
+                {
+                    Path = "/",
+                    PublicName = XmlSitemapApiConstants.DefaultSitemapKey
+                }));
+        }
+
+        return rows;
     }
 }
 

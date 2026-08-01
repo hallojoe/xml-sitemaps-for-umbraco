@@ -46,7 +46,7 @@ public sealed class PublishedContentServiceTests
     {
         var root = CreateContent(100, "home");
         ConfigureNavigationRoots(root);
-        var sut = CreateService(new XmlSitemapsOptions());
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
 
         var result = sut.GetRootContents().ToArray();
 
@@ -59,7 +59,7 @@ public sealed class PublishedContentServiceTests
         var includedRoot = CreateContent(100, "home");
         var excludedRoot = CreateContent(101, "landingPage");
         ConfigureNavigationRoots(includedRoot, excludedRoot);
-        var sut = CreateService(new XmlSitemapsOptions());
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
 
         var result = sut.GetRootContents("home").ToArray();
 
@@ -74,7 +74,11 @@ public sealed class PublishedContentServiceTests
         var rootContainer = CreateContent(100, "container");
         ConfigureNavigationRoots(rootContainer);
         ConfigureChildRoots(rootContainer, childOne, childTwo);
-        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration,
+            RootNodeSearchLevel = 1
+        });
 
         var result = sut.GetRootContents().ToArray();
 
@@ -86,7 +90,11 @@ public sealed class PublishedContentServiceTests
     {
         var rootContainer = CreateContent(100, "container");
         ConfigureNavigationRoots(rootContainer);
-        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration,
+            RootNodeSearchLevel = 1
+        });
 
         var result = sut.GetRootContents().ToArray();
 
@@ -98,7 +106,11 @@ public sealed class PublishedContentServiceTests
     {
         var root = CreateContent(100, "home");
         ConfigureNavigationRoots(root);
-        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 2 });
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration,
+            RootNodeSearchLevel = 2
+        });
 
         TestDelegate action = () => _ = sut.GetRootContents().ToArray();
 
@@ -107,6 +119,70 @@ public sealed class PublishedContentServiceTests
             Throws.TypeOf<InvalidOperationException>()
                 .With.Message.EqualTo(
                     "The default ICmsContentService implementation only supports RootNodeSearchLevel values 0 and 1. Configure a custom ICmsContentService for deeper root structures."));
+    }
+
+    [Test]
+    public void GetRootContents_WhenSingleModeUsesDefaultOptions_ReturnsFirstDiscoveredRoot()
+    {
+        var firstRoot = CreateContent(100, "landingPage");
+        var secondRoot = CreateContent(101, "home");
+        ConfigureNavigationRoots(firstRoot, secondRoot);
+        var sut = CreateService(new XmlSitemapsOptions());
+
+        var result = sut.GetRootContents().ToArray();
+
+        Assert.That(result, Is.EqualTo(new[] { firstRoot }));
+    }
+
+    [Test]
+    public void GetRootContents_WhenSingleModeHasRootContentTypeAliases_ReturnsFirstMatchingRoot()
+    {
+        var firstRoot = CreateContent(100, "landingPage");
+        var matchingRoot = CreateContent(101, "home");
+        var laterMatchingRoot = CreateContent(102, "home");
+        ConfigureNavigationRoots(firstRoot, matchingRoot, laterMatchingRoot);
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            RootContentTypeAliases = ["home"]
+        });
+
+        var result = sut.GetRootContents().ToArray();
+
+        Assert.That(result, Is.EqualTo(new[] { matchingRoot }));
+    }
+
+    [Test]
+    public void GetRootContents_WhenSingleModeSearchLevelIsOne_UsesFirstMatchingChildRoot()
+    {
+        var container = CreateContent(100, "container");
+        var firstChild = CreateContent(200, "landingPage");
+        var matchingChild = CreateContent(201, "home");
+        ConfigureNavigationRoots(container);
+        ConfigureChildRoots(container, firstChild, matchingChild);
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            RootNodeSearchLevel = 1,
+            RootContentTypeAliases = ["home"]
+        });
+
+        var result = sut.GetRootContents().ToArray();
+
+        Assert.That(result, Is.EqualTo(new[] { matchingChild }));
+    }
+
+    [Test]
+    public void GetRootContents_WhenSingleModeHasNoMatchingAlias_ReturnsNoRoots()
+    {
+        var root = CreateContent(100, "landingPage");
+        ConfigureNavigationRoots(root);
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            RootContentTypeAliases = ["home"]
+        });
+
+        var result = sut.GetRootContents().ToArray();
+
+        Assert.That(result, Is.Empty);
     }
 
     [Test]
@@ -119,7 +195,7 @@ public sealed class PublishedContentServiceTests
             .GetDocumentKeyByRoute("/", null, root.Id, false)
             .Returns(expectedContentKey);
         _publishedContentCache.GetById(false, expectedContentKey).Returns(root);
-        var sut = CreateService(new XmlSitemapsOptions());
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
 
         var result = sut.GetContentByPath("/", hostname: null);
 
@@ -143,7 +219,7 @@ public sealed class PublishedContentServiceTests
             .GetDocumentKeyByRoute("/", null, matchingRoot.Id, false)
             .Returns(expectedContentKey);
         _publishedContentCache.GetById(false, expectedContentKey).Returns(matchingRoot);
-        var sut = CreateService(new XmlSitemapsOptions());
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
 
         var result = sut.GetContentByPath("/", hostname: "match.example.com");
 
@@ -169,7 +245,11 @@ public sealed class PublishedContentServiceTests
             .GetDocumentKeyByRoute("/", null, matchingChild.Id, false)
             .Returns(expectedContentKey);
         _publishedContentCache.GetById(false, expectedContentKey).Returns(matchingChild);
-        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration,
+            RootNodeSearchLevel = 1
+        });
 
         var result = sut.GetContentByPath("/", hostname: "https://match.example.com");
 
@@ -193,7 +273,11 @@ public sealed class PublishedContentServiceTests
             .GetDocumentKeyByRoute("/", null, firstChild.Id, false)
             .Returns(expectedContentKey);
         _publishedContentCache.GetById(false, expectedContentKey).Returns(firstChild);
-        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration,
+            RootNodeSearchLevel = 1
+        });
 
         var result = sut.GetContentByPath("/", hostname: "");
 
@@ -219,7 +303,11 @@ public sealed class PublishedContentServiceTests
             .GetDocumentKeyByRoute("/", null, firstChild.Id, false)
             .Returns(expectedContentKey);
         _publishedContentCache.GetById(false, expectedContentKey).Returns(firstChild);
-        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration,
+            RootNodeSearchLevel = 1
+        });
 
         var result = sut.GetContentByPath("/", hostname: "unknown.example.com");
 
@@ -235,7 +323,11 @@ public sealed class PublishedContentServiceTests
     {
         var container = CreateContent(100, "container");
         ConfigureNavigationRoots(container);
-        var sut = CreateService(new XmlSitemapsOptions { RootNodeSearchLevel = 1 });
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration,
+            RootNodeSearchLevel = 1
+        });
 
         TestDelegate action = () => sut.GetContentByPath("/", hostname: "missing.example.com");
 

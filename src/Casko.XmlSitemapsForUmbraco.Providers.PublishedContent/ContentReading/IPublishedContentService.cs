@@ -1,4 +1,5 @@
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 
@@ -20,16 +21,18 @@ public interface IPublishedContentService
     /// Gets the first root item in the content tree.
     /// </summary>
     /// <param name="contentTypeAlias">Optional content type alias to filter by.</param>
+    /// <param name="publishedContentCache"></param>
     /// <returns></returns>
-    public IPublishedContent? GetRootContent(string? contentTypeAlias = null);
+    public IPublishedContent? GetRootContent(string? contentTypeAlias = null, IPublishedContentCache? publishedContentCache = null);
 
 
     /// <summary>
     /// Gets all root items in the content tree.
     /// </summary>
     /// <param name="contentTypeAlias">Optional content type alias to filter by.</param>
+    /// <param name="publishedContentCache"></param>
     /// <returns></returns>
-    public IEnumerable<IPublishedContent>? GetRootContents(string? contentTypeAlias = null);
+    public IEnumerable<IPublishedContent>? GetRootContents(string? contentTypeAlias = null, IPublishedContentCache? publishedContentCache = null);
 
     /// <summary>
     /// Gets a content item by path.

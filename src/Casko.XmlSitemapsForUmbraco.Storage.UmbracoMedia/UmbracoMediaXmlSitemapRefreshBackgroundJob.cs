@@ -14,7 +14,7 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
 
     public TimeSpan Delay => TimeSpan.FromSeconds(GetDelaySeconds());
     
-    public ServerRole[] ServerRoles => IRecurringBackgroundJob.DefaultServerRoles;
+    public ServerRole[] ServerRoles => [ServerRole.SchedulingPublisher, ServerRole.Single, ServerRole.Unknown];
 
     public event EventHandler? PeriodChanged
     {

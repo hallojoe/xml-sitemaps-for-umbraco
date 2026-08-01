@@ -15,7 +15,7 @@ public interface IXmlSitemapCustomProvider
     /// <summary>
     /// Gets a custom XML sitemap.
     /// </summary>
-    public Task<XmlSiteMap> GetSitemapAsync(
+    public Task<XmlSitemap> GetSitemapAsync(
         XmlSitemapCustomProviderContext context,
         CancellationToken cancellationToken = default);
 }

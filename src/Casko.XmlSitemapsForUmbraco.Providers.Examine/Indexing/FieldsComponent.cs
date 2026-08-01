@@ -1,4 +1,3 @@
-using Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Indexing;
 using Examine;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;

@@ -9,7 +9,7 @@
     <ItemGroup>
         <PackageReference Include="Umbraco.Cms"/>
         <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice"/>
-        <PackageReference Include="Casko.XmlSitemapsForUmbraco" />
+<!--        <PackageReference Include="Casko.XmlSitemapsForUmbraco" />-->
         <PackageReference Include="uSync" />
     </ItemGroup>
 
@@ -19,6 +19,10 @@
         <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Package\Casko.XmlSitemapsForUmbraco.Package.csproj" />
+    </ItemGroup>
+    
 <!--    <ItemGroup>-->
 <!--      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" />-->
 <!--      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Delivery\Casko.XmlSitemapsForUmbraco.Delivery.csproj" />-->

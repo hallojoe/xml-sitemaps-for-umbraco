@@ -57,6 +57,36 @@ public class SitemapRewriteDefinitionServiceTests
     }
 
     [Test]
+    public void GetDefinitions_WhenSingleModeHasNoConfiguredDefinitions_CreatesImplicitSitemapDefinition()
+    {
+        var sut = CreateService(new XmlSitemapsOptions());
+
+        var result = sut.GetDefinitions();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result.Single(), Is.EqualTo(new SitemapRewriteDefinition(
+            "/xmlsitemap.xml",
+            $"/{XmlSitemapApiConstants.ApiRoute}/key?key=xmlsitemap",
+            "xmlsitemap",
+            "xmlsitemap",
+            SitemapRewriteKind.Sitemap,
+            HostName: null)));
+    }
+
+    [Test]
+    public void GetDefinitions_WhenConfigurationModeHasNoConfiguredDefinitions_CreatesNoDefinitions()
+    {
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration
+        });
+
+        var result = sut.GetDefinitions();
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
     public void GetDefinitions_WhenIndexAndSitemapKeysCollide_PrefersIndexDefinition()
     {
         var sut = CreateService(new XmlSitemapsOptions

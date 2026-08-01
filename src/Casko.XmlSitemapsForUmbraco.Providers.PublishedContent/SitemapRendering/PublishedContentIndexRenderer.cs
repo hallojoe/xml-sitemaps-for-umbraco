@@ -6,7 +6,7 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.SitemapRenderin
 
 public sealed class PublishedContentIndexRenderer(IXmlSitemapIndexRenderer sitemapIndexRenderer) : IPublishedContentIndexRenderer
 {
-    public XmlSiteMapIndex Render(XmlSitemapIndexRenderContext context)
+    public XmlSitemapIndex Render(XmlSitemapIndexRenderContext context)
     {
         return sitemapIndexRenderer.Render(context);
     }

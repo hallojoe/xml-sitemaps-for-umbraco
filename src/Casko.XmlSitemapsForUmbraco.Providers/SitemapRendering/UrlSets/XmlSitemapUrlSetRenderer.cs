@@ -4,9 +4,9 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.UrlSets;
 
 public sealed class XmlSitemapUrlSetRenderer : IXmlSitemapUrlSetRenderer
 {
-    public XmlSiteMap Render(IEnumerable<XmlSiteMapUrl> urls)
+    public XmlSitemap Render(IEnumerable<XmlSitemapUrl> urls)
     {
-        var urlsByLocation = new Dictionary<string, XmlSiteMapUrl>(StringComparer.OrdinalIgnoreCase);
+        var urlsByLocation = new Dictionary<string, XmlSitemapUrl>(StringComparer.OrdinalIgnoreCase);
         foreach (var sitemapUrl in urls.Where(url => string.IsNullOrWhiteSpace(url.Location) is false))
         {
             urlsByLocation[sitemapUrl.Location] = sitemapUrl;
@@ -17,7 +17,7 @@ public sealed class XmlSitemapUrlSetRenderer : IXmlSitemapUrlSetRenderer
             throw new InvalidDataException("No valid URLs found in the input collection.");
         }
 
-        return new XmlSiteMap
+        return new XmlSitemap
         {
             Urls = urlsByLocation.Values.ToList()
         };

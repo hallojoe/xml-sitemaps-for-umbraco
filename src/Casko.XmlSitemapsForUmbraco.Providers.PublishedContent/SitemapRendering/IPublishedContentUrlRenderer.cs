@@ -12,5 +12,5 @@ public interface IPublishedContentUrlRenderer
     /// <summary>
     /// Builds a sitemap URL entry for one content item.
     /// </summary>
-    public XmlSiteMapUrl Render(IPublishedContent content, XmlSitemapUrlRenderContext context);
+    public XmlSitemapUrl Render(IPublishedContent content, XmlSitemapUrlRenderContext context);
 }

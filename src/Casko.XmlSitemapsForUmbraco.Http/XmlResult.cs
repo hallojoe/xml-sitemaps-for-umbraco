@@ -7,19 +7,19 @@ namespace Casko.XmlSitemapsForUmbraco.Http;
 
 public class XmlResult<T>(T result) : IResult
 {
-    private static readonly XmlSerializer _serializer = new(typeof(T));
+    private static readonly XmlSerializer Serializer = new(typeof(T));
 
     public async Task ExecuteAsync(HttpContext httpContext)
     {
         await using var fileBufferingWriteStream = new FileBufferingWriteStream();
 
-        if (result is XmlSiteMap siteMap)
+        if (result is XmlSitemap siteMap)
         {
-            _serializer.Serialize(fileBufferingWriteStream, result, siteMap.GetNamespaces());
+            Serializer.Serialize(fileBufferingWriteStream, result, siteMap.GetNamespaces());
         }
         else
         {
-            _serializer.Serialize(fileBufferingWriteStream, result);
+            Serializer.Serialize(fileBufferingWriteStream, result);
         }
 
         httpContext.Response.ContentType = Constants.XmlMimeType;

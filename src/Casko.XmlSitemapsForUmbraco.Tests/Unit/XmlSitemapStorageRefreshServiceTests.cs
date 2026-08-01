@@ -1,12 +1,14 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Models;
-using Casko.XmlSitemapsForUmbraco.Models.Serialization;
 using Casko.XmlSitemapsForUmbraco.Providers;
+using Casko.XmlSitemapsForUmbraco.Serialization;
 using Casko.XmlSitemapsForUmbraco.Storage;
 using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -53,7 +55,7 @@ public class XmlSitemapStorageRefreshServiceTests
     [Test]
     public async Task RefreshConfiguredAsync_RebuildsConfiguredSitemapAndWritesStorageKey()
     {
-        var sitemap = new XmlSiteMap();
+        var sitemap = new XmlSitemap();
         _sourceProvider.GetConfiguredAsync("products").Returns(sitemap);
         _xmlSitemapXmlSerializer.Serialize(sitemap).Returns("<urlset />");
 
@@ -69,9 +71,28 @@ public class XmlSitemapStorageRefreshServiceTests
     }
 
     [Test]
+    public async Task RefreshConfiguredAsync_WhenSingleModeUsesImplicitSitemapKey_WritesDefaultStorageKey()
+    {
+        _sut = CreateService(new XmlSitemapsOptions());
+        var sitemap = new XmlSitemap();
+        _sourceProvider.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey).Returns(sitemap);
+        _xmlSitemapXmlSerializer.Serialize(sitemap).Returns("<urlset />");
+
+        var result = await _sut.RefreshConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey);
+
+        Assert.That(result, Is.SameAs(sitemap));
+        await _xmlSitemapDataSource.Received(1).WriteAsync(
+            Arg.Is<XmlSitemapStorageKey>(key =>
+                key.Kind == XmlSitemapDocumentKind.Sitemap &&
+                key.Alias == CommonXmlSitemapApiConstants.DefaultSitemapKey &&
+                key.HostName == null),
+            "<urlset />");
+    }
+
+    [Test]
     public async Task RefreshIndexAsync_RebuildsConfiguredIndexAndWritesStorageKey()
     {
-        var index = new XmlSiteMapIndex();
+        var index = new XmlSitemapIndex();
         _sourceProvider.GetIndexAsync("main").Returns(index);
         _xmlSitemapXmlSerializer.Serialize(index).Returns("<sitemapindex />");
 
@@ -89,7 +110,7 @@ public class XmlSitemapStorageRefreshServiceTests
     [Test]
     public async Task RefreshCustomAsync_RebuildsConfiguredCustomSitemapAndWritesStorageKey()
     {
-        var sitemap = new XmlSiteMap();
+        var sitemap = new XmlSitemap();
         _sourceProvider.GetConfiguredAsync("external-products").Returns(sitemap);
         _xmlSitemapXmlSerializer.Serialize(sitemap).Returns("<custom-urlset />");
 
@@ -107,10 +128,10 @@ public class XmlSitemapStorageRefreshServiceTests
     [Test]
     public async Task RefreshAllAsync_RefreshesSitemapsBeforeCustomSitemapsBeforeIndexes()
     {
-        var products = new XmlSiteMap();
-        var articles = new XmlSiteMap();
-        var externalProducts = new XmlSiteMap();
-        var index = new XmlSiteMapIndex();
+        var products = new XmlSitemap();
+        var articles = new XmlSitemap();
+        var externalProducts = new XmlSitemap();
+        var index = new XmlSitemapIndex();
         _sourceProvider.GetConfiguredAsync("products").Returns(products);
         _sourceProvider.GetConfiguredAsync("articles").Returns(articles);
         _sourceProvider.GetConfiguredAsync("external-products").Returns(externalProducts);
@@ -137,6 +158,25 @@ public class XmlSitemapStorageRefreshServiceTests
                 Arg.Is<XmlSitemapStorageKey>(key => key.Kind == XmlSitemapDocumentKind.SitemapIndex && key.Alias == "main"),
                 "<index />");
         });
+    }
+
+    [Test]
+    public async Task RefreshAllAsync_WhenSingleModeHasNoConfiguredDefinitions_RefreshesImplicitSitemap()
+    {
+        _sut = CreateService(new XmlSitemapsOptions());
+        var sitemap = new XmlSitemap();
+        _sourceProvider.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey).Returns(sitemap);
+        _xmlSitemapXmlSerializer.Serialize(sitemap).Returns("<implicit />");
+
+        await _sut.RefreshAllAsync();
+
+        await _xmlSitemapDataSource.Received(1).WriteAsync(
+            Arg.Is<XmlSitemapStorageKey>(key =>
+                key.Kind == XmlSitemapDocumentKind.Sitemap &&
+                key.Alias == CommonXmlSitemapApiConstants.DefaultSitemapKey &&
+                key.HostName == null),
+            "<implicit />");
+        await _sourceProvider.DidNotReceive().GetIndexAsync(Arg.Any<string>());
     }
 
     private XmlSitemapStorageRefreshService CreateService(XmlSitemapsOptions options)

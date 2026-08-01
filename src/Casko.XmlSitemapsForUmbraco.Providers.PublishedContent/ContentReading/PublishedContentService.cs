@@ -22,7 +22,18 @@ public class PublishedContentService(
 {
     private IPublishedContent? GetRootContentByHostname(string? hostname = null, string? culture = null)
     {
-        var rootContents = GetRootContents().ToArray();
+
+        if (documentNavigationQueryService.TryGetRootKeys(out IEnumerable<Guid> rootKeys2))
+        {
+            var rootKeys2Test = rootKeys2.ToArray();
+    
+            
+        }
+
+
+        using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
+        
+        var rootContents = GetRootContents(null, umbracoContextReference.UmbracoContext.Content).ToArray();
 
         if (rootContents.Length == 0)
         {
@@ -76,9 +87,11 @@ public class PublishedContentService(
 
         var publishedContentCache = umbracoContextReference.UmbracoContext.Content;
 
-        return publishedContentCache.GetById(preview, contentKey.Value);
-    }
+        var publishedContent = publishedContentCache.GetById(preview, contentKey.Value);
 
+        return publishedContent;
+    }
+    
     public async Task<string[]> GetLanguagesAsync()
     {
         var defaultLanguageCode = (await languageService.GetDefaultLanguageAsync())?.IsoCode;
@@ -105,21 +118,29 @@ public class PublishedContentService(
         return umbracoContextReference.UmbracoContext.Content.GetById(key);
     }
 
-    public IPublishedContent? GetRootContent(string? contentTypeAlias = null)
+    public IPublishedContent? GetRootContent(
+        string? contentTypeAlias = null,
+        IPublishedContentCache? publishedContentCache = null)
     {
-        return InternalGetRootContents(contentTypeAlias).FirstOrDefault();
+        return InternalGetRootContents(contentTypeAlias, publishedContentCache).FirstOrDefault();
     }
 
-    public IEnumerable<IPublishedContent> GetRootContents(string? contentTypeAlias = null)
+    public IEnumerable<IPublishedContent> GetRootContents(
+        string? contentTypeAlias = null,
+        IPublishedContentCache? publishedContentCache = null)
     {
-        return InternalGetRootContents(contentTypeAlias);
+        return InternalGetRootContents(contentTypeAlias, publishedContentCache);
     }
 
-    private IEnumerable<IPublishedContent> InternalGetRootContents(string? contentTypeAlias = null)
+    private IEnumerable<IPublishedContent> InternalGetRootContents(
+        string? contentTypeAlias,
+        IPublishedContentCache? publishedContentCache)
     {
-        using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
-
-        var publishedContentCache = umbracoContextReference.UmbracoContext.Content;
+        if (publishedContentCache is null)
+        {
+            using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
+            return InternalGetRootContents(contentTypeAlias, umbracoContextReference.UmbracoContext.Content).ToArray();
+        }
 
         if (documentNavigationQueryService.TryGetRootKeys(out IEnumerable<Guid> rootKeys) is false)
         {
@@ -139,12 +160,38 @@ public class PublishedContentService(
                 "The default ICmsContentService implementation only supports RootNodeSearchLevel values 0 and 1. Configure a custom ICmsContentService for deeper root structures.")
         };
 
-        return string.IsNullOrWhiteSpace(contentTypeAlias)
-            ? siteRoots
-            : siteRoots.Where(content => content.ContentType.Alias == contentTypeAlias);
+        var filteredSiteRoots = FilterByContentTypeAlias(siteRoots, contentTypeAlias);
+        if (xmlSitemapsOptions.Value.Mode == XmlSitemapsMode.Configuration)
+        {
+            return filteredSiteRoots;
+        }
+
+        var rootContentTypeAliases = xmlSitemapsOptions.Value.RootContentTypeAliases;
+        if (rootContentTypeAliases.Length > 0)
+        {
+            filteredSiteRoots = filteredSiteRoots
+                .Where(content => rootContentTypeAliases.Contains(
+                    content.ContentType.Alias,
+                    StringComparer.OrdinalIgnoreCase));
+        }
+
+        return filteredSiteRoots.Take(1).ToArray();
     }
 
     private int GetConfiguredRootNodeSearchLevel() => xmlSitemapsOptions.Value.RootNodeSearchLevel;
+
+    private static IEnumerable<IPublishedContent> FilterByContentTypeAlias(
+        IEnumerable<IPublishedContent> contents,
+        string? contentTypeAlias)
+    {
+        if (string.IsNullOrWhiteSpace(contentTypeAlias))
+        {
+            return contents;
+        }
+
+        return contents.Where(content =>
+            string.Equals(content.ContentType.Alias, contentTypeAlias, StringComparison.OrdinalIgnoreCase));
+    }
 
     private IEnumerable<IPublishedContent> GetChildContents(Guid parentKey, IPublishedContentCache publishedContentCache)
     {

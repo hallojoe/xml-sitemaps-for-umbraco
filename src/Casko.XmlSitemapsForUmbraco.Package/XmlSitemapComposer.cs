@@ -23,8 +23,8 @@ public sealed class XmlSitemapComposer: IComposer
         // XML Sitemaps Examine provider and preferred live source.
         builder.Services.AddXmlSitemapExamineProvider();
 
-        // This wraps the live source and becomes the public IXmlSitemapProvider.
-        builder.Services.AddXmlSitemapsUmbracoMediaStorage();
+        // // This wraps the live source and becomes the public IXmlSitemapProvider.
+        // builder.Services.AddXmlSitemapsUmbracoMediaStorage();
         
         // Delivery API
         builder.Services.AddXmlSitemapDeliveryApi(builder.Config);
