@@ -13,6 +13,7 @@ using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.UrlSets;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
@@ -129,9 +130,14 @@ public class ExamineXmlSitemapProviderTests
         var root = CreateContent(rootKey);
         _publishedContentService.GetContentByPath("/").Returns(root);
         _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
-            new CmsUrl("/", new DateTime(2026, 5, 14), "https://example.com", "en", Id: 10)
+            new CmsUrl("/", new DateTime(2026, 5, 14), "https://ignored.example.com", "en", Id: 10)
         ]);
-        var sut = CreateProvider(new XmlSitemapsOptions());
+        var sut = CreateProvider(
+            new XmlSitemapsOptions(),
+            webRoutingSettings: new WebRoutingSettings
+            {
+                UmbracoApplicationUrl = "https://example.com"
+            });
 
         var result = await sut.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey) as XmlSitemap;
 
@@ -266,12 +272,14 @@ public class ExamineXmlSitemapProviderTests
 
     private ExamineXmlSitemapProvider CreateProvider(
         XmlSitemapsOptions options,
-        IEnumerable<IXmlSitemapCustomProvider>? customProviders = null)
+        IEnumerable<IXmlSitemapCustomProvider>? customProviders = null,
+        WebRoutingSettings? webRoutingSettings = null)
     {
         var urlBuilder = new XmlSitemapUrlBuilder();
         var urlSetRenderer = new XmlSitemapUrlSetRenderer();
 
         return new ExamineXmlSitemapProvider(
+            Options.Create(webRoutingSettings ?? new WebRoutingSettings()),
             Options.Create(options),
             _publishedContentService,
             _cmsUrlService,
