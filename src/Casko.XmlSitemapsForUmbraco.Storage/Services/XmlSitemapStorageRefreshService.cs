@@ -3,6 +3,7 @@ using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Serialization;
 using Microsoft.Extensions.Options;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.Services;
 
@@ -15,6 +16,13 @@ public sealed class XmlSitemapStorageRefreshService(
     /// <inheritdoc />
     public async Task RefreshAllAsync(CancellationToken cancellationToken = default)
     {
+        if (ShouldUseImplicitSingleSitemap())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await RefreshConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey, cancellationToken);
+            return;
+        }
+
         foreach (var key in xmlSitemapOptions.Value.Sitemaps.Keys)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -37,7 +45,8 @@ public sealed class XmlSitemapStorageRefreshService(
     /// <inheritdoc />
     public async Task<IXmlSitemapModel> RefreshConfiguredAsync(string key, CancellationToken cancellationToken = default)
     {
-        if (!xmlSitemapOptions.Value.Sitemaps.TryGetValue(key, out var sitemapOptions))
+        if (!xmlSitemapOptions.Value.Sitemaps.TryGetValue(key, out var sitemapOptions) &&
+            !IsImplicitSingleSitemapKey(key))
         {
             throw new InvalidOperationException("Invalid key.");
         }
@@ -48,7 +57,7 @@ public sealed class XmlSitemapStorageRefreshService(
             var storageKey = new XmlSitemapStorageKey(
                 XmlSitemapDocumentKind.Sitemap,
                 key,
-                sitemapOptions.HostName);
+                sitemapOptions?.HostName);
             var xml = xmlSitemapXmlSerializer.Serialize(sitemap);
             await xmlSitemapDataSource.WriteAsync(storageKey, xml, cancellationToken);
         }
@@ -98,5 +107,19 @@ public sealed class XmlSitemapStorageRefreshService(
         }
 
         return xmlSiteMap;
+    }
+
+    private bool ShouldUseImplicitSingleSitemap()
+    {
+        return xmlSitemapOptions.Value.Mode == XmlSitemapsMode.Single &&
+               xmlSitemapOptions.Value.Sitemaps.Count == 0 &&
+               xmlSitemapOptions.Value.CustomSitemaps.Count == 0 &&
+               xmlSitemapOptions.Value.Indexes.Count == 0;
+    }
+
+    private bool IsImplicitSingleSitemapKey(string key)
+    {
+        return xmlSitemapOptions.Value.Mode == XmlSitemapsMode.Single &&
+               string.Equals(key, CommonXmlSitemapApiConstants.DefaultSitemapKey, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -13,6 +13,15 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
         var definitions = new List<SitemapRewriteDefinition>();
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        if (ShouldCreateImplicitSingleSitemapDefinition(settings))
+        {
+            definitions.Add(CreateDefinition(
+                XmlSitemapApiConstants.DefaultSitemapKey,
+                XmlSitemapApiConstants.DefaultSitemapKey,
+                hostName: null,
+                SitemapRewriteKind.Sitemap));
+        }
+
         foreach (var (indexKey, indexOptions) in settings.Indexes)
         {
             var definition = CreateDefinition(
@@ -56,6 +65,14 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
         }
 
         return definitions;
+    }
+
+    private static bool ShouldCreateImplicitSingleSitemapDefinition(XmlSitemapsOptions settings)
+    {
+        return settings.Mode == XmlSitemapsMode.Single &&
+               settings.Indexes.Count == 0 &&
+               settings.Sitemaps.Count == 0 &&
+               settings.CustomSitemaps.Count == 0;
     }
 
     public bool TryMatch(PathString requestPath, HostString requestHost, out SitemapRewriteDefinition? definition)

@@ -1,4 +1,3 @@
-using Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Indexing;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Indexing;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;

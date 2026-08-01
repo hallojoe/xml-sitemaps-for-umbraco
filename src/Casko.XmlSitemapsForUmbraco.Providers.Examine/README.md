@@ -102,7 +102,7 @@ This project reads `XmlSitemapsOptions` for configured sitemaps, custom sitemaps
 
 `UrlResolverSettings` uses configuration key `Casko:Search:Url` and currently exposes `PageSize`, defaulting to `1000`.
 
-Known implementation constraint: `ContentUrlService` currently builds URL records for the fixed culture list `da`, `en`, and `pl`.
+`ContentUrlService` builds URL records from Umbraco's configured languages, ordered with the default language first, then applies `XmlSitemapsOptions.IncludedCultures` and `ExcludedCultures`.
 
 ## Build and test
 

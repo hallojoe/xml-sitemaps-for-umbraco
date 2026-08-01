@@ -1,4 +1,5 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
@@ -10,6 +11,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -81,6 +83,26 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         AsyncTestDelegate action = async () => await sut.GetByRootKeyAsync(rootKey);
 
         Assert.That(action, Throws.TypeOf<RootContentNotFoundException>());
+    }
+
+    [Test]
+    public async Task GetConfiguredAsync_WhenSingleModeUsesImplicitSitemapKey_RendersSitemapFromRootPath()
+    {
+        var root = CreateContent("home");
+        var sitemap = new XmlSitemap();
+        PublishedContentRenderContext? context = null;
+        _publishedContentService.GetContentByPath("/", null, null).Returns(root);
+        _publishedContentService.GetLanguagesAsync().Returns(["en-US"]);
+        _sitemapRenderer
+            .Render(Arg.Do<PublishedContentRenderContext>(value => context = value))
+            .Returns(sitemap);
+        var sut = CreateService(new XmlSitemapsOptions());
+
+        var result = await sut.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey);
+
+        Assert.That(result, Is.SameAs(sitemap));
+        Assert.That(context!.RootContents, Is.EqualTo(new[] { root }));
+        _publishedContentService.Received(1).GetContentByPath("/", null, null);
     }
 
     private PublishedContentXmlSitemapProvider CreateService(XmlSitemapsOptions options)

@@ -3,6 +3,7 @@ using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Serialization;
 using Microsoft.Extensions.Options;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.Services;
 
@@ -61,6 +62,14 @@ public sealed class StoredXmlSitemapProvider(
                 key,
                 customSitemapOptions.HostName,
                 () => xmlSitemapStorageRefreshService.RefreshCustomAsync(key));
+        }
+
+        if (IsImplicitSingleSitemapKey(key))
+        {
+            return await GetStoredSitemapAsync(
+                key,
+                hostName: null,
+                () => xmlSitemapStorageRefreshService.RefreshConfiguredAsync(key));
         }
 
         throw new InvalidOperationException("Invalid key.");
@@ -127,5 +136,11 @@ public sealed class StoredXmlSitemapProvider(
         }
 
         return storedDocument.RefreshedUtc.Value.AddSeconds(staleAfterSeconds) <= timeProvider.GetUtcNow();
+    }
+
+    private bool IsImplicitSingleSitemapKey(string key)
+    {
+        return xmlSitemapOptions.Value.Mode == XmlSitemapsMode.Single &&
+               string.Equals(key, CommonXmlSitemapApiConstants.DefaultSitemapKey, StringComparison.OrdinalIgnoreCase);
     }
 }

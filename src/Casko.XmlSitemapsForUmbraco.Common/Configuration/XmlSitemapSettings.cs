@@ -1,10 +1,18 @@
 namespace Casko.XmlSitemapsForUmbraco.Common.Configuration;
 
+public enum XmlSitemapsMode
+{
+    Single,
+    Configuration
+}
+
 /// <summary>
 /// XML sitemaps settings.
 /// </summary>
 public sealed class XmlSitemapsOptions
 {
+    private XmlSitemapsMode _mode = XmlSitemapsMode.Single;
+
     /// <summary>
     /// Key.
     /// </summary>
@@ -54,7 +62,30 @@ public sealed class XmlSitemapsOptions
     /// Gets or sets a value indicating whether to render alternate links for single culture sitemaps.
     /// </summary>
     public bool RenderAlternateLinksForSingleCultureSitemaps { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the mode for resolving root nodes. 0 = Single, 1 = Configuration.
+    /// </summary>
+    public XmlSitemapsMode Mode
+    {
+        get => _mode;
+        set => _mode = value;
+    }
 
+    /// <summary>
+    /// Gets or sets the mode for resolving root nodes. 0 = Single, 1 = Configuration.
+    /// </summary>
+    public XmlSitemapsMode RootNodeMode
+    {
+        get => Mode;
+        set => Mode = value;
+    }
+    
+    /// <summary>
+    /// List of document type aliases that represent root nodes. Setting this makes it easier to locate root nodes in the content tree.
+    /// </summary>
+    public string[] RootContentTypeAliases { get; set; } = [];
+    
     /// <summary>
     /// Gets or sets the level where routed root nodes are resolved.
     /// </summary>

@@ -1,5 +1,5 @@
-using Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Models;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;

@@ -1,4 +1,5 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Serialization;
@@ -7,6 +8,7 @@ using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -117,6 +119,29 @@ public class StoredXmlSitemapProviderTests
 
         Assert.That(result, Is.SameAs(generatedSitemap));
         await _xmlSitemapStorageRefreshService.Received(1).RefreshConfiguredAsync("products");
+    }
+
+    [Test]
+    public async Task GetConfiguredAsync_WhenSingleModeUsesImplicitSitemapKey_RefreshesImplicitSitemap()
+    {
+        _sut = CreateService(new XmlSitemapsOptions());
+        var generatedSitemap = new XmlSitemap();
+        _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
+            .Returns(Task.FromResult<XmlSitemapStoredDocument?>(null));
+        _xmlSitemapStorageRefreshService
+            .RefreshConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey)
+            .Returns(generatedSitemap);
+
+        var result = await _sut.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey);
+
+        Assert.That(result, Is.SameAs(generatedSitemap));
+        await _xmlSitemapDataSource.Received(1).ReadAsync(
+            Arg.Is<XmlSitemapStorageKey>(key =>
+                key.Kind == XmlSitemapDocumentKind.Sitemap &&
+                key.Alias == CommonXmlSitemapApiConstants.DefaultSitemapKey &&
+                key.HostName == null));
+        await _xmlSitemapStorageRefreshService.Received(1)
+            .RefreshConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey);
     }
 
     [Test]

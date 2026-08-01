@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Models;
@@ -8,6 +9,7 @@ using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers.PublishedContent;
 
@@ -90,6 +92,11 @@ public class PublishedContentXmlSitemapProvider(
 
         if (!configuredSitemaps.Sitemaps.TryGetValue(sitemapKey, out var sitemapOptions))
         {
+            if (IsImplicitSingleSitemapKey(configuredSitemaps, sitemapKey))
+            {
+                return await GetXmlSiteMapAsync("/", hostname: null, culture: null, sitemapOptions: null);
+            }
+
             return await GetCustomConfiguredAsync(sitemapKey);
         }
 
@@ -219,5 +226,11 @@ public class PublishedContentXmlSitemapProvider(
         }
 
         return absoluteUrl.Split('/').FirstOrDefault();
+    }
+
+    private static bool IsImplicitSingleSitemapKey(XmlSitemapsOptions options, string sitemapKey)
+    {
+        return options.Mode == XmlSitemapsMode.Single &&
+               string.Equals(sitemapKey, CommonXmlSitemapApiConstants.DefaultSitemapKey, StringComparison.OrdinalIgnoreCase);
     }
 }

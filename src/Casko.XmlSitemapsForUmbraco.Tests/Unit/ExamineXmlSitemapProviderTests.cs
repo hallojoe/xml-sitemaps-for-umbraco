@@ -1,10 +1,11 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
-using Casko.XmlSitemapsForUmbraco.Common.Exceptions; 
-using Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Urls;
+using Casko.XmlSitemapsForUmbraco.Common;
+using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -118,6 +120,23 @@ public class ExamineXmlSitemapProviderTests
         AsyncTestDelegate action = async () => await sut.GetConfiguredAsync("missing");
 
         Assert.That(action, Throws.TypeOf<InvalidOperationException>());
+    }
+
+    [Test]
+    public async Task GetConfiguredAsync_WhenSingleModeUsesImplicitSitemapKey_ResolvesRootPath()
+    {
+        var rootKey = Guid.NewGuid();
+        var root = CreateContent(rootKey);
+        _publishedContentService.GetContentByPath("/").Returns(root);
+        _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
+            new CmsUrl("/", new DateTime(2026, 5, 14), "https://example.com", "en", Id: 10)
+        ]);
+        var sut = CreateProvider(new XmlSitemapsOptions());
+
+        var result = await sut.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey) as XmlSitemap;
+
+        Assert.That(result!.Urls[0].Location, Is.EqualTo("https://example.com/"));
+        _publishedContentService.Received(1).GetContentByPath("/");
     }
 
     [Test]

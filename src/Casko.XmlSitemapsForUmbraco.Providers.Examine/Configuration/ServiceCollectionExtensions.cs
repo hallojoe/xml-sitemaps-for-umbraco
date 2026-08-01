@@ -1,6 +1,6 @@
-using Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.Configuration;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

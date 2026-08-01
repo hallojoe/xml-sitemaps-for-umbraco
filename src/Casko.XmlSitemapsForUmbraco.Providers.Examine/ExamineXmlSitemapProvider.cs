@@ -1,17 +1,21 @@
 using System.ComponentModel.DataAnnotations;
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
-using Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
 using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Configuration.Models;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers.Examine;
 
 public sealed class ExamineXmlSitemapProvider(
+    IOptions<WebRoutingSettings> webRoutingSettings,
     IOptions<XmlSitemapsOptions> xmlSitemapOptions,
     IPublishedContentService publishedContentService,
     ICmsUrlService cmsUrlService,
@@ -61,6 +65,21 @@ public sealed class ExamineXmlSitemapProvider(
         var configuredSitemaps = xmlSitemapOptions.Value;
         if (!configuredSitemaps.Sitemaps.TryGetValue(key, out var sitemapOptions))
         {
+            if (IsImplicitSingleSitemapKey(configuredSitemaps, key))
+            {
+                var implicitRootContent = publishedContentService.GetContentByPath("/");
+                if (implicitRootContent is null)
+                {
+                    throw new RootContentNotFoundException();
+                }
+
+                return await RenderXmlSiteMapAsync(
+                    implicitRootContent.Key,
+                    hostname: webRoutingSettings.Value.UmbracoApplicationUrl,
+                    culture: null,
+                    sitemapOptions: null);
+            }
+
             return await GetCustomConfiguredAsync(key);
         }
 
@@ -137,6 +156,11 @@ public sealed class ExamineXmlSitemapProvider(
         SitemapOptions? sitemapOptions)
     {
         var urls = (await cmsUrlService.GetUrlsByKeyAsync(rootKey)).ToList();
+        if (urls.Count == 0)
+        {
+            throw new RootContentHasNoContentException();
+        }
+
         var allLanguageCodes = urls
             .Select(url => url.Culture)
             .Where(cultureCode => string.IsNullOrWhiteSpace(cultureCode) is false)
@@ -183,5 +207,11 @@ public sealed class ExamineXmlSitemapProvider(
         }
 
         return key;
+    }
+
+    private static bool IsImplicitSingleSitemapKey(XmlSitemapsOptions options, string key)
+    {
+        return options.Mode == XmlSitemapsMode.Single &&
+               string.Equals(key, CommonXmlSitemapApiConstants.DefaultSitemapKey, StringComparison.OrdinalIgnoreCase);
     }
 }

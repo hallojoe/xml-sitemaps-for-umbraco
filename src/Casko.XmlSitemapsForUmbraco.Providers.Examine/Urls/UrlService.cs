@@ -1,10 +1,11 @@
 using Examine;
 using Examine.Search;
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Examine;
 
-namespace Casko.XmlSitemapsForUmbraco.Common.Providers.Examine.Urls;
+namespace Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 
 public class UrlResolverSettings
 {
@@ -31,17 +32,18 @@ public interface ICmsUrlService
 
 public sealed class ContentUrlService(
     IOptions<UrlResolverSettings> urlResolverSettings,
-    IContentService contentService,
+    IOptions<XmlSitemapsOptions> xmlSitemapsOptions,
+    ILanguageService languageService,
     IDocumentUrlService documentUrlService,
     IExamineManager examineManager) : ICmsUrlService
 {
     /// <inheritdoc />
-    public Task<IEnumerable<CmsUrl>> GetUrlsByKeyAsync(Guid key, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CmsUrl>> GetUrlsByKeyAsync(Guid key, CancellationToken cancellationToken = default)
     {
         var indexName = "ExternalIndex";
         if(!examineManager.TryGetIndex(indexName, out var index))
         {
-            return Task.FromResult(Enumerable.Empty<CmsUrl>());
+            return [];
         }
 
         List<ISearchResult> searchResultList = [];
@@ -66,7 +68,8 @@ public sealed class ContentUrlService(
 
         var cmsUrls = new List<CmsUrl>();
 
-        var languages = new List<string> {"da", "en", "pl"};
+        var languages = await GetCandidateLanguagesAsync();
+        
         foreach (var searchResult in searchResultList)
         {
             if (!Guid.TryParse(searchResult.Values["__Key"], out var contentKey))
@@ -90,7 +93,7 @@ public sealed class ContentUrlService(
             {
                 var updatedDateForCulture = updatedDate;
 
-                if (!long.TryParse(searchResult.Values["updateDate_" + language], out var updatedDateAsLongForCulture))
+                if (long.TryParse(searchResult.Values["updateDate_" + language], out var updatedDateAsLongForCulture))
                 {
                     updatedDateForCulture = new DateTime(updatedDateAsLongForCulture);
                 }
@@ -106,6 +109,41 @@ public sealed class ContentUrlService(
             }            
         }
 
-        return Task.FromResult<IEnumerable<CmsUrl>>(cmsUrls);
+        return cmsUrls;
+    }
+
+    private async Task<string[]> GetCandidateLanguagesAsync()
+    {
+        var defaultLanguageCode = (await languageService.GetDefaultLanguageAsync())?.IsoCode;
+        var languageCodes = (await languageService.GetAllAsync())
+            .Select(language => language.IsoCode)
+            .Where(languageCode => string.IsNullOrWhiteSpace(languageCode) is false)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (string.IsNullOrWhiteSpace(defaultLanguageCode) is false)
+        {
+            languageCodes.RemoveAll(languageCode =>
+                string.Equals(languageCode, defaultLanguageCode, StringComparison.OrdinalIgnoreCase));
+            languageCodes.Insert(0, defaultLanguageCode);
+        }
+
+        var includedCultures = xmlSitemapsOptions.Value.IncludedCultures;
+        if (includedCultures.Count > 0)
+        {
+            languageCodes = languageCodes
+                .Where(languageCode => includedCultures.Contains(languageCode, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        var excludedCultures = xmlSitemapsOptions.Value.ExcludedCultures;
+        if (excludedCultures.Count > 0)
+        {
+            languageCodes = languageCodes
+                .Where(languageCode => !excludedCultures.Contains(languageCode, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        return languageCodes.ToArray();
     }
 }
