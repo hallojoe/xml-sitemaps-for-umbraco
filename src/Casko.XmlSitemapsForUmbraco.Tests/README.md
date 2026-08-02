@@ -6,11 +6,9 @@ framework: net10.0
 solution_role: NUnit unit and integration tests for XML sitemaps package behavior
 depends_on:
   - Casko.XmlSitemapsForUmbraco.Delivery
-  - Casko.XmlSitemapsForUmbraco.Http
   - Casko.XmlSitemapsForUmbraco.Providers
   - Casko.XmlSitemapsForUmbraco.Providers.Examine
   - Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
-  - Casko.XmlSitemapsForUmbraco.Serialization
   - Casko.XmlSitemapsForUmbraco.Storage
   - Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
   - Casko.XmlSitemapsForUmbraco.TestSite
@@ -45,11 +43,9 @@ It is the main verification project for changes across the package's internal pr
 
 ```text
 Casko.XmlSitemapsForUmbraco.Delivery
-Casko.XmlSitemapsForUmbraco.Http
 Casko.XmlSitemapsForUmbraco.Providers
 Casko.XmlSitemapsForUmbraco.Providers.Examine
 Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
-Casko.XmlSitemapsForUmbraco.Serialization
 Casko.XmlSitemapsForUmbraco.Storage
 Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
 Casko.XmlSitemapsForUmbraco.TestSite
@@ -60,17 +56,15 @@ Casko.XmlSitemapsForUmbraco.Tests
 
 ### Dependencies
 
-| Project | Reason |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj` | Tests delivery API routing, access behavior, and service composition. |
-| `../Casko.XmlSitemapsForUmbraco.Http/Casko.XmlSitemapsForUmbraco.Http.csproj` | Tests XML HTTP result behavior. |
-| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Tests sitemap rendering and provider-level behavior. |
-| `../Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj` | Tests Examine-backed sitemap provider behavior. |
+| Project                                                                                                                   | Reason |
+|---------------------------------------------------------------------------------------------------------------------------|---|
+| `../Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj`                                     | Tests delivery API routing, access behavior, and service composition. |
+| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj`                                   | Tests sitemap rendering and provider-level behavior. |
+| `../Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj`                   | Tests Examine-backed sitemap provider behavior. |
 | `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent/Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.csproj` | Tests published-content rendering and selection behavior. |
-| `../Casko.XmlSitemapsForUmbraco.Serialization/Casko.XmlSitemapsForUmbraco.Serialization.csproj` | Tests XML serializer behavior. |
-| `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj` | Tests stored sitemap provider, refresh service, and storage-name behavior. |
-| `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj` | Tests Umbraco media storage data source and background job behavior. |
-| `../Casko.XmlSitemapsForUmbraco.TestSite/Casko.XmlSitemapsForUmbraco.TestSite.csproj` | Supplies the local Umbraco host and content/configuration surface for integration-style coverage. |
+| `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj`                                       | Tests stored sitemap provider, refresh service, and storage-name behavior. |
+| `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj`             | Tests Umbraco media storage data source and background job behavior. |
+| `../Casko.XmlSitemapsForUmbraco.TestSite/Casko.XmlSitemapsForUmbraco.DemoSingleSite.csproj`                               | Supplies the local Umbraco host and content/configuration surface for integration-style coverage. |
 
 ### Used by
 

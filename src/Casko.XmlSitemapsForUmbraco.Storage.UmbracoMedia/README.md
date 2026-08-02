@@ -42,7 +42,7 @@ It also wires the storage layer into the public provider pipeline by registering
 
 ```text
 Casko.XmlSitemapsForUmbraco.Providers
-Casko.XmlSitemapsForUmbraco.Serialization
+Casko.XmlSitemapsForUmbraco.Common
 Casko.XmlSitemapsForUmbraco.Storage
        |
        v
@@ -55,11 +55,11 @@ Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
 
 ### Dependencies
 
-| Project | Reason |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Supplies shared provider registrations and `IXmlSitemapProvider` contracts used by storage composition. |
-| `../Casko.XmlSitemapsForUmbraco.Serialization/Casko.XmlSitemapsForUmbraco.Serialization.csproj` | Supplies XML serializer/deserializer registration used by stored sitemap provider and refresh services. |
-| `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj` | Supplies storage contracts, name provider, refresh service, and stored provider wrapper. |
+| Project                                                                                  | Reason |
+|------------------------------------------------------------------------------------------|---|
+| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj`  | Supplies shared provider registrations and `IXmlSitemapProvider` contracts used by storage composition. |
+| `../Casko.XmlSitemapsForUmbraco.Serialization/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies XML serializer/deserializer registration used by stored sitemap provider and refresh services. |
+| `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj`      | Supplies storage contracts, name provider, refresh service, and stored provider wrapper. |
 
 ### Used by
 

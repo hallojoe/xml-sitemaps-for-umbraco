@@ -7,16 +7,14 @@ solution_role: NuGet package assembly, Umbraco composer, backoffice API, and bun
 depends_on:
   - Casko.XmlSitemapsForUmbraco.Common
   - Casko.XmlSitemapsForUmbraco.Delivery
-  - Casko.XmlSitemapsForUmbraco.Http
   - Casko.XmlSitemapsForUmbraco.Models
   - Casko.XmlSitemapsForUmbraco.Providers
   - Casko.XmlSitemapsForUmbraco.Providers.Examine
   - Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
-  - Casko.XmlSitemapsForUmbraco.Serialization
   - Casko.XmlSitemapsForUmbraco.Storage
   - Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
 used_by:
-  - Casko.XmlSitemapsForUmbraco.TestSite
+  - Casko.XmlSitemapsForUmbraco.Demo*Site
 ---
 
 # Casko.XmlSitemapsForUmbraco.Package
@@ -49,12 +47,10 @@ It also carries NuGet metadata and includes `../../docs/README_nuget.md` as the 
 ```text
 Casko.XmlSitemapsForUmbraco.Common
 Casko.XmlSitemapsForUmbraco.Delivery
-Casko.XmlSitemapsForUmbraco.Http
 Casko.XmlSitemapsForUmbraco.Models
 Casko.XmlSitemapsForUmbraco.Providers
 Casko.XmlSitemapsForUmbraco.Providers.Examine
 Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
-Casko.XmlSitemapsForUmbraco.Serialization
 Casko.XmlSitemapsForUmbraco.Storage
 Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
        |
@@ -67,24 +63,22 @@ Casko.XmlSitemapsForUmbraco.TestSite
 
 ### Dependencies
 
-| Project | Reason |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj` | Provides configuration options and shared services used by package API responses and composition. |
-| `../Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj` | Registers public delivery API behavior through the package composer. |
-| `../Casko.XmlSitemapsForUmbraco.Http/Casko.XmlSitemapsForUmbraco.Http.csproj` | Included in the packaged runtime output for XML HTTP delivery support. |
-| `../Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj` | Included in the packaged runtime output for sitemap model contracts. |
-| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Provides provider abstractions and core sitemap rendering services. |
-| `../Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj` | Registers the Examine-backed sitemap provider. |
-| `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent/Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.csproj` | Registers the published-content sitemap provider and fallback source. |
-| `../Casko.XmlSitemapsForUmbraco.Serialization/Casko.XmlSitemapsForUmbraco.Serialization.csproj` | Included for XML serialization and deserialization support. |
-| `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj` | Included for stored sitemap provider and refresh behavior. |
-| `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj` | Registers Umbraco media-backed storage as the public sitemap provider wrapper. |
+| Project | Reason                                                                                             |
+|---|----------------------------------------------------------------------------------------------------|
+| `../Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj` | Provides configuration options and shared services used by package API responses and composition. Included in the packaged runtime output for XML HTTP delivery support. Included for XML serialization and deserialization support. |
+| `../Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj` | Registers public delivery API behavior through the package composer.                               |
+| `../Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj` | Included in the packaged runtime output for sitemap model contracts.                               |
+| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Provides provider abstractions and core sitemap rendering services.                                |
+| `../Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj` | Registers the Examine-backed sitemap provider.                                                     |
+| `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent/Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.csproj` | Registers the published-content sitemap provider and fallback source.                              |
+| `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj` | Included for stored sitemap provider and refresh behavior.                                         |
+| `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj` | Registers Umbraco media-backed storage as the public sitemap provider wrapper.                     |
 
 ### Used by
 
-| Project | Usage |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.TestSite/Casko.XmlSitemapsForUmbraco.TestSite.csproj` | Hosts the local package project through a direct project reference for source-level validation. |
+| Project                                                                                | Usage                                                                                                                               |
+|----------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `../Casko.XmlSitemapsForUmbraco.TestSite/Casko.XmlSitemapsForUmbraco.Demo*Site.csproj` | Sites (in different configurations) hosts the local package project through a direct project reference for source-level validation. |
 
 ## Important files and entry points
 

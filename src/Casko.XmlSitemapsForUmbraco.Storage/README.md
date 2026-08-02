@@ -8,7 +8,6 @@ depends_on:
   - Casko.XmlSitemapsForUmbraco.Common
   - Casko.XmlSitemapsForUmbraco.Models
   - Casko.XmlSitemapsForUmbraco.Providers
-  - Casko.XmlSitemapsForUmbraco.Serialization
 used_by:
   - Casko.XmlSitemapsForUmbraco.Package
   - Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
@@ -46,7 +45,6 @@ The project does not choose a physical storage medium. `Storage.UmbracoMedia` su
 Casko.XmlSitemapsForUmbraco.Common
 Casko.XmlSitemapsForUmbraco.Models
 Casko.XmlSitemapsForUmbraco.Providers
-Casko.XmlSitemapsForUmbraco.Serialization
        |
        v
 Casko.XmlSitemapsForUmbraco.Storage
@@ -59,12 +57,11 @@ Casko.XmlSitemapsForUmbraco.Storage
 
 ### Dependencies
 
-| Project | Reason |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies `XmlSitemapsOptions` and storage configuration values such as `RefreshStaleAfterSeconds`. |
-| `../Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj` | Supplies `IXmlSitemapModel`, `XmlSitemap`, and `XmlSitemapIndex` types refreshed and returned by storage services. |
+| Project | Reason                                                                                                                 |
+|---|------------------------------------------------------------------------------------------------------------------------|
+| `../Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies `XmlSitemapsOptions` and storage configuration values such as `RefreshStaleAfterSeconds`. Supplies XML serializer/deserializer services for storing and reading raw XML documents.                    |
+| `../Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj` | Supplies `IXmlSitemapModel`, `XmlSitemap`, and `XmlSitemapIndex` types refreshed and returned by storage services.     |
 | `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Supplies `IXmlSitemapProvider` and `IXmlSitemapSourceProvider` contracts used by stored provider and refresh services. |
-| `../Casko.XmlSitemapsForUmbraco.Serialization/Casko.XmlSitemapsForUmbraco.Serialization.csproj` | Supplies XML serializer/deserializer services for storing and reading raw XML documents. |
 
 ### Used by
 
