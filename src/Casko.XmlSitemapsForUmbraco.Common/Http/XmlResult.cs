@@ -3,7 +3,7 @@ using Casko.XmlSitemapsForUmbraco.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
 
-namespace Casko.XmlSitemapsForUmbraco.Http;
+namespace Casko.XmlSitemapsForUmbraco.Common.Http;
 
 public class XmlResult<T>(T result) : IResult
 {

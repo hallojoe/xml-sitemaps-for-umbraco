@@ -1,8 +1,8 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common;
+using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
-using Casko.XmlSitemapsForUmbraco.Serialization;
 using Casko.XmlSitemapsForUmbraco.Storage;
 using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Microsoft.Extensions.Options;

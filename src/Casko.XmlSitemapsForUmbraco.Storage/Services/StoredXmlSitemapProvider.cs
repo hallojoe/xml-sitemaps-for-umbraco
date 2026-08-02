@@ -1,7 +1,7 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
-using Casko.XmlSitemapsForUmbraco.Serialization;
 using Microsoft.Extensions.Options;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 

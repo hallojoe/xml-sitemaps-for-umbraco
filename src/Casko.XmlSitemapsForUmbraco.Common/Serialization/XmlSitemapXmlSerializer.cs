@@ -2,7 +2,7 @@ using System.Text;
 using System.Xml.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
 
-namespace Casko.XmlSitemapsForUmbraco.Serialization;
+namespace Casko.XmlSitemapsForUmbraco.Common.Serialization;
 
 /// <inheritdoc />
 public sealed class XmlSitemapXmlSerializer : IXmlSitemapXmlSerializer

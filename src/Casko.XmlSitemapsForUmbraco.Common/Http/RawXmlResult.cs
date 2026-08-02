@@ -2,7 +2,7 @@ using System.Text;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Microsoft.AspNetCore.Http;
 
-namespace Casko.XmlSitemapsForUmbraco.Http;
+namespace Casko.XmlSitemapsForUmbraco.Common.Http;
 
 public sealed class RawXmlResult(string xml) : IResult
 {

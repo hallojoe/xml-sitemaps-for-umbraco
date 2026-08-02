@@ -38,7 +38,7 @@ The project owns the common abstractions for public sitemap access, live source 
 ## Non-responsibilities
 
 - This project does not query Umbraco content or Examine indexes. Concrete source behavior belongs in `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent` and `../Casko.XmlSitemapsForUmbraco.Providers.Examine`.
-- This project does not serialize XML; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Serialization`.
+- This project does not serialize XML; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Common/Serialization`.
 - This project does not cache, store, or refresh sitemap output; storage behavior belongs in `../Casko.XmlSitemapsForUmbraco.Storage` and `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia`.
 - This project does not expose HTTP endpoints; delivery and backoffice API behavior belongs in `../Casko.XmlSitemapsForUmbraco.Delivery` and `../Casko.XmlSitemapsForUmbraco.Package`.
 

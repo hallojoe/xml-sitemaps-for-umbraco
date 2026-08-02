@@ -1,6 +1,6 @@
 using System.Globalization;
+using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
-using Casko.XmlSitemapsForUmbraco.Serialization;
 using NUnit.Framework;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;

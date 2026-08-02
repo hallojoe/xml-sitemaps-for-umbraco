@@ -1,5 +1,5 @@
 using System.Text;
-using Casko.XmlSitemapsForUmbraco.Http;
+using Casko.XmlSitemapsForUmbraco.Common.Http;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Microsoft.AspNetCore.Http;
 using NUnit.Framework;

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Casko.XmlSitemapsForUmbraco.Serialization.Configuration;
+namespace Casko.XmlSitemapsForUmbraco.Common.Serialization.Configuration;
 
 public static class ServiceCollectionExtensions
 {

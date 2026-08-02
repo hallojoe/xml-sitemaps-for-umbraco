@@ -8,9 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Http\Casko.XmlSitemapsForUmbraco.Http.csproj" />
       <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers\Casko.XmlSitemapsForUmbraco.Providers.csproj" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Serialization\Casko.XmlSitemapsForUmbraco.Serialization.csproj" />
     </ItemGroup>
 
     <ItemGroup>

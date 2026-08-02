@@ -1,6 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Models;
 
-namespace Casko.XmlSitemapsForUmbraco.Serialization;
+namespace Casko.XmlSitemapsForUmbraco.Common.Serialization;
 
 /// <summary>
 /// Deserializes raw XML sitemap documents to sitemap models.
