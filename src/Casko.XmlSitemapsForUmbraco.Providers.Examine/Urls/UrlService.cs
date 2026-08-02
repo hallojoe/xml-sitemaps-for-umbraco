@@ -35,6 +35,7 @@ public interface ICmsUrlService
 public sealed class ContentUrlService(
     IOptions<UrlResolverSettings> urlResolverSettings,
     IOptions<WebRoutingSettings> webRoutingSettings,
+    IOptions<RequestHandlerSettings> requestHandlerSettings,
     IOptions<XmlSitemapsOptions> xmlSitemapsOptions,
     ILanguageService languageService,
     IDomainService domainService,
@@ -110,7 +111,13 @@ public sealed class ContentUrlService(
                     continue;
                 }
 
-                var resolvedUrl = ResolveUrl(url, language, assignedDomains, webRoutingSettings.Value.UmbracoApplicationUrl);
+                var resolvedUrl = ResolveUrl(
+                    url, 
+                    language, 
+                    assignedDomains, 
+                    webRoutingSettings.Value.UmbracoApplicationUrl, 
+                    requestHandlerSettings.Value.AddTrailingSlash);
+                
                 cmsUrls.Add(new CmsUrl(
                     resolvedUrl.UrlPath,
                     updatedDateForCulture,
@@ -129,22 +136,23 @@ public sealed class ContentUrlService(
         string url,
         string? culture,
         IReadOnlyCollection<IDomain> assignedDomains,
-        string? fallbackApplicationUrl)
+        string? fallbackApplicationUrl, 
+        bool addTrailingSlash = true)
     {
         if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
         {
             return new ResolvedCmsUrl(
-                RemoveIdFromLegacyRouteFormat(absoluteUrl.PathAndQuery),
+                RemoveIdFromLegacyRouteFormat(absoluteUrl.PathAndQuery, addTrailingSlash),
                 absoluteUrl.GetLeftPart(UriPartial.Authority));
         }
 
-        var sanitizedUrl = RemoveIdFromLegacyRouteFormat(url);
+        var sanitizedUrl = RemoveIdFromLegacyRouteFormat(url, addTrailingSlash);
         var hostname = ResolveHostname(culture, assignedDomains, fallbackApplicationUrl);
 
         return new ResolvedCmsUrl(sanitizedUrl, hostname);
     }
 
-    internal static string RemoveIdFromLegacyRouteFormat(string url)
+    internal static string RemoveIdFromLegacyRouteFormat(string url, bool addTrailingSlash = true)
     {
         var trimmedUrl = url.TrimStart('/');
         var separatorIndex = trimmedUrl.IndexOf('/');
@@ -166,7 +174,12 @@ public sealed class ContentUrlService(
             return "/";
         }
 
-        return sanitizedUrl;
+        if (addTrailingSlash is false)
+        {
+            return sanitizedUrl.Trim('/');
+        }
+
+        return sanitizedUrl.EndsWith('/') ? sanitizedUrl : sanitizedUrl + '/';
     }
 
     internal static string? ResolveHostname(
