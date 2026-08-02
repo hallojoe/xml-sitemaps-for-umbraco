@@ -12,14 +12,14 @@ public sealed class CustomSitemapProvider : IXmlSitemapCustomProvider
         XmlSitemapCustomProviderContext context,
         CancellationToken cancellationToken = default)
     {
-        var lastModified = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+        var lastModified = DateTime.UtcNow;
         var sitemap = new XmlSitemap
         {
             Urls =
             [
-                CreateUrl($"https://{context.HostName}/dummy/one", lastModified, ChangeFrequency.Weekly, 0.8),
-                CreateUrl($"https://{context.HostName}/dummy/two", lastModified.AddDays(-7), ChangeFrequency.Monthly, 0.6),
-                CreateUrl($"https://{context.HostName}/dummy/three", lastModified.AddDays(-14), ChangeFrequency.Yearly, 0.4)
+                CreateUrl($"{context.HostName}/dummy/one", lastModified, ChangeFrequency.Weekly, 0.8),
+                CreateUrl($"{context.HostName}/dummy/two", lastModified.AddDays(-7), ChangeFrequency.Monthly, 0.6),
+                CreateUrl($"{context.HostName}/dummy/three", lastModified.AddDays(-14), ChangeFrequency.Yearly, 0.4)
             ]
         };
 
