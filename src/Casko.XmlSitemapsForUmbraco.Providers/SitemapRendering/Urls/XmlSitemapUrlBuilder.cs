@@ -1,3 +1,5 @@
+using Casko.XmlSitemapsForUmbraco.Common;
+
 namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
 
 public class XmlSitemapUrlBuilder : IXmlSitemapUrlBuilder
