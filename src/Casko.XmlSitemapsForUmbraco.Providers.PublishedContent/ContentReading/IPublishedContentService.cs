@@ -24,8 +24,7 @@ public interface IPublishedContentService
     /// <param name="publishedContentCache"></param>
     /// <returns></returns>
     public IPublishedContent? GetRootContent(string? contentTypeAlias = null, IPublishedContentCache? publishedContentCache = null);
-
-
+    
     /// <summary>
     /// Gets all root items in the content tree.
     /// </summary>

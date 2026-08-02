@@ -2,6 +2,14 @@ using Casko.XmlSitemapsForUmbraco.Models;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers;
 
+
+public interface IXmlSitemapHostProvider2
+{
+    
+    
+}
+
+
 /// <summary>
 /// Provides XML sitemap and XML sitemap index models.
 /// </summary>

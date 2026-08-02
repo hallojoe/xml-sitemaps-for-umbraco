@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Models;
@@ -8,7 +7,6 @@ using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.SitemapRendering;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Routing;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers.PublishedContent;
@@ -18,7 +16,7 @@ public class PublishedContentXmlSitemapProvider(
     IPublishedContentService publishedContentService,
     IPublishedContentRenderer sitemapRenderer,
     IPublishedContentIndexRenderer sitemapIndexRenderer,
-    IPublishedUrlProvider publishedUrlProvider,
+    IHostUrlProvider hostUrlProvider,
     IEnumerable<IXmlSitemapCustomProvider> customProviders) : IXmlSitemapSourceProvider
 {
     /// <inheritdoc />
@@ -181,51 +179,71 @@ public class PublishedContentXmlSitemapProvider(
 
         var allLanguageCodes = await publishedContentService.GetLanguagesAsync();
 
-        var defaultLanguageCode = culture ?? allLanguageCodes.FirstOrDefault() ?? "en";
+        var hostUrl = await ResolveHostUrlAsync(rootContent.Key, culture);
+        var defaultLanguageCode = culture ?? hostUrl?.Culture ?? allLanguageCodes.FirstOrDefault() ?? "en";
+        var availableCultures = ResolveAvailableCultures(allLanguageCodes, culture, hostUrl?.Culture);
 
         var cultureSelection = SitemapCultureSelection.Resolve(
-            allLanguageCodes,
+            availableCultures,
             rootOptions,
             sitemapOptions);
 
         var contentTypeSelection = SitemapContentTypeSelection.Resolve(rootOptions, sitemapOptions);
         var propertyExclusionSelection = SitemapPropertyExclusionSelection.Resolve(rootOptions);
-
-        if (string.IsNullOrWhiteSpace(hostname))
-        {
-            hostname = ResolveHostname(rootContent, culture);
-        }
+        var resolvedHostname = string.IsNullOrWhiteSpace(hostname)
+            ? ResolveHostname(hostUrl)
+            : hostname;
 
         return sitemapRenderer.Render(new PublishedContentRenderContext(
             [rootContent],
             defaultLanguageCode,
             cultureSelection.Cultures,
-            hostname,
+            resolvedHostname,
             cultureSelection.RenderAlternateLinks,
             content => contentTypeSelection.ShouldInclude(content) &&
                        propertyExclusionSelection.ShouldInclude(content, defaultLanguageCode)));
     }
 
-    private string? ResolveHostname(IPublishedContent rootContent, string? culture)
+    private async Task<HostUrl?> ResolveHostUrlAsync(Guid rootKey, string? culture)
     {
-        var absoluteUrl = publishedUrlProvider.GetUrl(rootContent, UrlMode.Absolute, culture, current: null);
-        if (string.IsNullOrWhiteSpace(absoluteUrl) || absoluteUrl == "#")
+        var hostUrls = (await hostUrlProvider.GetHostUrlsAsync())
+            .Where(hostUrl => hostUrl.Key == rootKey)
+            .ToList();
+
+        if (hostUrls.Count == 0)
         {
             return null;
         }
 
-        if (Uri.TryCreate(absoluteUrl, UriKind.Absolute, out var absoluteUri))
+        if (string.IsNullOrWhiteSpace(culture) is false)
         {
-            return absoluteUri.Authority;
+            var cultureHostUrl = hostUrls.FirstOrDefault(hostUrl =>
+                string.Equals(hostUrl.Culture, culture, StringComparison.OrdinalIgnoreCase));
+            if (cultureHostUrl is not null)
+            {
+                return cultureHostUrl;
+            }
         }
 
-        var schemeSeparatorIndex = absoluteUrl.IndexOf("://", StringComparison.Ordinal);
-        if (schemeSeparatorIndex >= 0)
-        {
-            absoluteUrl = absoluteUrl[(schemeSeparatorIndex + 3)..];
-        }
+        return hostUrls.FirstOrDefault(hostUrl => hostUrl.IsDefaultCulture) ?? hostUrls.First();
+    }
 
-        return absoluteUrl.Split('/').FirstOrDefault();
+    private static string? ResolveHostname(HostUrl? hostUrl)
+    {
+        return hostUrl?.Uri.ToString().TrimEnd('/');
+    }
+
+    private static IReadOnlyCollection<string> ResolveAvailableCultures(
+        IEnumerable<string> languageCodes,
+        string? culture,
+        string? hostCulture)
+    {
+        return languageCodes
+            .Concat([culture, hostCulture])
+            .Where(languageCode => string.IsNullOrWhiteSpace(languageCode) is false)
+            .Select(languageCode => languageCode!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private static bool IsImplicitSingleSitemapKey(XmlSitemapsOptions options, string sitemapKey)

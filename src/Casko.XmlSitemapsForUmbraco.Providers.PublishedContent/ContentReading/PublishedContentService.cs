@@ -22,15 +22,6 @@ public class PublishedContentService(
 {
     private IPublishedContent? GetRootContentByHostname(string? hostname = null, string? culture = null)
     {
-
-        if (documentNavigationQueryService.TryGetRootKeys(out IEnumerable<Guid> rootKeys2))
-        {
-            var rootKeys2Test = rootKeys2.ToArray();
-    
-            
-        }
-
-
         using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
         
         var rootContents = GetRootContents(null, umbracoContextReference.UmbracoContext.Content).ToArray();

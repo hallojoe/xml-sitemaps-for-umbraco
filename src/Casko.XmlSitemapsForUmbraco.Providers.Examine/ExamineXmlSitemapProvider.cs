@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Models;
@@ -9,15 +8,14 @@ using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
 using Microsoft.Extensions.Options;
-using Umbraco.Cms.Core.Configuration.Models;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers.Examine;
 
 public sealed class ExamineXmlSitemapProvider(
-    IOptions<WebRoutingSettings> webRoutingSettings,
     IOptions<XmlSitemapsOptions> xmlSitemapOptions,
     IPublishedContentService publishedContentService,
+    IHostUrlProvider hostUrlProvider,
     ICmsUrlService cmsUrlService,
     IExamineXmlSitemapRenderer sitemapRenderer,
     IXmlSitemapIndexRenderer sitemapIndexRenderer,
@@ -75,7 +73,7 @@ public sealed class ExamineXmlSitemapProvider(
 
                 return await RenderXmlSiteMapAsync(
                     implicitRootContent.Key,
-                    hostname: webRoutingSettings.Value.UmbracoApplicationUrl,
+                    hostname: null,
                     culture: null,
                     sitemapOptions: null);
             }
@@ -168,18 +166,65 @@ public sealed class ExamineXmlSitemapProvider(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var defaultLanguageCode = culture ?? allLanguageCodes.FirstOrDefault() ?? "en";
+        var hostUrl = await ResolveHostUrlAsync(rootKey, culture);
+        var defaultLanguageCode = culture ?? hostUrl?.Culture ?? allLanguageCodes.FirstOrDefault() ?? "en";
+        var availableCultures = ResolveAvailableCultures(allLanguageCodes, culture, hostUrl?.Culture);
         var cultureSelection = SitemapCultureSelection.Resolve(
-            allLanguageCodes,
+            availableCultures,
             xmlSitemapOptions.Value,
             sitemapOptions);
+        var resolvedHostname = string.IsNullOrWhiteSpace(hostname)
+            ? ResolveHostname(hostUrl)
+            : hostname;
 
         return sitemapRenderer.Render(new ExamineXmlSitemapRenderContext(
             urls,
             defaultLanguageCode,
             cultureSelection.Cultures,
-            hostname,
+            resolvedHostname,
             cultureSelection.RenderAlternateLinks));
+    }
+
+    private async Task<HostUrl?> ResolveHostUrlAsync(Guid rootKey, string? culture)
+    {
+        var hostUrls = (await hostUrlProvider.GetHostUrlsAsync())
+            .Where(hostUrl => hostUrl.Key == rootKey)
+            .ToList();
+
+        if (hostUrls.Count == 0)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(culture) is false)
+        {
+            var cultureHostUrl = hostUrls.FirstOrDefault(hostUrl =>
+                string.Equals(hostUrl.Culture, culture, StringComparison.OrdinalIgnoreCase));
+            if (cultureHostUrl is not null)
+            {
+                return cultureHostUrl;
+            }
+        }
+
+        return hostUrls.FirstOrDefault(hostUrl => hostUrl.IsDefaultCulture) ?? hostUrls.First();
+    }
+
+    private static string? ResolveHostname(HostUrl? hostUrl)
+    {
+        return hostUrl?.Uri.ToString().TrimEnd('/');
+    }
+
+    private static IReadOnlyCollection<string> ResolveAvailableCultures(
+        IEnumerable<string> languageCodes,
+        string? culture,
+        string? hostCulture)
+    {
+        return languageCodes
+            .Concat([culture, hostCulture])
+            .Where(languageCode => string.IsNullOrWhiteSpace(languageCode) is false)
+            .Select(languageCode => languageCode!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private static IReadOnlyDictionary<string, string> ResolvePublicSitemapAliases(

@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddXmlSitemapProviders(this IServiceCollection services)
     {
+        services.AddScoped<IHostUrlProvider, HostUrlProvider>();
         services.AddScoped<IXmlSitemapUrlBuilder, XmlSitemapUrlBuilder>();
         services.AddScoped<IXmlSitemapUrlSetRenderer, XmlSitemapUrlSetRenderer>();
         services.AddScoped<IXmlSitemapIndexRenderer, XmlSitemapIndexRenderer>();

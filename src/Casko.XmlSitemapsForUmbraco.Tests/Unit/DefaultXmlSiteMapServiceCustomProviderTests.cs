@@ -9,7 +9,6 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Routing;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -19,6 +18,7 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
     private IPublishedContentService _publishedContentService = null!;
     private IPublishedContentRenderer _sitemapRenderer = null!;
     private IPublishedContentIndexRenderer _sitemapIndexRenderer = null!;
+    private IHostUrlProvider _hostUrlProvider = null!;
     private IXmlSitemapCustomProvider _customProvider = null!;
 
     [SetUp]
@@ -27,6 +27,8 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
         _publishedContentService = Substitute.For<IPublishedContentService>();
         _sitemapRenderer = Substitute.For<IPublishedContentRenderer>();
         _sitemapIndexRenderer = Substitute.For<IPublishedContentIndexRenderer>();
+        _hostUrlProvider = Substitute.For<IHostUrlProvider>();
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([]));
         _customProvider = Substitute.For<IXmlSitemapCustomProvider>();
         _customProvider.Alias.Returns("external-products-provider");
     }
@@ -123,7 +125,7 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
             _publishedContentService,
             _sitemapRenderer,
             _sitemapIndexRenderer,
-            Substitute.For<IPublishedUrlProvider>(),
+            _hostUrlProvider,
             customProviders);
     }
 }

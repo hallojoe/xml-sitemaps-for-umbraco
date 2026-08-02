@@ -4,6 +4,7 @@ using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.SitemapRendering;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
+using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
 using NSubstitute;
 using NUnit.Framework;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -218,6 +219,16 @@ public class SitemapRenderingServiceTests
         var result = sut.BuildLegacySitemapFileUrl("products", "https://example.com/");
 
         Assert.That(result, Is.EqualTo("https://example.com/products.xml"));
+    }
+
+    [Test]
+    public void CombineWithHostname_WhenHostnameContainsPath_PreservesPath()
+    {
+        var sut = new XmlSitemapUrlBuilder();
+
+        var result = sut.CombineWithHostname("/text-page", "https://localhost:56317/en/");
+
+        Assert.That(result, Is.EqualTo("https://localhost:56317/en/text-page"));
     }
 
     private static IPublishedContent CreateContent(string contentTypeAlias)
