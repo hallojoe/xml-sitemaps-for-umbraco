@@ -1,3 +1,6 @@
+using Casko.XmlSitemapsForUmbraco.DemoSite;
+using Casko.XmlSitemapsForUmbraco.Providers.Configuration;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Load XML sitemap settings before Umbraco composers run so rewrite middleware
@@ -5,12 +8,16 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Configuration
     .AddJsonFile("appsettings.XmlSitemapsForUmbraco.json", optional: false, reloadOnChange: true);
 
+builder.Services.AddXmlSitemapCustomProvider<CustomSitemapProvider>();
+
 builder.CreateUmbracoBuilder()
     .AddBackOffice()
     .AddWebsite()
     .AddDeliveryApi()
     .AddComposers()
     .Build();
+
+
 
 WebApplication app = builder.Build();
 

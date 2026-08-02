@@ -77,7 +77,7 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
             .Where(url => url is not null)
             .Select(url => new XHtmlLink
             {
-                Href = BuildUrl(url!, hostname),
+                Href = BuildUrl(url!, ResolveCultureLinkHostname(url!, hostname)),
                 HrefLang = url!.Culture!
             })
             .Where(cultureLink => !cultureLink.Href.Contains('#'))
@@ -98,6 +98,13 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
         }
 
         return urlBuilder.CombineWithHostname(urlPath, resolvedHostname);
+    }
+
+    private static string? ResolveCultureLinkHostname(CmsUrl url, string? fallbackHostname)
+    {
+        return string.IsNullOrWhiteSpace(url.Hostname)
+            ? fallbackHostname
+            : url.Hostname;
     }
 
     private static bool IsCulture(CmsUrl url, string culture)

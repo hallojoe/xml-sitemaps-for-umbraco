@@ -61,6 +61,7 @@ public sealed class ServiceCompositionTests
         Assert.Multiple(() =>
         {
             Assert.That(services.Any(service => service.ServiceType == typeof(TimeProvider)), Is.True);
+            Assert.That(services.Any(service => service.ServiceType == typeof(IHostUrlProvider)), Is.True);
             Assert.That(services.Any(service => service.ServiceType == typeof(IXmlSitemapUrlBuilder)), Is.True);
             Assert.That(services.Any(service => service.ServiceType == typeof(IXmlSitemapXmlSerializer)), Is.True);
             Assert.That(services.Any(service => service.ServiceType == typeof(IXmlSitemapXmlDeserializer)), Is.True);

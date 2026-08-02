@@ -13,7 +13,6 @@ using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.UrlSets;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
-using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
@@ -23,6 +22,7 @@ namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 public class ExamineXmlSitemapProviderTests
 {
     private IPublishedContentService _publishedContentService = null!;
+    private IHostUrlProvider _hostUrlProvider = null!;
     private ICmsUrlService _cmsUrlService = null!;
     private IXmlSitemapCustomProvider _customProvider = null!;
 
@@ -30,6 +30,8 @@ public class ExamineXmlSitemapProviderTests
     public void SetUp()
     {
         _publishedContentService = Substitute.For<IPublishedContentService>();
+        _hostUrlProvider = Substitute.For<IHostUrlProvider>();
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([]));
         _cmsUrlService = Substitute.For<ICmsUrlService>();
         _customProvider = Substitute.For<IXmlSitemapCustomProvider>();
         _customProvider.Alias.Returns("external-products-provider");
@@ -54,6 +56,24 @@ public class ExamineXmlSitemapProviderTests
             Assert.That(result.Urls[0].Location, Is.EqualTo("https://example.com/en/products"));
             Assert.That(result.Urls[0].LastModified, Is.EqualTo(lastModified));
         });
+    }
+
+    [Test]
+    public async Task GetByRootKeyAsync_WhenHostUrlMatchesRoot_UsesHostUrlHostnameAndDefaultCulture()
+    {
+        var rootKey = Guid.NewGuid();
+        var lastModified = new DateTime(2026, 8, 2, 12, 0, 0, DateTimeKind.Utc);
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([
+            new HostUrl(new Uri("https://localhost:56317/en/"), "en", 10, rootKey, true)
+        ]));
+        _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
+            new CmsUrl("/text-page", lastModified, null, "en", Id: 10)
+        ]);
+        var sut = CreateProvider(new XmlSitemapsOptions());
+
+        var result = await sut.GetByRootKeyAsync(rootKey) as XmlSitemap;
+
+        Assert.That(result!.Urls[0].Location, Is.EqualTo("https://localhost:56317/en/text-page"));
     }
 
     [Test]
@@ -94,6 +114,9 @@ public class ExamineXmlSitemapProviderTests
         _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
             new CmsUrl("/da/produkter", new DateTime(2026, 5, 14), null, "da", Id: 10)
         ]);
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([
+            new HostUrl(new Uri("https://ignored.example.com"), "en", 10, rootKey, true)
+        ]));
         var sut = CreateProvider(new XmlSitemapsOptions
         {
             Sitemaps =
@@ -132,12 +155,10 @@ public class ExamineXmlSitemapProviderTests
         _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
             new CmsUrl("/", new DateTime(2026, 5, 14), "https://ignored.example.com", "en", Id: 10)
         ]);
-        var sut = CreateProvider(
-            new XmlSitemapsOptions(),
-            webRoutingSettings: new WebRoutingSettings
-            {
-                UmbracoApplicationUrl = "https://example.com"
-            });
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([
+            new HostUrl(new Uri("https://example.com"), "en", 10, rootKey, true)
+        ]));
+        var sut = CreateProvider(new XmlSitemapsOptions());
 
         var result = await sut.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey) as XmlSitemap;
 
@@ -212,7 +233,7 @@ public class ExamineXmlSitemapProviderTests
     }
 
     [Test]
-    public void RenderUrls_UsesHostnameOverrideAndRendersAlternateLinksById()
+    public void RenderUrls_UsesHostnameOverrideForLocationAndCmsHostnamesForAlternateLinks()
     {
         var renderer = new ExamineUrlRenderer(new XmlSitemapUrlBuilder());
         var lastModified = new DateTime(2026, 5, 14);
@@ -231,8 +252,45 @@ public class ExamineXmlSitemapProviderTests
             Assert.That(result[0].CultureLinks!.Select(link => link.HrefLang), Is.EqualTo(new[] { "da", "en" }));
             Assert.That(result[0].CultureLinks!.Select(link => link.Href), Is.EqualTo(new[]
             {
-                "https://example.com/da/produkter",
-                "https://example.com/en/products"
+                "https://ignored.example.com/da/produkter",
+                "https://ignored.example.com/en/products"
+            }));
+        });
+    }
+
+    [Test]
+    public void RenderUrls_WhenCultureHostnamesContainPaths_PreservesCultureHostnamePathsInAlternateLinks()
+    {
+        var renderer = new ExamineUrlRenderer(new XmlSitemapUrlBuilder());
+        var lastModified = new DateTime(2026, 8, 1);
+        var urls = new[]
+        {
+            new CmsUrl("/", lastModified, "https://localhost:56317", "da", Id: 10),
+            new CmsUrl("/", lastModified, "https://localhost:56317/en", "en", Id: 10),
+            new CmsUrl("/", lastModified, "https://localhost:56317/pl", "pl", Id: 10),
+            new CmsUrl("/tekst-side", lastModified, "https://localhost:56317", "da", Id: 20),
+            new CmsUrl("/text-page", lastModified, "https://localhost:56317/en", "en", Id: 20),
+            new CmsUrl("/pl-page-1", lastModified, "https://localhost:56317/pl", "pl", Id: 20)
+        };
+
+        var result = renderer.Render(urls, "da", ["da", "en", "pl"], "https://localhost:56317", renderAlternateLinks: true).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result[0].Location, Is.EqualTo("https://localhost:56317/"));
+            Assert.That(result[0].CultureLinks!.Select(link => link.Href), Is.EqualTo(new[]
+            {
+                "https://localhost:56317/",
+                "https://localhost:56317/en/",
+                "https://localhost:56317/pl/"
+            }));
+            Assert.That(result[1].Location, Is.EqualTo("https://localhost:56317/tekst-side"));
+            Assert.That(result[1].CultureLinks!.Select(link => link.Href), Is.EqualTo(new[]
+            {
+                "https://localhost:56317/tekst-side",
+                "https://localhost:56317/en/text-page",
+                "https://localhost:56317/pl/pl-page-1"
             }));
         });
     }
@@ -272,16 +330,15 @@ public class ExamineXmlSitemapProviderTests
 
     private ExamineXmlSitemapProvider CreateProvider(
         XmlSitemapsOptions options,
-        IEnumerable<IXmlSitemapCustomProvider>? customProviders = null,
-        WebRoutingSettings? webRoutingSettings = null)
+        IEnumerable<IXmlSitemapCustomProvider>? customProviders = null)
     {
         var urlBuilder = new XmlSitemapUrlBuilder();
         var urlSetRenderer = new XmlSitemapUrlSetRenderer();
 
         return new ExamineXmlSitemapProvider(
-            Options.Create(webRoutingSettings ?? new WebRoutingSettings()),
             Options.Create(options),
             _publishedContentService,
+            _hostUrlProvider,
             _cmsUrlService,
             new ExamineXmlSitemapRenderer(new ExamineUrlRenderer(urlBuilder), urlSetRenderer),
             new XmlSitemapIndexRenderer(urlBuilder),

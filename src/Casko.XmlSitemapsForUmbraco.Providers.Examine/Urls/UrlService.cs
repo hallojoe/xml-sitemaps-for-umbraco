@@ -2,6 +2,8 @@ using Examine;
 using Examine.Search;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Configuration.Models;
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Examine;
 
@@ -19,7 +21,7 @@ public record CmsUrl(
     string? Hostname, 
     string? Culture, 
     int? Id = null,
-    int? Key = null);
+    Guid? Key = null);
 
 public interface ICmsUrlService
 {
@@ -32,8 +34,10 @@ public interface ICmsUrlService
 
 public sealed class ContentUrlService(
     IOptions<UrlResolverSettings> urlResolverSettings,
+    IOptions<WebRoutingSettings> webRoutingSettings,
     IOptions<XmlSitemapsOptions> xmlSitemapsOptions,
     ILanguageService languageService,
+    IDomainService domainService,
     IDocumentUrlService documentUrlService,
     IExamineManager examineManager) : ICmsUrlService
 {
@@ -69,6 +73,7 @@ public sealed class ContentUrlService(
         var cmsUrls = new List<CmsUrl>();
 
         var languages = await GetCandidateLanguagesAsync();
+        var assignedDomains = (await domainService.GetAssignedDomainsAsync(key, false)).ToArray();
         
         foreach (var searchResult in searchResultList)
         {
@@ -105,11 +110,122 @@ public sealed class ContentUrlService(
                     continue;
                 }
 
-                cmsUrls.Add(new CmsUrl(url, updatedDateForCulture, "", language, contentId));
+                var resolvedUrl = ResolveUrl(url, language, assignedDomains, webRoutingSettings.Value.UmbracoApplicationUrl);
+                cmsUrls.Add(new CmsUrl(
+                    resolvedUrl.UrlPath,
+                    updatedDateForCulture,
+                    resolvedUrl.Hostname,
+                    language,
+                    contentId,
+                    contentKey));
             }            
         }
 
         return cmsUrls;
+    }
+
+
+    internal static ResolvedCmsUrl ResolveUrl(
+        string url,
+        string? culture,
+        IReadOnlyCollection<IDomain> assignedDomains,
+        string? fallbackApplicationUrl)
+    {
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
+        {
+            return new ResolvedCmsUrl(
+                RemoveIdFromLegacyRouteFormat(absoluteUrl.PathAndQuery),
+                absoluteUrl.GetLeftPart(UriPartial.Authority));
+        }
+
+        var sanitizedUrl = RemoveIdFromLegacyRouteFormat(url);
+        var hostname = ResolveHostname(culture, assignedDomains, fallbackApplicationUrl);
+
+        return new ResolvedCmsUrl(sanitizedUrl, hostname);
+    }
+
+    internal static string RemoveIdFromLegacyRouteFormat(string url)
+    {
+        var trimmedUrl = url.TrimStart('/');
+        var separatorIndex = trimmedUrl.IndexOf('/');
+        var potentialContentIdPart = separatorIndex < 0
+            ? trimmedUrl
+            : trimmedUrl[..separatorIndex];
+
+        if (!int.TryParse(potentialContentIdPart, out _))
+        {
+            return url;
+        }
+
+        var sanitizedUrl = separatorIndex < 0
+            ? "/"
+            : "/" + trimmedUrl[(separatorIndex + 1)..];
+
+        if (string.IsNullOrWhiteSpace(sanitizedUrl))
+        {
+            return "/";
+        }
+
+        return sanitizedUrl;
+    }
+
+    internal static string? ResolveHostname(
+        string? culture,
+        IReadOnlyCollection<IDomain> assignedDomains,
+        string? fallbackApplicationUrl)
+    {
+        var domain = assignedDomains
+            .OrderBy(domain => domain.SortOrder)
+            .FirstOrDefault(domain =>
+                string.Equals(domain.LanguageIsoCode, culture, StringComparison.OrdinalIgnoreCase));
+
+        var domainName = domain?.DomainName;
+
+        if (!string.IsNullOrWhiteSpace(domainName))
+        {
+            return NormalizeHostname(domainName, fallbackApplicationUrl);
+        }
+
+        return string.IsNullOrWhiteSpace(fallbackApplicationUrl)
+            ? null
+            : NormalizeHostname(fallbackApplicationUrl, fallbackApplicationUrl);
+    }
+
+    private static string NormalizeHostname(string hostname, string? fallbackApplicationUrl)
+    {
+        if (Uri.TryCreate(hostname, UriKind.Absolute, out _))
+        {
+            return hostname.TrimEnd('/');
+        }
+
+        if (hostname.StartsWith('/'))
+        {
+            var fallbackOrigin = ResolveFallbackOrigin(fallbackApplicationUrl);
+            return $"{fallbackOrigin}{hostname}".TrimEnd('/');
+        }
+
+        var scheme = ResolveFallbackScheme(fallbackApplicationUrl);
+        return $"{scheme}://{hostname.Trim('/')}";
+    }
+
+    private static string ResolveFallbackOrigin(string? fallbackApplicationUrl)
+    {
+        if (Uri.TryCreate(fallbackApplicationUrl, UriKind.Absolute, out var applicationUri))
+        {
+            return applicationUri.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+        }
+
+        return string.Empty;
+    }
+
+    private static string ResolveFallbackScheme(string? fallbackApplicationUrl)
+    {
+        if (Uri.TryCreate(fallbackApplicationUrl, UriKind.Absolute, out var applicationUri))
+        {
+            return applicationUri.Scheme;
+        }
+
+        return Uri.UriSchemeHttps;
     }
 
     private async Task<string[]> GetCandidateLanguagesAsync()
@@ -147,3 +263,5 @@ public sealed class ContentUrlService(
         return languageCodes.ToArray();
     }
 }
+
+internal sealed record ResolvedCmsUrl(string UrlPath, string? Hostname);

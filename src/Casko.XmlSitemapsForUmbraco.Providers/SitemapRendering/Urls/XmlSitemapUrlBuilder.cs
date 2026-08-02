@@ -20,13 +20,6 @@ public class XmlSitemapUrlBuilder : IXmlSitemapUrlBuilder
             return relativeUrl;
         }
 
-        var lastIndexOfSlash = hostname.LastIndexOf('/');
-        if ((hostname.StartsWith("http", StringComparison.OrdinalIgnoreCase) && lastIndexOfSlash > 7) ||
-            (!hostname.StartsWith("http", StringComparison.OrdinalIgnoreCase) && lastIndexOfSlash > 0))
-        {
-            hostname = hostname[..lastIndexOfSlash];
-        }
-
-        return $"{hostname.TrimEnd('/')}{relativeUrl}";
+        return $"{hostname.TrimEnd('/')}/{relativeUrl.TrimStart('/')}";
     }
 }
