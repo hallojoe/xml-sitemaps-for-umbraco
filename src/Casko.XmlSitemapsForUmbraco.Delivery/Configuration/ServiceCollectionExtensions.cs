@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddXmlSitemapDeliveryApi(this IServiceCollection services,
         IConfiguration configuration, bool addRewritePipeline = true)
     {
-        services.AddXmlSitemapConfiguration(configuration);
+        services.AddXmlSitemapsConfiguration(configuration);
 
         services
             .AddControllers()

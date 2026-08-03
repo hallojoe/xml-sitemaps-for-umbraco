@@ -180,7 +180,7 @@ public class PublishedContentXmlSitemapProvider(
         var allLanguageCodes = await publishedContentService.GetLanguagesAsync();
 
         var hostUrl = await ResolveHostUrlAsync(rootContent.Key, culture);
-        var defaultLanguageCode = culture ?? hostUrl?.Culture ?? allLanguageCodes.FirstOrDefault() ?? "en";
+        var defaultLanguageCode = culture ?? hostUrl?.Culture ?? allLanguageCodes.FirstOrDefault() ?? string.Empty;
         var availableCultures = ResolveAvailableCultures(allLanguageCodes, culture, hostUrl?.Culture);
 
         var cultureSelection = SitemapCultureSelection.Resolve(

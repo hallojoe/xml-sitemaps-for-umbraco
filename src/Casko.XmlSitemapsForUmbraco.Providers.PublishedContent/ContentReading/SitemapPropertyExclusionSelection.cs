@@ -56,7 +56,7 @@ public sealed class SitemapPropertyExclusionSelection
         {
             null => null,
             string stringValue => stringValue,
-            bool boolValue => boolValue ? bool.TrueString : bool.FalseString,
+            bool boolValue => boolValue ? "1" : "0",
             IEnumerable enumerableValue => string.Join(",", enumerableValue.Cast<object?>().Select(ConvertToText)),
             IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString()

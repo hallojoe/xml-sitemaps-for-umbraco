@@ -1,4 +1,5 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -6,7 +7,6 @@ using NUnit.Framework;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
-using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
@@ -20,7 +20,7 @@ public sealed class PublishedContentServiceTests
     private IDocumentUrlService _documentUrlService = null!;
     private IDocumentNavigationQueryService _documentNavigationQueryService = null!;
     private ILanguageService _languageService = null!;
-    private IPublishedUrlProvider _publishedUrlProvider = null!;
+    private IHostUrlProvider _hostUrlProvider = null!;
     private IPublishedContentCache _publishedContentCache = null!;
 
     [SetUp]
@@ -30,7 +30,8 @@ public sealed class PublishedContentServiceTests
         _documentUrlService = Substitute.For<IDocumentUrlService>();
         _documentNavigationQueryService = Substitute.For<IDocumentNavigationQueryService>();
         _languageService = Substitute.For<ILanguageService>();
-        _publishedUrlProvider = Substitute.For<IPublishedUrlProvider>();
+        _hostUrlProvider = Substitute.For<IHostUrlProvider>();
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([]));
         _publishedContentCache = Substitute.For<IPublishedContentCache>();
 
         var umbracoContext = Substitute.For<IUmbracoContext>();
@@ -189,7 +190,8 @@ public sealed class PublishedContentServiceTests
     public void GetContentByPath_WhenHostnameIsEmpty_UsesTheFirstResolvedRoot()
     {
         var root = CreateContent(100, "home");
-        ConfigureNavigationRoots(root);
+        ConfigureHostUrls(new HostUrl(new Uri("https://example.com/"), "en", root.Id, root.Key, true));
+        _publishedContentCache.GetById(root.Key).Returns(root);
         var expectedContentKey = Guid.NewGuid();
         _documentUrlService
             .GetDocumentKeyByRoute("/", null, root.Id, false)
@@ -207,13 +209,15 @@ public sealed class PublishedContentServiceTests
     }
 
     [Test]
-    public void GetContentByPath_WhenMultipleDirectRootsMatchHostname_UsesTheMatchingRoot()
+    public void GetContentByPath_WhenMultipleHostUrlsMatchHostname_UsesTheMatchingRoot()
     {
         var firstRoot = CreateContent(100, "home");
         var matchingRoot = CreateContent(101, "home");
-        ConfigureNavigationRoots(firstRoot, matchingRoot);
-        _publishedUrlProvider.GetUrl(firstRoot, UrlMode.Absolute, null, null).Returns("https://first.example.com/");
-        _publishedUrlProvider.GetUrl(matchingRoot, UrlMode.Absolute, null, null).Returns("https://match.example.com/");
+        ConfigureHostUrls(
+            new HostUrl(new Uri("https://first.example.com/"), "en", firstRoot.Id, firstRoot.Key, true),
+            new HostUrl(new Uri("https://match.example.com/"), "en", matchingRoot.Id, matchingRoot.Key, true));
+        _publishedContentCache.GetById(firstRoot.Key).Returns(firstRoot);
+        _publishedContentCache.GetById(matchingRoot.Key).Returns(matchingRoot);
         var expectedContentKey = Guid.NewGuid();
         _documentUrlService
             .GetDocumentKeyByRoute("/", null, matchingRoot.Id, false)
@@ -231,103 +235,70 @@ public sealed class PublishedContentServiceTests
     }
 
     [Test]
-    public void GetContentByPath_WhenRootNodeSearchLevelIsOneAndHostnameMatchesAChild_UsesTheMatchingChildRoot()
+    public void GetContentByPath_WhenHostnameContainsAPath_MatchesPathfulHostUrl()
     {
-        var firstChild = CreateContent(200, "home");
-        var matchingChild = CreateContent(201, "home");
-        var container = CreateContent(100, "container");
-        ConfigureNavigationRoots(container);
-        ConfigureChildRoots(container, firstChild, matchingChild);
-        _publishedUrlProvider.GetUrl(firstChild, UrlMode.Absolute, null, null).Returns("https://first.example.com/");
-        _publishedUrlProvider.GetUrl(matchingChild, UrlMode.Absolute, null, null).Returns("https://match.example.com/");
+        var matchingRoot = CreateContent(201, "home");
+        ConfigureHostUrls(new HostUrl(new Uri("https://match.example.com/en/"), "en", matchingRoot.Id, matchingRoot.Key, true));
+        _publishedContentCache.GetById(matchingRoot.Key).Returns(matchingRoot);
         var expectedContentKey = Guid.NewGuid();
         _documentUrlService
-            .GetDocumentKeyByRoute("/", null, matchingChild.Id, false)
+            .GetDocumentKeyByRoute("/", null, matchingRoot.Id, false)
             .Returns(expectedContentKey);
-        _publishedContentCache.GetById(false, expectedContentKey).Returns(matchingChild);
-        var sut = CreateService(new XmlSitemapsOptions
-        {
-            Mode = XmlSitemapsMode.Configuration,
-            RootNodeSearchLevel = 1
-        });
+        _publishedContentCache.GetById(false, expectedContentKey).Returns(matchingRoot);
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
 
-        var result = sut.GetContentByPath("/", hostname: "https://match.example.com");
+        var result = sut.GetContentByPath("/", hostname: "https://match.example.com/en");
 
         Assert.Multiple(() =>
         {
-            Assert.That(result, Is.SameAs(matchingChild));
-            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, matchingChild.Id, false);
+            Assert.That(result, Is.SameAs(matchingRoot));
+            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, matchingRoot.Id, false);
         });
     }
 
     [Test]
-    public void GetContentByPath_WhenRootNodeSearchLevelIsOneAndHostnameIsEmpty_UsesTheFirstResolvedChildRoot()
+    public void GetContentByPath_WhenCultureIsSpecified_PrefersMatchingHostUrlCulture()
     {
-        var firstChild = CreateContent(200, "home");
-        var secondChild = CreateContent(201, "home");
-        var container = CreateContent(100, "container");
-        ConfigureNavigationRoots(container);
-        ConfigureChildRoots(container, firstChild, secondChild);
+        var defaultRoot = CreateContent(200, "home");
+        var englishRoot = CreateContent(201, "home");
+        ConfigureHostUrls(
+            new HostUrl(new Uri("https://example.com/"), "da", defaultRoot.Id, defaultRoot.Key, true),
+            new HostUrl(new Uri("https://example.com/en/"), "en", englishRoot.Id, englishRoot.Key, false));
+        _publishedContentCache.GetById(defaultRoot.Key).Returns(defaultRoot);
+        _publishedContentCache.GetById(englishRoot.Key).Returns(englishRoot);
         var expectedContentKey = Guid.NewGuid();
         _documentUrlService
-            .GetDocumentKeyByRoute("/", null, firstChild.Id, false)
+            .GetDocumentKeyByRoute("/", "en", englishRoot.Id, false)
             .Returns(expectedContentKey);
-        _publishedContentCache.GetById(false, expectedContentKey).Returns(firstChild);
-        var sut = CreateService(new XmlSitemapsOptions
-        {
-            Mode = XmlSitemapsMode.Configuration,
-            RootNodeSearchLevel = 1
-        });
+        _publishedContentCache.GetById(false, expectedContentKey).Returns(englishRoot);
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
 
-        var result = sut.GetContentByPath("/", hostname: "");
+        var result = sut.GetContentByPath("/", hostname: "https://example.com/en", culture: "en");
 
         Assert.Multiple(() =>
         {
-            Assert.That(result, Is.SameAs(firstChild));
-            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, firstChild.Id, false);
+            Assert.That(result, Is.SameAs(englishRoot));
+            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", "en", englishRoot.Id, false);
         });
     }
 
     [Test]
-    public void GetContentByPath_WhenRootNodeSearchLevelIsOneAndHostnameDoesNotMatch_FallsBackToTheFirstResolvedChildRoot()
+    public void GetContentByPath_WhenHostnameDoesNotMatchAHostUrl_ThrowsNoRootContentException()
     {
-        var firstChild = CreateContent(200, "home");
-        var secondChild = CreateContent(201, "home");
-        var container = CreateContent(100, "container");
-        ConfigureNavigationRoots(container);
-        ConfigureChildRoots(container, firstChild, secondChild);
-        _publishedUrlProvider.GetUrl(firstChild, UrlMode.Absolute, null, null).Returns("https://first.example.com/");
-        _publishedUrlProvider.GetUrl(secondChild, UrlMode.Absolute, null, null).Returns("https://second.example.com/");
-        var expectedContentKey = Guid.NewGuid();
-        _documentUrlService
-            .GetDocumentKeyByRoute("/", null, firstChild.Id, false)
-            .Returns(expectedContentKey);
-        _publishedContentCache.GetById(false, expectedContentKey).Returns(firstChild);
-        var sut = CreateService(new XmlSitemapsOptions
-        {
-            Mode = XmlSitemapsMode.Configuration,
-            RootNodeSearchLevel = 1
-        });
+        var root = CreateContent(200, "home");
+        ConfigureHostUrls(new HostUrl(new Uri("https://first.example.com/"), "en", root.Id, root.Key, true));
+        _publishedContentCache.GetById(root.Key).Returns(root);
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
 
-        var result = sut.GetContentByPath("/", hostname: "unknown.example.com");
+        TestDelegate action = () => sut.GetContentByPath("/", hostname: "unknown.example.com");
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result, Is.SameAs(firstChild));
-            _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, firstChild.Id, false);
-        });
+        Assert.That(action, Throws.TypeOf<InvalidOperationException>().With.Message.EqualTo("No content found at root."));
     }
 
     [Test]
-    public void GetContentByPath_WhenRootNodeSearchLevelIsOneAndNoChildrenExist_ThrowsNoRootContentException()
+    public void GetContentByPath_WhenNoHostUrlsExist_ThrowsNoRootContentException()
     {
-        var container = CreateContent(100, "container");
-        ConfigureNavigationRoots(container);
-        var sut = CreateService(new XmlSitemapsOptions
-        {
-            Mode = XmlSitemapsMode.Configuration,
-            RootNodeSearchLevel = 1
-        });
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
 
         TestDelegate action = () => sut.GetContentByPath("/", hostname: "missing.example.com");
 
@@ -342,7 +313,12 @@ public sealed class PublishedContentServiceTests
             _documentUrlService,
             _documentNavigationQueryService,
             _languageService,
-            _publishedUrlProvider);
+            _hostUrlProvider);
+    }
+
+    private void ConfigureHostUrls(params HostUrl[] hostUrls)
+    {
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>(hostUrls));
     }
 
     private void ConfigureNavigationRoots(params IPublishedContent[] roots)

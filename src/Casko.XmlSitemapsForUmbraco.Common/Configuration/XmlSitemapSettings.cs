@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Casko.XmlSitemapsForUmbraco.Common.Configuration;
 
 public enum XmlSitemapsMode
@@ -115,7 +117,14 @@ public sealed class XmlSitemapsOptions
     /// Gets or sets a value indicating whether to use the Delivery API access policy.
     /// </summary>
     public bool UseDeliveryApiAccessPolicy { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the key used to identify the XML sitemaps provider.
+    /// </summary>
+    public string ProviderKey { get; set; } = "PublishedContent";
+    
 }
+
 
 /// <summary>
 /// XML sitemap storage refresh settings.

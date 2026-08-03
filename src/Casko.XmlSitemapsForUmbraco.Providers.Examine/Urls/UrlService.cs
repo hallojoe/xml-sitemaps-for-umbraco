@@ -11,7 +11,7 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 
 public class UrlResolverSettings
 {
-    public const string Key = "Casko:Search:Url";
+    public const string Key = "XmlSitemaps:Providers:Examine";
     public ushort PageSize { get; set; } = 1000;
 }
 
@@ -30,6 +30,7 @@ public interface ICmsUrlService
     /// </summary>
     /// <returns></returns>
     public Task<IEnumerable<CmsUrl>> GetUrlsByKeyAsync(Guid key, CancellationToken cancellationToken = default);
+    
 }
 
 public sealed class ContentUrlService(
@@ -62,7 +63,7 @@ public sealed class ContentUrlService(
                 .CreateQuery(IndexTypes.Content)
                 .NativeQuery("+pathKeys:" + key.ToString("D"))
                 .Execute(new QueryOptions(skip, urlResolverSettings.Value.PageSize));
-                
+            
             total = searchResults.TotalItemCount;
             
             searchResultList.AddRange(searchResults);
@@ -78,6 +79,15 @@ public sealed class ContentUrlService(
         
         foreach (var searchResult in searchResultList)
         {
+            if (searchResult.Values.TryGetValue(
+                    xmlSitemapsOptions.Value.ExcludingUrlPropertyAlias ?? "__unknown", 
+                    out var excludingPropertyAlias) 
+                && 
+                    excludingPropertyAlias.Equals(xmlSitemapsOptions.Value.ExcludingUrlPropertyValue, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+            
             if (!Guid.TryParse(searchResult.Values["__Key"], out var contentKey))
             {
                 continue;
@@ -88,6 +98,11 @@ public sealed class ContentUrlService(
                 continue;
             }
 
+            // if (!searchResult.Values.TryGetValue("__Path", out var path))
+            // {
+            //     continue;
+            // }
+            
             if (!long.TryParse(searchResult.Values["updateDate"], out var updateDateAsLong))
             {
                 continue;
@@ -130,8 +145,7 @@ public sealed class ContentUrlService(
 
         return cmsUrls;
     }
-
-
+    
     internal static ResolvedCmsUrl ResolveUrl(
         string url,
         string? culture,

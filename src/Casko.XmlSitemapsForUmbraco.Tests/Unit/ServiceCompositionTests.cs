@@ -3,6 +3,7 @@ using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Configuration;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Routing;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.Configuration;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
@@ -26,12 +27,13 @@ public sealed class ServiceCompositionTests
         var services = new ServiceCollection();
         var configuration = new ConfigurationBuilder().Build();
 
-        services.AddXmlSitemapConfiguration(configuration);
-        services.AddXmlSitemapPublishedContentProvider();
+        services.AddXmlSitemapsConfiguration(configuration);
+        services.AddXmlSitemapsPublishedContentProvider();
         services.AddXmlSitemapExamineProvider();
         services.AddXmlSitemapsUmbracoMediaStorage();
 
-        services.AddScoped(_ => Substitute.For<IPublishedContentService>());
+        services.AddScoped(_ => Substitute.For<IHostUrlProvider>());
+        services.AddScoped(_ => Substitute.For<IExamineSitemapRootResolver>());
         services.AddScoped(_ => Substitute.For<ICmsUrlService>());
         services.AddScoped(_ => Substitute.For<IXmlSitemapDataSource>());
 
@@ -48,6 +50,20 @@ public sealed class ServiceCompositionTests
         {
             Assert.That(publicProvider, Is.TypeOf<StoredXmlSitemapProvider>());
             Assert.That(sourceProvider, Is.TypeOf<ExamineXmlSitemapProvider>());
+        });
+    }
+
+    [Test]
+    public void ExamineProvider_DoesNotRegisterPublishedContentServices()
+    {
+        var services = new ServiceCollection();
+
+        services.AddXmlSitemapExamineProvider();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(services.Any(service => service.ServiceType == typeof(IPublishedContentService)), Is.False);
+            Assert.That(services.Any(service => service.ServiceType == typeof(IExamineSitemapRootResolver)), Is.True);
         });
     }
 

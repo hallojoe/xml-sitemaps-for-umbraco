@@ -9,7 +9,6 @@ depends_on:
   - Casko.XmlSitemapsForUmbraco.Providers
 used_by:
   - Casko.XmlSitemapsForUmbraco.Package
-  - Casko.XmlSitemapsForUmbraco.Providers.Examine
   - Casko.XmlSitemapsForUmbraco.Tests
 ---
 
@@ -50,7 +49,6 @@ Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
        ^
        |
        +-- Casko.XmlSitemapsForUmbraco.Package
-       +-- Casko.XmlSitemapsForUmbraco.Providers.Examine
        +-- Casko.XmlSitemapsForUmbraco.Tests
 ```
 
@@ -66,7 +64,6 @@ Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
 | Project | Usage |
 |---|---|
 | `../Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj` | Registers this provider as part of package composition. |
-| `../Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj` | Reuses published-content services and public sitemap-name resolution alongside Examine rendering. |
 | `../Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj` | Tests content selection, published-content service behavior, rendering, custom configured sitemaps, and composition. |
 
 ## Important files and entry points
@@ -79,7 +76,7 @@ Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
 | `Configuration/SitemapPublicName.cs` | Resolves public sitemap names from configuration keys and optional public-name settings. |
 | `ContentReading/IPublishedContentService.cs` | Abstraction over Umbraco content, root content, path lookup, and language lookup. |
 | `ContentReading/PublishedContentService.cs` | Umbraco-backed implementation using context, document URL, document navigation, language, and URL services. |
-| `ContentReading/SitemapCultureSelection.cs` | Resolves included cultures and whether alternate links should render. |
+| `../Casko.XmlSitemapsForUmbraco.Providers/SitemapRendering/Contexts/SitemapCultureSelection.cs` | Shared helper that resolves included cultures and whether alternate links should render. |
 | `ContentReading/SitemapContentTypeSelection.cs` | Resolves root and per-sitemap content type include/exclude filters. |
 | `ContentReading/SitemapPropertyExclusionSelection.cs` | Excludes content based on configured property alias/value matching. |
 | `SitemapRendering/PublishedContentRenderer.cs` | Collects content, applies inclusion predicate, renders URL entries, and builds the URL set. |

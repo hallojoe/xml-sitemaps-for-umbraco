@@ -1,6 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 
-namespace Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
+namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 
 public static class SitemapCultureSelection
 {

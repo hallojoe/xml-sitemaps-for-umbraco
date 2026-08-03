@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
-using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
@@ -17,37 +16,22 @@ public class PublishedContentService(
     IDocumentUrlService documentUrlService,
     IDocumentNavigationQueryService documentNavigationQueryService,
     ILanguageService languageService,
-    IPublishedUrlProvider publishedUrlProvider)
+    IHostUrlProvider hostUrlProvider)
     : IPublishedContentService
 {
-    private IPublishedContent? GetRootContentByHostname(string? hostname = null, string? culture = null)
+    private IPublishedContent? GetRootContentByHostname(
+        IPublishedContentCache publishedContentCache,
+        string? hostname = null,
+        string? culture = null)
     {
-        using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
-        
-        var rootContents = GetRootContents(null, umbracoContextReference.UmbracoContext.Content).ToArray();
+        var hostUrl = ResolveHostUrl(hostname, culture);
 
-        if (rootContents.Length == 0)
+        if (hostUrl is null)
         {
             return null;
         }
 
-        if (string.IsNullOrWhiteSpace(hostname))
-        {
-            return rootContents.FirstOrDefault();
-        }
-
-        foreach (var rootContent in rootContents)
-        {
-            var rootContentUrl = publishedUrlProvider.GetUrl(rootContent, UrlMode.Absolute, culture, current: null);
-            if (IsHostnameMatch(hostname, rootContentUrl))
-            {
-                return rootContent;
-            }
-        }
-
-        return GetConfiguredRootNodeSearchLevel() == 1
-            ? rootContents.FirstOrDefault()
-            : null;
+        return publishedContentCache.GetById(hostUrl.Key);
     }
 
     public IPublishedContent? GetContentByPath(
@@ -58,7 +42,10 @@ public class PublishedContentService(
     {
         var normalizedPath = NormalizePath(path);
 
-        var rootContent = GetRootContentByHostname(hostname, culture);
+        using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
+
+        var publishedContentCache = umbracoContextReference.UmbracoContext.Content;
+        var rootContent = GetRootContentByHostname(publishedContentCache, hostname, culture);
 
         if (rootContent is null)
         {
@@ -68,15 +55,10 @@ public class PublishedContentService(
         var documentStartNodeId = rootContent.Id;
 
         var contentKey = documentUrlService.GetDocumentKeyByRoute(normalizedPath, culture, documentStartNodeId, preview);
-
         if (contentKey is null)
         {
             throw new InvalidOperationException("No content key found at path.");
         }
-
-        using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
-
-        var publishedContentCache = umbracoContextReference.UmbracoContext.Content;
 
         var publishedContent = publishedContentCache.GetById(preview, contentKey.Value);
 
@@ -213,32 +195,54 @@ public class PublishedContentService(
         return path;
     }
 
-    private static bool IsHostnameMatch(string hostname, string? absoluteContentUrl)
+    private HostUrl? ResolveHostUrl(string? hostname, string? culture)
     {
-        if (string.IsNullOrWhiteSpace(absoluteContentUrl) || absoluteContentUrl.EndsWith('#'))
+        var hostUrls = hostUrlProvider.GetHostUrlsAsync().GetAwaiter().GetResult().ToList();
+        if (hostUrls.Count == 0)
         {
-            return false;
+            return null;
         }
 
-        if (absoluteContentUrl.StartsWith(hostname, StringComparison.OrdinalIgnoreCase))
+        var candidates = string.IsNullOrWhiteSpace(hostname)
+            ? hostUrls
+            : hostUrls.Where(hostUrl => IsHostnameMatch(hostname, hostUrl.Uri)).ToList();
+
+        if (candidates.Count == 0)
         {
-            return true;
+            return null;
         }
 
-        if (!Uri.TryCreate(absoluteContentUrl, UriKind.Absolute, out var contentUri))
+        if (string.IsNullOrWhiteSpace(culture) is false)
         {
-            return false;
+            var cultureHostUrl = candidates.FirstOrDefault(hostUrl =>
+                string.Equals(hostUrl.Culture, culture, StringComparison.OrdinalIgnoreCase));
+            if (cultureHostUrl is not null)
+            {
+                return cultureHostUrl;
+            }
         }
 
-        var hostnameWithoutScheme = RemoveScheme(hostname).Trim('/');
-        return contentUri.Authority.StartsWith(hostnameWithoutScheme, StringComparison.OrdinalIgnoreCase);
+        return candidates.FirstOrDefault(hostUrl => hostUrl.IsDefaultCulture) ?? candidates.First();
     }
 
-    private static string RemoveScheme(string hostname)
+    private static bool IsHostnameMatch(string hostname, Uri hostUrl)
     {
-        var schemeSeparatorIndex = hostname.IndexOf("://", StringComparison.Ordinal);
-        return schemeSeparatorIndex < 0
-            ? hostname
-            : hostname[(schemeSeparatorIndex + 3)..];
+        var normalizedHostname = NormalizeHostname(hostname);
+        var normalizedHostUrl = NormalizeHostname(hostUrl.ToString());
+
+        return string.Equals(normalizedHostname, normalizedHostUrl, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeHostname(string hostname)
+    {
+        if (!Uri.TryCreate(hostname, UriKind.Absolute, out var uri))
+        {
+            hostname = "https://" + hostname.Trim('/');
+            Uri.TryCreate(hostname, UriKind.Absolute, out uri);
+        }
+
+        return uri is null
+            ? hostname.TrimEnd('/')
+            : uri.GetLeftPart(UriPartial.Path).TrimEnd('/');
     }
 }

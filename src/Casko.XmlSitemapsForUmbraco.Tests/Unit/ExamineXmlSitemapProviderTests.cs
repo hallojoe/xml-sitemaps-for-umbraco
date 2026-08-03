@@ -5,15 +5,15 @@ using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Routing;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
-using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.UrlSets;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
-using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Services;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
@@ -21,18 +21,20 @@ namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 [TestFixture]
 public class ExamineXmlSitemapProviderTests
 {
-    private IPublishedContentService _publishedContentService = null!;
+    private IExamineSitemapRootResolver _sitemapRootResolver = null!;
     private IHostUrlProvider _hostUrlProvider = null!;
     private ICmsUrlService _cmsUrlService = null!;
+    private IDocumentUrlService _documentUrlService = null!;
     private IXmlSitemapCustomProvider _customProvider = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _publishedContentService = Substitute.For<IPublishedContentService>();
+        _sitemapRootResolver = Substitute.For<IExamineSitemapRootResolver>();
         _hostUrlProvider = Substitute.For<IHostUrlProvider>();
         _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([]));
         _cmsUrlService = Substitute.For<ICmsUrlService>();
+        _documentUrlService = Substitute.For<IDocumentUrlService>();
         _customProvider = Substitute.For<IXmlSitemapCustomProvider>();
         _customProvider.Alias.Returns("external-products-provider");
     }
@@ -92,8 +94,8 @@ public class ExamineXmlSitemapProviderTests
     public async Task GetByPathAsync_ResolvesRootContentThenQueriesUrlsByRootKey()
     {
         var rootKey = Guid.NewGuid();
-        var root = CreateContent(rootKey);
-        _publishedContentService.GetContentByPath("/products", "https://example.com", "da").Returns(root);
+        _sitemapRootResolver.ResolveAsync("/products", "https://example.com", "da").Returns(
+            new ExamineSitemapRoot(rootKey, new HostUrl(new Uri("https://example.com"), "da", 10, rootKey, true)));
         _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
             new CmsUrl("/da/produkter", new DateTime(2026, 5, 14), null, "da", Id: 10)
         ]);
@@ -109,8 +111,8 @@ public class ExamineXmlSitemapProviderTests
     public async Task GetConfiguredAsync_WhenKeyIsConfigured_ResolvesConfiguredRootAndHostname()
     {
         var rootKey = Guid.NewGuid();
-        var root = CreateContent(rootKey);
-        _publishedContentService.GetContentByPath("/products", "https://example.com", "da").Returns(root);
+        _sitemapRootResolver.ResolveAsync("/products", "https://example.com", "da").Returns(
+            new ExamineSitemapRoot(rootKey, new HostUrl(new Uri("https://example.com"), "da", 10, rootKey, true)));
         _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
             new CmsUrl("/da/produkter", new DateTime(2026, 5, 14), null, "da", Id: 10)
         ]);
@@ -133,7 +135,7 @@ public class ExamineXmlSitemapProviderTests
         var result = await sut.GetConfiguredAsync("products") as XmlSitemap;
 
         Assert.That(result!.Urls[0].Location, Is.EqualTo("https://example.com/da/produkter"));
-        _publishedContentService.Received(1).GetContentByPath("/products", "https://example.com", "da");
+        await _sitemapRootResolver.Received(1).ResolveAsync("/products", "https://example.com", "da");
     }
 
     [Test]
@@ -150,8 +152,8 @@ public class ExamineXmlSitemapProviderTests
     public async Task GetConfiguredAsync_WhenSingleModeUsesImplicitSitemapKey_ResolvesRootPath()
     {
         var rootKey = Guid.NewGuid();
-        var root = CreateContent(rootKey);
-        _publishedContentService.GetContentByPath("/").Returns(root);
+        _sitemapRootResolver.ResolveAsync("/").Returns(
+            new ExamineSitemapRoot(rootKey, new HostUrl(new Uri("https://example.com"), "en", 10, rootKey, true)));
         _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
             new CmsUrl("/", new DateTime(2026, 5, 14), "https://ignored.example.com", "en", Id: 10)
         ]);
@@ -163,7 +165,18 @@ public class ExamineXmlSitemapProviderTests
         var result = await sut.GetConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey) as XmlSitemap;
 
         Assert.That(result!.Urls[0].Location, Is.EqualTo("https://example.com/"));
-        _publishedContentService.Received(1).GetContentByPath("/");
+        await _sitemapRootResolver.Received(1).ResolveAsync("/");
+    }
+
+    [Test]
+    public void GetByPathAsync_WhenPathCannotResolve_ThrowsRootContentNotFoundException()
+    {
+        _sitemapRootResolver.ResolveAsync("/missing", "https://example.com", "da").Returns((ExamineSitemapRoot?)null);
+        var sut = CreateProvider(new XmlSitemapsOptions());
+
+        AsyncTestDelegate action = async () => await sut.GetByPathAsync("/missing", "da", "https://example.com");
+
+        Assert.That(action, Throws.TypeOf<RootContentNotFoundException>());
     }
 
     [Test]
@@ -328,6 +341,92 @@ public class ExamineXmlSitemapProviderTests
         Assert.That(result.Urls[0].Location, Is.EqualTo("/SAME"));
     }
 
+    [Test]
+    public async Task RootResolver_WhenPathIsRoot_ReturnsSelectedHostUrlKey()
+    {
+        var rootKey = Guid.NewGuid();
+        var hostUrl = new HostUrl(new Uri("https://example.com"), "da", 10, rootKey, true);
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([hostUrl]));
+        var sut = new ExamineSitemapRootResolver(_hostUrlProvider, _documentUrlService);
+
+        var result = await sut.ResolveAsync("/", "https://example.com", "da");
+
+        Assert.That(result, Is.EqualTo(new ExamineSitemapRoot(rootKey, hostUrl)));
+        _documentUrlService.DidNotReceiveWithAnyArgs().GetDocumentKeyByRoute(default!, default, default, default);
+    }
+
+    [Test]
+    public async Task RootResolver_WhenPathIsBelowRoot_UsesDocumentUrlServiceWithSelectedHostId()
+    {
+        var rootKey = Guid.NewGuid();
+        var sectionKey = Guid.NewGuid();
+        var hostUrl = new HostUrl(new Uri("https://example.com"), "da", 10, rootKey, true);
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([hostUrl]));
+        _documentUrlService.GetDocumentKeyByRoute("/om-os", "da", 10, false).Returns(sectionKey);
+        var sut = new ExamineSitemapRootResolver(_hostUrlProvider, _documentUrlService);
+
+        var result = await sut.ResolveAsync("/om-os", "https://example.com", "da");
+
+        Assert.That(result, Is.EqualTo(new ExamineSitemapRoot(sectionKey, hostUrl)));
+        _documentUrlService.Received(1).GetDocumentKeyByRoute("/om-os", "da", 10, false);
+    }
+
+    [Test]
+    public async Task RootResolver_WhenHostnamesContainPaths_SelectsMatchingPathfulHost()
+    {
+        var rootKey = Guid.NewGuid();
+        var sectionKey = Guid.NewGuid();
+        var defaultHost = new HostUrl(new Uri("https://example.com"), "da", 10, Guid.NewGuid(), true);
+        var pathHost = new HostUrl(new Uri("https://example.com/en/"), "en", 20, rootKey, false);
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([defaultHost, pathHost]));
+        _documentUrlService.GetDocumentKeyByRoute("/news", "en", 20, false).Returns(sectionKey);
+        var sut = new ExamineSitemapRootResolver(_hostUrlProvider, _documentUrlService);
+
+        var result = await sut.ResolveAsync("/news", "https://example.com/en", "en");
+
+        Assert.That(result, Is.EqualTo(new ExamineSitemapRoot(sectionKey, pathHost)));
+    }
+
+    [Test]
+    public async Task RootResolver_WhenMultipleHostUrlsMatchHostname_PrefersMatchingCulture()
+    {
+        var englishKey = Guid.NewGuid();
+        var defaultHost = new HostUrl(new Uri("https://example.com"), "da", 10, Guid.NewGuid(), true);
+        var englishHost = new HostUrl(new Uri("https://example.com"), "en", 20, englishKey, false);
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([defaultHost, englishHost]));
+        var sut = new ExamineSitemapRootResolver(_hostUrlProvider, _documentUrlService);
+
+        var result = await sut.ResolveAsync("/", "https://example.com", "en");
+
+        Assert.That(result, Is.EqualTo(new ExamineSitemapRoot(englishKey, englishHost)));
+    }
+
+    [Test]
+    public async Task RootResolver_WhenHostnameDoesNotMatch_ReturnsNull()
+    {
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([
+            new HostUrl(new Uri("https://example.com"), "da", 10, Guid.NewGuid(), true)
+        ]));
+        var sut = new ExamineSitemapRootResolver(_hostUrlProvider, _documentUrlService);
+
+        var result = await sut.ResolveAsync("/", "https://unknown.example.com", "da");
+
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public async Task RootResolver_WhenDocumentUrlServiceCannotResolvePath_ReturnsNull()
+    {
+        var hostUrl = new HostUrl(new Uri("https://example.com"), "da", 10, Guid.NewGuid(), true);
+        _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([hostUrl]));
+        _documentUrlService.GetDocumentKeyByRoute("/missing", "da", 10, false).Returns((Guid?)null);
+        var sut = new ExamineSitemapRootResolver(_hostUrlProvider, _documentUrlService);
+
+        var result = await sut.ResolveAsync("/missing", "https://example.com", "da");
+
+        Assert.That(result, Is.Null);
+    }
+
     private ExamineXmlSitemapProvider CreateProvider(
         XmlSitemapsOptions options,
         IEnumerable<IXmlSitemapCustomProvider>? customProviders = null)
@@ -337,18 +436,11 @@ public class ExamineXmlSitemapProviderTests
 
         return new ExamineXmlSitemapProvider(
             Options.Create(options),
-            _publishedContentService,
+            _sitemapRootResolver,
             _hostUrlProvider,
             _cmsUrlService,
             new ExamineXmlSitemapRenderer(new ExamineUrlRenderer(urlBuilder), urlSetRenderer),
             new XmlSitemapIndexRenderer(urlBuilder),
             customProviders ?? []);
-    }
-
-    private static IPublishedContent CreateContent(Guid key)
-    {
-        var content = Substitute.For<IPublishedContent>();
-        content.Key.Returns(key);
-        return content;
     }
 }

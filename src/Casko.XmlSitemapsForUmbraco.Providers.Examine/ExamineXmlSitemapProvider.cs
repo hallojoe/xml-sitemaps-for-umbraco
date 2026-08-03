@@ -3,8 +3,8 @@ using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Routing;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
-using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
 using Microsoft.Extensions.Options;
@@ -14,7 +14,7 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.Examine;
 
 public sealed class ExamineXmlSitemapProvider(
     IOptions<XmlSitemapsOptions> xmlSitemapOptions,
-    IPublishedContentService publishedContentService,
+    IExamineSitemapRootResolver sitemapRootResolver,
     IHostUrlProvider hostUrlProvider,
     ICmsUrlService cmsUrlService,
     IExamineXmlSitemapRenderer sitemapRenderer,
@@ -42,13 +42,13 @@ public sealed class ExamineXmlSitemapProvider(
     /// <inheritdoc />
     public async Task<IXmlSitemapModel> GetByPathAsync(string path, string? culture = null, string? hostname = null)
     {
-        var rootContent = publishedContentService.GetContentByPath(path, hostname, culture);
-        if (rootContent is null)
+        var sitemapRoot = await sitemapRootResolver.ResolveAsync(path, hostname, culture);
+        if (sitemapRoot is null)
         {
             throw new RootContentNotFoundException();
         }
 
-        return await RenderXmlSiteMapAsync(rootContent.Key, hostname, culture, sitemapOptions: null);
+        return await RenderXmlSiteMapAsync(sitemapRoot.Key, hostname, culture, sitemapOptions: null);
     }
 
     /// <inheritdoc />
@@ -65,14 +65,14 @@ public sealed class ExamineXmlSitemapProvider(
         {
             if (IsImplicitSingleSitemapKey(configuredSitemaps, key))
             {
-                var implicitRootContent = publishedContentService.GetContentByPath("/");
-                if (implicitRootContent is null)
+                var implicitRoot = await sitemapRootResolver.ResolveAsync("/");
+                if (implicitRoot is null)
                 {
                     throw new RootContentNotFoundException();
                 }
 
                 return await RenderXmlSiteMapAsync(
-                    implicitRootContent.Key,
+                    implicitRoot.Key,
                     hostname: null,
                     culture: null,
                     sitemapOptions: null);
@@ -81,17 +81,17 @@ public sealed class ExamineXmlSitemapProvider(
             return await GetCustomConfiguredAsync(key);
         }
 
-        var rootContent = publishedContentService.GetContentByPath(
+        var sitemapRoot = await sitemapRootResolver.ResolveAsync(
             sitemapOptions.Path ?? "/",
             sitemapOptions.HostName,
             sitemapOptions.Culture);
 
-        if (rootContent is null)
+        if (sitemapRoot is null)
         {
             throw new RootContentNotFoundException();
         }
 
-        return await RenderXmlSiteMapAsync(rootContent.Key, sitemapOptions.HostName, sitemapOptions.Culture, sitemapOptions);
+        return await RenderXmlSiteMapAsync(sitemapRoot.Key, sitemapOptions.HostName, sitemapOptions.Culture, sitemapOptions);
     }
 
     /// <inheritdoc />

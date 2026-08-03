@@ -5,7 +5,7 @@ namespace Casko.XmlSitemapsForUmbraco.Common.Configuration;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddXmlSitemapConfiguration(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddXmlSitemapsConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<XmlSitemapsOptions>(configuration.GetSection(XmlSitemapsOptions.Key));
         

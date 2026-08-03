@@ -7,7 +7,7 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.Configuration;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddXmlSitemapPublishedContentProvider(this IServiceCollection services)
+    public static IServiceCollection AddXmlSitemapsPublishedContentProvider(this IServiceCollection services)
     {
         services.AddXmlSitemapProviders();
 
