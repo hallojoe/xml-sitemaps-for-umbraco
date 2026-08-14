@@ -11,6 +11,7 @@
         <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice"/>
 <!--        <PackageReference Include="Casko.XmlSitemapsForUmbraco" />-->
         <PackageReference Include="uSync" />
+        <PackageReference Include="Yarp.ReverseProxy" />
     </ItemGroup>
 
     <ItemGroup>

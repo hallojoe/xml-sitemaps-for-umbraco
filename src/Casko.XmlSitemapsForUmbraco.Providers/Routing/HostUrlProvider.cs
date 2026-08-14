@@ -1,0 +1,149 @@
+using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Configuration.Models;
+using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Services;
+
+namespace Casko.XmlSitemapsForUmbraco.Providers.Routing;
+
+/// <summary>
+/// Default implementation of IHostUrlProvider. Uses <see cref="IDomainService"/> to resolve the host URLs from Umbraco.
+/// When mode is`Single` it falls back to the first content item in the content tree using <see cref="IContentService"/>.
+/// </summary>
+public class HostUrlProvider(
+    IOptions<WebRoutingSettings> webRoutingSettings,
+    IDomainService domainService, 
+    ILanguageService languageService,
+    IContentService contentService) : IHostUrlProvider
+{
+    /// <inheritdoc/>
+    public async Task<IEnumerable<HostUrl>> GetHostUrlsAsync(CancellationToken cancellationToken = default)
+    {
+        var defaultCulture = (await languageService.GetDefaultLanguageAsync())?.IsoCode;
+        var domains = (await domainService.GetAllAsync(includeWildcards: false)).ToList();
+        if (domains.Count == 0)
+        {
+            return CreateFallbackHostUrls(defaultCulture);
+        }
+
+        var hostUrls = domains
+            .OrderBy(domain => domain.SortOrder)
+            .Select(domain => CreateHostUrl(domain, defaultCulture))
+            .Where(hostUrl => hostUrl is not null)
+            .Select(hostUrl => hostUrl!)
+            .ToList();
+
+        var lowPriorityHostUrls = hostUrls.Where(hostUrl => hostUrl.Uri.ToString().Replace("://", "").Contains(':')).ToList();
+        var highPriorityHostUrls = hostUrls.Except(lowPriorityHostUrls).ToList();
+        
+        hostUrls = highPriorityHostUrls.Concat(lowPriorityHostUrls).ToList();
+        
+        return hostUrls.Count > 0
+            ? hostUrls
+            : CreateFallbackHostUrls(defaultCulture);
+    }
+
+    private IEnumerable<HostUrl> CreateFallbackHostUrls(string? defaultCulture)
+    {
+        var content = contentService
+            .GetPagedChildren(-1, 0, 100, out _, null, null, null)
+            .FirstOrDefault(content => content.Published);
+
+        var hostUrl = content is null
+            ? null
+            : CreateHostUrl(content, defaultCulture);
+
+        return hostUrl is null
+            ? []
+            : [hostUrl];
+    }
+
+    private HostUrl? CreateHostUrl(IDomain domain, string? defaultCulture)
+    {
+        var rootContent = domain.RootContentId is null
+            ? null
+            : contentService.GetById(domain.RootContentId.Value);
+        var uri = ResolveUri(domain.DomainName, webRoutingSettings.Value.UmbracoApplicationUrl);
+        var culture = ResolveCulture(domain.LanguageIsoCode, defaultCulture);
+
+        if (rootContent is null || uri is null || culture is null)
+        {
+            return null;
+        }
+
+        return new HostUrl(
+            uri,
+            culture,
+            rootContent.Id,
+            rootContent.Key,
+            IsDefaultCulture(culture, defaultCulture));
+    }
+
+    private HostUrl? CreateHostUrl(IContent content, string? defaultCulture)
+    {
+        var uri = ResolveUri(domainName: null, webRoutingSettings.Value.UmbracoApplicationUrl);
+        var culture = ResolveCulture(culture: null, defaultCulture);
+
+        if (uri is null || culture is null)
+        {
+            return null;
+        }
+
+        return new HostUrl(
+            uri,
+            culture,
+            content.Id,
+            content.Key,
+            IsDefaultCulture(culture, defaultCulture));
+    }
+
+    internal static Uri? ResolveUri(string? domainName, string? fallbackApplicationUrl)
+    {
+        if (Uri.TryCreate(domainName, UriKind.Absolute, out var absoluteUri))
+        {
+            return absoluteUri;
+        }
+
+        if (string.IsNullOrWhiteSpace(domainName) || domainName.StartsWith('/'))
+        {
+            return ResolveUriFromApplicationUrl(domainName, fallbackApplicationUrl);
+        }
+
+        if (domainName.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return Uri.TryCreate($"https://{domainName.Trim()}", UriKind.Absolute, out var hostUri)
+            ? hostUri
+            : null;
+    }
+
+    private static Uri? ResolveUriFromApplicationUrl(string? domainName, string? fallbackApplicationUrl)
+    {
+        if (!Uri.TryCreate(fallbackApplicationUrl, UriKind.Absolute, out var fallbackUri))
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(domainName))
+        {
+            return fallbackUri;
+        }
+
+        return Uri.TryCreate(fallbackUri.GetLeftPart(UriPartial.Authority) + domainName, UriKind.Absolute, out var pathUri)
+            ? pathUri
+            : null;
+    }
+
+    private static string? ResolveCulture(string? culture, string? defaultCulture)
+    {
+        return string.IsNullOrWhiteSpace(culture)
+            ? defaultCulture
+            : culture;
+    }
+
+    private static bool IsDefaultCulture(string culture, string? defaultCulture)
+    {
+        return string.Equals(culture, defaultCulture, StringComparison.OrdinalIgnoreCase);
+    }
+}

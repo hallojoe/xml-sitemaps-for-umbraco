@@ -1,4 +1,5 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -38,13 +39,27 @@ public class PublishedContentService(
         string path,
         string? hostname = null,
         string? culture = null,
-        bool preview = false)
+        bool preview = false,
+        IPublishedContentCache? publishedContentCache = null)
     {
-        var normalizedPath = NormalizePath(path);
+        if (publishedContentCache is not null)
+        {
+            return InternalGetContentByPath(path, hostname, culture, preview, publishedContentCache);
+        }
 
         using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
 
-        var publishedContentCache = umbracoContextReference.UmbracoContext.Content;
+        return InternalGetContentByPath(path, hostname, culture, preview, umbracoContextReference.UmbracoContext.Content);
+    }
+
+    private IPublishedContent? InternalGetContentByPath(
+        string path,
+        string? hostname,
+        string? culture,
+        bool preview,
+        IPublishedContentCache publishedContentCache)
+    {
+        var normalizedPath = NormalizePath(path);
         var rootContent = GetRootContentByHostname(publishedContentCache, hostname, culture);
 
         if (rootContent is null)
@@ -84,8 +99,13 @@ public class PublishedContentService(
         return allLanguageCodes.ToArray();
     }
 
-    public IPublishedContent? GetContent(Guid key)
+    public IPublishedContent? GetContent(Guid key, IPublishedContentCache? publishedContentCache = null)
     {
+        if (publishedContentCache is not null)
+        {
+            return publishedContentCache.GetById(key);
+        }
+
         using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
 
         return umbracoContextReference.UmbracoContext.Content.GetById(key);

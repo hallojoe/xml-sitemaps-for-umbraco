@@ -119,9 +119,9 @@ public sealed class XmlSitemapsOptions
     public bool UseDeliveryApiAccessPolicy { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the key used to identify the XML sitemaps provider.
+    /// Gets or sets the name of the index to use as XML sitemaps provider.
     /// </summary>
-    public string ProviderKey { get; set; } = "PublishedContent";
+    public string IndexName { get; set; } = Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName;
     
 }
 

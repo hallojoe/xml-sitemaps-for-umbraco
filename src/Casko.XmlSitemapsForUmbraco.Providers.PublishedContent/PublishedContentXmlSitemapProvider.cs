@@ -4,19 +4,23 @@ using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.SitemapRendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Web;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers.PublishedContent;
 
+// [Obsolete("Use the Examine XmlSitemapProvider instead.", true)]
 public class PublishedContentXmlSitemapProvider(
     IOptions<XmlSitemapsOptions> legacySitemapOptions,
     IPublishedContentService publishedContentService,
     IPublishedContentRenderer sitemapRenderer,
     IPublishedContentIndexRenderer sitemapIndexRenderer,
     IHostUrlProvider hostUrlProvider,
+    IUmbracoContextFactory umbracoContextFactory,
     IEnumerable<IXmlSitemapCustomProvider> customProviders) : IXmlSitemapSourceProvider
 {
     /// <inheritdoc />
@@ -56,7 +60,12 @@ public class PublishedContentXmlSitemapProvider(
     /// <inheritdoc />
     public virtual async Task<IXmlSitemapModel> GetByRootKeyAsync(Guid rootKey)
     {
-        var rootContent = publishedContentService.GetContent(rootKey);
+
+        using var umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
+        
+        var publishedContentCache = umbracoContextReference.UmbracoContext.Content;
+        
+        var rootContent = publishedContentService.GetContent(rootKey, publishedContentCache);
         if (rootContent is null)
         {
             throw new RootContentNotFoundException();
@@ -160,7 +169,20 @@ public class PublishedContentXmlSitemapProvider(
         string? culture,
         SitemapOptions? sitemapOptions)
     {
-        var rootContent = publishedContentService.GetContentByPath(path, hostname, culture);
+        var hostUrls = await hostUrlProvider.GetHostUrlsAsync();
+        
+        var hostUrl = hostname is null 
+            ? hostUrls?.FirstOrDefault(hostUrl => hostUrl.IsDefaultCulture) 
+            : hostUrls.FirstOrDefault(hostUrl => hostUrl.Uri.ToString().Contains(hostname.Replace("http://", "").Replace("https://", "")));
+
+        if (hostUrl is null)
+        {
+            throw new RootContentNotFoundException();
+        }
+
+        using var umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
+
+        var rootContent = await umbracoContextReference.UmbracoContext.Content.GetByIdAsync(hostUrl.Key);
         if (rootContent is null)
         {
             throw new RootContentNotFoundException();
@@ -180,7 +202,9 @@ public class PublishedContentXmlSitemapProvider(
         var allLanguageCodes = await publishedContentService.GetLanguagesAsync();
 
         var hostUrl = await ResolveHostUrlAsync(rootContent.Key, culture);
+
         var defaultLanguageCode = culture ?? hostUrl?.Culture ?? allLanguageCodes.FirstOrDefault() ?? string.Empty;
+        
         var availableCultures = ResolveAvailableCultures(allLanguageCodes, culture, hostUrl?.Culture);
 
         var cultureSelection = SitemapCultureSelection.Resolve(
@@ -200,8 +224,7 @@ public class PublishedContentXmlSitemapProvider(
             cultureSelection.Cultures,
             resolvedHostname,
             cultureSelection.RenderAlternateLinks,
-            content => contentTypeSelection.ShouldInclude(content) &&
-                       propertyExclusionSelection.ShouldInclude(content, defaultLanguageCode)));
+            content => contentTypeSelection.ShouldInclude(content) && propertyExclusionSelection.ShouldInclude(content, defaultLanguageCode)));
     }
 
     private async Task<HostUrl?> ResolveHostUrlAsync(Guid rootKey, string? culture)

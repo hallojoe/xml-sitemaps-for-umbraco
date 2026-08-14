@@ -1,4 +1,5 @@
 using Casko.XmlSitemapsForUmbraco.Providers;
+using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;

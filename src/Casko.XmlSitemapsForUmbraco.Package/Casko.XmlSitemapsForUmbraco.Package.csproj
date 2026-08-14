@@ -50,7 +50,6 @@
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Models\Casko.XmlSitemapsForUmbraco.Models.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers\Casko.XmlSitemapsForUmbraco.Providers.csproj" />
-        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers.PublishedContent\Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers.Examine\Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />

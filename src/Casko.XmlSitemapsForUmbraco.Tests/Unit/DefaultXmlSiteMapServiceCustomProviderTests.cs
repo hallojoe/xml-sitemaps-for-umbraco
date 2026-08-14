@@ -5,10 +5,14 @@ using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.SitemapRendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Cms.Core.Web;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
@@ -20,6 +24,8 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
     private IPublishedContentIndexRenderer _sitemapIndexRenderer = null!;
     private IHostUrlProvider _hostUrlProvider = null!;
     private IXmlSitemapCustomProvider _customProvider = null!;
+    private IUmbracoContextFactory _umbracoContextFactory = null!;
+    private IPublishedContentCache _publishedContentCache = null!;
 
     [SetUp]
     public void SetUp()
@@ -31,6 +37,17 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
         _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([]));
         _customProvider = Substitute.For<IXmlSitemapCustomProvider>();
         _customProvider.Alias.Returns("external-products-provider");
+        _umbracoContextFactory = Substitute.For<IUmbracoContextFactory>();
+        _publishedContentCache = Substitute.For<IPublishedContentCache>();
+
+        var umbracoContext = Substitute.For<IUmbracoContext>();
+        umbracoContext.Content.Returns(_publishedContentCache);
+        _umbracoContextFactory
+            .EnsureUmbracoContext()
+            .Returns(new UmbracoContextReference(
+                umbracoContext,
+                true,
+                Substitute.For<IUmbracoContextAccessor>()));
     }
 
     [Test]
@@ -67,6 +84,7 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
             Assert.That(context.HostName, Is.EqualTo("custom.example.com"));
             Assert.That(context.Settings["FeedId"], Is.EqualTo("products"));
         });
+        _umbracoContextFactory.DidNotReceive().EnsureUmbracoContext();
     }
 
     [Test]
@@ -93,7 +111,11 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
     {
         _publishedContentService.GetLanguagesAsync().Returns([]);
         _publishedContentService
-            .GetContentByPath(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<string?>())
+            .GetContentByPath(
+                Arg.Any<string>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                publishedContentCache: _publishedContentCache)
             .Returns((IPublishedContent?)null);
         var sut = CreateService(new XmlSitemapsOptions
         {
@@ -126,6 +148,7 @@ public class DefaultXmlSiteMapServiceCustomProviderTests
             _sitemapRenderer,
             _sitemapIndexRenderer,
             _hostUrlProvider,
+            _umbracoContextFactory,
             customProviders);
     }
 }

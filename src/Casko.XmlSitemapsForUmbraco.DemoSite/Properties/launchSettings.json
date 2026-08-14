@@ -20,7 +20,8 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:44317;https://localhost:44318;https://localhost:44319;http://localhost:39605",
+      "launchUrl": "https://backoffice.dev.localhost/umbraco/",
+      "applicationUrl": "https://localhost:44317;https://localhost:44318;https://localhost:44319;https://localhost:44320;http://localhost:39605",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }      

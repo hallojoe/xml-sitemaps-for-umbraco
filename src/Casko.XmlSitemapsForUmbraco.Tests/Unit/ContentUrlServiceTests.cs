@@ -6,12 +6,12 @@ using Umbraco.Cms.Core.Models;
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
 
 [TestFixture]
-public class ContentUrlServiceTests
+public class ExternalIndexUrlServiceTests
 {
     [Test]
     public void ResolveUrl_WhenLegacyPathHasNumericPrefix_RemovesPrefixAndUsesFallbackHostname()
     {
-        var result = ContentUrlService.ResolveUrl(
+        var result = ExternalIndexUrlService.ResolveUrl(
             "/1062/some-path",
             "da",
             [],
@@ -33,8 +33,8 @@ public class ContentUrlServiceTests
             CreateDomain("https://en.example.com", "en")
         };
 
-        var daResult = ContentUrlService.ResolveUrl("/1062/tekst-side", "da", domains, "https://fallback.example.com");
-        var enResult = ContentUrlService.ResolveUrl("/1062/text-page", "en", domains, "https://fallback.example.com");
+        var daResult = ExternalIndexUrlService.ResolveUrl("/1062/tekst-side", "da", domains, "https://fallback.example.com");
+        var enResult = ExternalIndexUrlService.ResolveUrl("/1062/text-page", "en", domains, "https://fallback.example.com");
 
         Assert.Multiple(() =>
         {
@@ -54,8 +54,8 @@ public class ContentUrlServiceTests
             CreateDomain("https://localhost:56317/pl/", "pl")
         };
 
-        var enResult = ContentUrlService.ResolveUrl("/1062/text-page", "en", domains, "https://localhost:56317");
-        var plResult = ContentUrlService.ResolveUrl("/1062/pl-page-1", "pl", domains, "https://localhost:56317");
+        var enResult = ExternalIndexUrlService.ResolveUrl("/1062/text-page", "en", domains, "https://localhost:56317");
+        var plResult = ExternalIndexUrlService.ResolveUrl("/1062/pl-page-1", "pl", domains, "https://localhost:56317");
 
         Assert.Multiple(() =>
         {
@@ -76,9 +76,9 @@ public class ContentUrlServiceTests
             CreateDomain("/pl/", "pl")
         };
 
-        var daResult = ContentUrlService.ResolveUrl("/1062/tekst-side", "da", domains, "https://localhost:56317");
-        var enResult = ContentUrlService.ResolveUrl("/1062/text-page", "en", domains, "https://localhost:56317");
-        var plResult = ContentUrlService.ResolveUrl("/1062/pl-page-1", "pl", domains, "https://localhost:56317");
+        var daResult = ExternalIndexUrlService.ResolveUrl("/1062/tekst-side", "da", domains, "https://localhost:56317");
+        var enResult = ExternalIndexUrlService.ResolveUrl("/1062/text-page", "en", domains, "https://localhost:56317");
+        var plResult = ExternalIndexUrlService.ResolveUrl("/1062/pl-page-1", "pl", domains, "https://localhost:56317");
 
         Assert.Multiple(() =>
         {
@@ -91,7 +91,7 @@ public class ContentUrlServiceTests
     [Test]
     public void ResolveUrl_WhenFirstPathSegmentIsNotNumeric_LeavesPathAndUsesFallbackHostname()
     {
-        var result = ContentUrlService.ResolveUrl(
+        var result = ExternalIndexUrlService.ResolveUrl(
             "/some-path",
             "da",
             [],
@@ -107,7 +107,7 @@ public class ContentUrlServiceTests
     [Test]
     public void ResolveUrl_WhenLegacyPathIsRootOnlyNumeric_ResolvesToRootPath()
     {
-        var result = ContentUrlService.ResolveUrl(
+        var result = ExternalIndexUrlService.ResolveUrl(
             "/1062",
             "da",
             [],
@@ -123,7 +123,7 @@ public class ContentUrlServiceTests
     [Test]
     public void ResolveUrl_WhenUrlIsAbsolute_RemovesLegacyPrefixAndPreservesItsHostname()
     {
-        var result = ContentUrlService.ResolveUrl(
+        var result = ExternalIndexUrlService.ResolveUrl(
             "https://existing.example.com/1062/some-path",
             "da",
             [],

@@ -79,7 +79,9 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
     {
         var normalizedRequestHost = NormalizeHostName(requestHost.Value);
 
-        definition = GetDefinitions()
+        var definitions = GetDefinitions();
+        
+        definition = definitions
             .Where(candidate => string.Equals(candidate.Path, requestPath.Value, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(candidate =>
                 candidate.HostName is not null &&

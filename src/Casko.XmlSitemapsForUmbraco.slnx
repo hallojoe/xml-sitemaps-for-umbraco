@@ -1,8 +1,7 @@
 <Solution>
   <Folder Name="/DemoSites/">
-    <Project Path="Casko.XmlSitemapsForUmbraco.DemoSingleLanguageVariantSite/Casko.XmlSitemapsForUmbraco.DemoSingleLanguageVariantSite.csproj" />
-    <Project Path="Casko.XmlSitemapsForUmbraco.DemoSingleSite/Casko.XmlSitemapsForUmbraco.DemoSingleSite.csproj" />
     <Project Path="Casko.XmlSitemapsForUmbraco.DemoSite/Casko.XmlSitemapsForUmbraco.DemoSite.csproj" />
+    <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteReverseProxy/Casko.XmlSitemapsForUmbraco.DemoSiteReverseProxy.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj" />

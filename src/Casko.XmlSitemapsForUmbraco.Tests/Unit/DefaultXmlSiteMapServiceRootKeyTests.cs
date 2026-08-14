@@ -6,10 +6,14 @@ using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.SitemapRendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Cms.Core.Web;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
@@ -21,6 +25,9 @@ public class DefaultXmlSiteMapServiceRootKeyTests
     private IPublishedContentRenderer _sitemapRenderer = null!;
     private IPublishedContentIndexRenderer _sitemapIndexRenderer = null!;
     private IHostUrlProvider _hostUrlProvider = null!;
+    private IUmbracoContextFactory _umbracoContextFactory = null!;
+    private IPublishedContentCache _publishedContentCache = null!;
+    private IUmbracoContextAccessor _umbracoContextAccessor = null!;
 
     [SetUp]
     public void SetUp()
@@ -30,6 +37,15 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         _sitemapIndexRenderer = Substitute.For<IPublishedContentIndexRenderer>();
         _hostUrlProvider = Substitute.For<IHostUrlProvider>();
         _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([]));
+        _umbracoContextFactory = Substitute.For<IUmbracoContextFactory>();
+        _publishedContentCache = Substitute.For<IPublishedContentCache>();
+        _umbracoContextAccessor = Substitute.For<IUmbracoContextAccessor>();
+
+        var umbracoContext = Substitute.For<IUmbracoContext>();
+        umbracoContext.Content.Returns(_publishedContentCache);
+        _umbracoContextFactory
+            .EnsureUmbracoContext()
+            .Returns(new UmbracoContextReference(umbracoContext, true, _umbracoContextAccessor));
     }
 
     [Test]
@@ -41,13 +57,17 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         var noIndex = CreateContent("root", "metaRobots", "noindex,nofollow");
         var sitemap = new XmlSitemap();
         PublishedContentRenderContext? context = null;
-        _publishedContentService.GetContent(rootKey).Returns(root);
+        _publishedContentService.GetContent(rootKey, _publishedContentCache).Returns(root);
         _publishedContentService.GetLanguagesAsync().Returns(["en-US", "da-DK"]);
         _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([
             new HostUrl(new Uri("https://example.com/en-US/"), "en-US", 10, rootKey, true)
         ]));
         _sitemapRenderer
-            .Render(Arg.Do<PublishedContentRenderContext>(value => context = value))
+            .Render(Arg.Do<PublishedContentRenderContext>(value =>
+            {
+                context = value;
+                _umbracoContextAccessor.DidNotReceive().Clear();
+            }))
             .Returns(sitemap);
         var sut = CreateService(new XmlSitemapsOptions
         {
@@ -59,6 +79,8 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         var result = await sut.GetByRootKeyAsync(rootKey);
 
         Assert.That(result, Is.SameAs(sitemap));
+        _umbracoContextFactory.Received(1).EnsureUmbracoContext();
+        _umbracoContextAccessor.Received(1).Clear();
         Assert.That(context, Is.Not.Null);
         Assert.Multiple(() =>
         {
@@ -79,7 +101,13 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         var root = CreateContent("home", key: rootKey);
         var sitemap = new XmlSitemap();
         PublishedContentRenderContext? context = null;
-        _publishedContentService.GetContentByPath("/products", "https://configured.example.com", "da-DK").Returns(root);
+        _publishedContentService
+            .GetContentByPath(
+                "/products",
+                "https://configured.example.com",
+                "da-DK",
+                publishedContentCache: _publishedContentCache)
+            .Returns(root);
         _publishedContentService.GetLanguagesAsync().Returns(["en-US", "da-DK"]);
         _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([
             new HostUrl(new Uri("https://ignored.example.com/en-US/"), "en-US", 10, rootKey, true)
@@ -103,6 +131,7 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         var result = await sut.GetConfiguredAsync("products");
 
         Assert.That(result, Is.SameAs(sitemap));
+        _umbracoContextFactory.Received(1).EnsureUmbracoContext();
         Assert.Multiple(() =>
         {
             Assert.That(context!.DefaultLanguageCode, Is.EqualTo("da-DK"));
@@ -114,7 +143,7 @@ public class DefaultXmlSiteMapServiceRootKeyTests
     public void GetByRootKeyAsync_WhenContentDoesNotExist_ThrowsRootContentNotFoundException()
     {
         var rootKey = Guid.NewGuid();
-        _publishedContentService.GetContent(rootKey).Returns((IPublishedContent?)null);
+        _publishedContentService.GetContent(rootKey, _publishedContentCache).Returns((IPublishedContent?)null);
         var sut = CreateService(new XmlSitemapsOptions());
 
         AsyncTestDelegate action = async () => await sut.GetByRootKeyAsync(rootKey);
@@ -129,7 +158,9 @@ public class DefaultXmlSiteMapServiceRootKeyTests
         var root = CreateContent("home", key: rootKey);
         var sitemap = new XmlSitemap();
         PublishedContentRenderContext? context = null;
-        _publishedContentService.GetContentByPath("/", null, null).Returns(root);
+        _publishedContentService
+            .GetContentByPath("/", null, null, publishedContentCache: _publishedContentCache)
+            .Returns(root);
         _publishedContentService.GetLanguagesAsync().Returns(["en-US"]);
         _hostUrlProvider.GetHostUrlsAsync().Returns(Task.FromResult<IEnumerable<HostUrl>>([
             new HostUrl(new Uri("https://example.com"), "en-US", 10, rootKey, true)
@@ -143,7 +174,8 @@ public class DefaultXmlSiteMapServiceRootKeyTests
 
         Assert.That(result, Is.SameAs(sitemap));
         Assert.That(context!.RootContents, Is.EqualTo(new[] { root }));
-        _publishedContentService.Received(1).GetContentByPath("/", null, null);
+        _umbracoContextFactory.Received(1).EnsureUmbracoContext();
+        _publishedContentService.Received(1).GetContentByPath("/", null, null, publishedContentCache: _publishedContentCache);
     }
 
     private PublishedContentXmlSitemapProvider CreateService(XmlSitemapsOptions options)
@@ -154,6 +186,7 @@ public class DefaultXmlSiteMapServiceRootKeyTests
             _sitemapRenderer,
             _sitemapIndexRenderer,
             _hostUrlProvider,
+            _umbracoContextFactory,
             Array.Empty<IXmlSitemapCustomProvider>());
     }
 

@@ -8,16 +8,25 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.Examine.Configuration;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddXmlSitemapExamineProvider(this IServiceCollection services)
+    public static IServiceCollection AddXmlSitemapExamineProvider(this IServiceCollection services, string indexName = Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName)
     {
         services.AddXmlSitemapProviders();
         
         services.AddScoped<IExamineSitemapRootResolver, ExamineSitemapRootResolver>();
-        services.AddScoped<ICmsUrlService, ContentUrlService>();
+        services.AddScoped<ICmsUrlService, ExternalIndexUrlService>();
 
-        services.AddScoped<ExamineXmlSitemapProvider>();
-        services.AddScoped<IXmlSitemapSourceProvider, ExamineXmlSitemapProvider>();
-        services.AddScoped<IXmlSitemapProvider, ExamineXmlSitemapProvider>();
+        // services.AddScoped<ExamineXmlSitemapProvider>();
+        if (indexName.Equals(Umbraco.Cms.Core.Constants.UmbracoIndexes.DeliveryApiContentIndexName, StringComparison.InvariantCultureIgnoreCase))
+        {
+            services.AddScoped<IXmlSitemapSourceProvider, ExamineXmlSitemapProvider>();
+            services.AddScoped<IXmlSitemapProvider, ExamineXmlSitemapProvider>();
+        }
+        else
+        {
+            services.AddScoped<IXmlSitemapSourceProvider, ExamineXmlSitemapProvider>();
+            services.AddScoped<IXmlSitemapProvider, ExamineXmlSitemapProvider>();
+        }
+
 
         services.AddScoped<IExamineUrlRenderer, ExamineUrlRenderer>();
         services.AddScoped<IExamineXmlSitemapRenderer, ExamineXmlSitemapRenderer>();

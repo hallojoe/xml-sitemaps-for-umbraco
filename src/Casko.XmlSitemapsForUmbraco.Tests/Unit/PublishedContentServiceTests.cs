@@ -1,6 +1,7 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
+using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
@@ -254,6 +255,56 @@ public sealed class PublishedContentServiceTests
             Assert.That(result, Is.SameAs(matchingRoot));
             _documentUrlService.Received(1).GetDocumentKeyByRoute("/", null, matchingRoot.Id, false);
         });
+    }
+
+    [Test]
+    public void GetContent_WhenPublishedContentCacheIsSupplied_DoesNotEnsureUmbracoContext()
+    {
+        var key = Guid.NewGuid();
+        var content = CreateContent(100, "home");
+        _publishedContentCache.GetById(key).Returns(content);
+        var sut = CreateService(new XmlSitemapsOptions());
+        _umbracoContextFactory.ClearReceivedCalls();
+
+        var result = sut.GetContent(key, _publishedContentCache);
+
+        Assert.That(result, Is.SameAs(content));
+        _umbracoContextFactory.DidNotReceive().EnsureUmbracoContext();
+    }
+
+    [Test]
+    public void GetContent_WhenPublishedContentCacheIsNotSupplied_EnsuresUmbracoContext()
+    {
+        var key = Guid.NewGuid();
+        var content = CreateContent(100, "home");
+        _publishedContentCache.GetById(key).Returns(content);
+        var sut = CreateService(new XmlSitemapsOptions());
+        _umbracoContextFactory.ClearReceivedCalls();
+
+        var result = sut.GetContent(key);
+
+        Assert.That(result, Is.SameAs(content));
+        _umbracoContextFactory.Received(1).EnsureUmbracoContext();
+    }
+
+    [Test]
+    public void GetContentByPath_WhenPublishedContentCacheIsSupplied_DoesNotEnsureUmbracoContext()
+    {
+        var root = CreateContent(100, "home");
+        ConfigureHostUrls(new HostUrl(new Uri("https://example.com/"), "en", root.Id, root.Key, true));
+        _publishedContentCache.GetById(root.Key).Returns(root);
+        var expectedContentKey = Guid.NewGuid();
+        _documentUrlService
+            .GetDocumentKeyByRoute("/", null, root.Id, false)
+            .Returns(expectedContentKey);
+        _publishedContentCache.GetById(false, expectedContentKey).Returns(root);
+        var sut = CreateService(new XmlSitemapsOptions { Mode = XmlSitemapsMode.Configuration });
+        _umbracoContextFactory.ClearReceivedCalls();
+
+        var result = sut.GetContentByPath("/", publishedContentCache: _publishedContentCache);
+
+        Assert.That(result, Is.SameAs(root));
+        _umbracoContextFactory.DidNotReceive().EnsureUmbracoContext();
     }
 
     [Test]
