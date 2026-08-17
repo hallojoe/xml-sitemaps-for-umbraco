@@ -1,11 +1,13 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common;
+using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Storage;
 using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
@@ -18,6 +20,7 @@ public class XmlSitemapStorageRefreshServiceTests
     private IXmlSitemapSourceProvider _sourceProvider = null!;
     private IXmlSitemapDataSource _xmlSitemapDataSource = null!;
     private IXmlSitemapXmlSerializer _xmlSitemapXmlSerializer = null!;
+    private ILogger<XmlSitemapStorageRefreshService> _logger = null!;
     private XmlSitemapStorageRefreshService _sut = null!;
 
     [SetUp]
@@ -26,6 +29,7 @@ public class XmlSitemapStorageRefreshServiceTests
         _sourceProvider = Substitute.For<IXmlSitemapSourceProvider>();
         _xmlSitemapDataSource = Substitute.For<IXmlSitemapDataSource>();
         _xmlSitemapXmlSerializer = Substitute.For<IXmlSitemapXmlSerializer>();
+        _logger = Substitute.For<ILogger<XmlSitemapStorageRefreshService>>();
         _sut = CreateService(new XmlSitemapsOptions
         {
             Sitemaps =
@@ -179,12 +183,59 @@ public class XmlSitemapStorageRefreshServiceTests
         await _sourceProvider.DidNotReceive().GetIndexAsync(Arg.Any<string>());
     }
 
+    [Test]
+    public async Task RefreshAllAsync_WhenConfiguredRootIsMissing_SkipsItAndContinuesRefreshingOtherDocuments()
+    {
+        var articles = new XmlSitemap();
+        var externalProducts = new XmlSitemap();
+        var index = new XmlSitemapIndex();
+        _sourceProvider.GetConfiguredAsync("products").Returns<Task<IXmlSitemapModel>>(_ =>
+            throw new RootContentNotFoundException());
+        _sourceProvider.GetConfiguredAsync("articles").Returns(articles);
+        _sourceProvider.GetConfiguredAsync("external-products").Returns(externalProducts);
+        _sourceProvider.GetIndexAsync("main").Returns(index);
+        _xmlSitemapXmlSerializer.Serialize(articles).Returns("<articles />");
+        _xmlSitemapXmlSerializer.Serialize(externalProducts).Returns("<external-products />");
+        _xmlSitemapXmlSerializer.Serialize(index).Returns("<index />");
+
+        await _sut.RefreshAllAsync();
+
+        await _xmlSitemapDataSource.DidNotReceive().WriteAsync(
+            Arg.Is<XmlSitemapStorageKey>(key => key.Alias == "products"),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+        await _xmlSitemapDataSource.Received(1).WriteAsync(
+            Arg.Is<XmlSitemapStorageKey>(key => key.Alias == "articles"),
+            "<articles />",
+            Arg.Any<CancellationToken>());
+        await _xmlSitemapDataSource.Received(1).WriteAsync(
+            Arg.Is<XmlSitemapStorageKey>(key => key.Alias == "external-products"),
+            "<external-products />",
+            Arg.Any<CancellationToken>());
+        await _xmlSitemapDataSource.Received(1).WriteAsync(
+            Arg.Is<XmlSitemapStorageKey>(key => key.Alias == "main"),
+            "<index />",
+            Arg.Any<CancellationToken>());
+    }
+
+    [Test]
+    public void RefreshConfiguredAsync_WhenConfiguredRootIsMissing_StillThrows()
+    {
+        _sourceProvider.GetConfiguredAsync("products").Returns<Task<IXmlSitemapModel>>(_ =>
+            throw new RootContentNotFoundException());
+
+        AsyncTestDelegate action = async () => await _sut.RefreshConfiguredAsync("products");
+
+        Assert.That(action, Throws.TypeOf<RootContentNotFoundException>());
+    }
+
     private XmlSitemapStorageRefreshService CreateService(XmlSitemapsOptions options)
     {
         return new XmlSitemapStorageRefreshService(
             _sourceProvider,
             _xmlSitemapDataSource,
             _xmlSitemapXmlSerializer,
-            Options.Create(options));
+            Options.Create(options),
+            _logger);
     }
 }

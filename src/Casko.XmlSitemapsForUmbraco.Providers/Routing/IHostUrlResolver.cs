@@ -1,5 +1,3 @@
-using Umbraco.Cms.Core.Services;
-
 namespace Casko.XmlSitemapsForUmbraco.Providers.Routing;
 
 /// <summary>

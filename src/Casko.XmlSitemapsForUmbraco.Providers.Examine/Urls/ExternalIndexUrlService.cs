@@ -42,6 +42,7 @@ public sealed class ExternalIndexUrlService(
 
         do
         {
+         
             var searchResults = index.Searcher
                 .CreateQuery(IndexTypes.Content)
                 .NativeQuery("+pathKeys:" + key.ToString("D"))
@@ -100,6 +101,16 @@ public sealed class ExternalIndexUrlService(
                 if (long.TryParse(searchResult.Values["updateDate_" + language], out var updatedDateAsLongForCulture))
                 {
                     updatedDateForCulture = new DateTime(updatedDateAsLongForCulture);
+                }
+
+                if (!searchResult.Values.TryGetValue("__Published_" + language, out var publishedValueForCulture))
+                {
+                    continue;
+                }
+
+                if (!publishedValueForCulture.ToLower().Equals("y"))
+                {
+                    continue;
                 }
 
                 var url = documentUrlService.GetLegacyRouteFormat(contentKey, language, false);

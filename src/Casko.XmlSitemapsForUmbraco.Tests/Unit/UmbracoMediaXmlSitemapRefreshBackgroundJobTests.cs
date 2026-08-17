@@ -3,6 +3,7 @@ using Casko.XmlSitemapsForUmbraco.Storage;
 using Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
 using Umbraco.Cms.Infrastructure.BackgroundJobs;
@@ -86,6 +87,7 @@ public class UmbracoMediaXmlSitemapRefreshBackgroundJobTests
 
         return new UmbracoMediaXmlSitemapRefreshBackgroundJob(
             serviceProvider.GetRequiredService<IServiceScopeFactory>(),
-            Options.Create(options));
+            Options.Create(options),
+            Substitute.For<ILogger<UmbracoMediaXmlSitemapRefreshBackgroundJob>>());
     }
 }

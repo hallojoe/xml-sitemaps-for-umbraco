@@ -12,6 +12,7 @@ using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.UrlSets;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
 using Umbraco.Cms.Core.Services;
@@ -27,6 +28,7 @@ public class ExamineXmlSitemapProviderTests
     private ICmsUrlService _cmsUrlService = null!;
     private IDocumentUrlService _documentUrlService = null!;
     private IXmlSitemapCustomProvider _customProvider = null!;
+    private CapturingLogger<ExamineXmlSitemapProvider> _logger = null!;
 
     [SetUp]
     public void SetUp()
@@ -38,6 +40,7 @@ public class ExamineXmlSitemapProviderTests
         _documentUrlService = Substitute.For<IDocumentUrlService>();
         _customProvider = Substitute.For<IXmlSitemapCustomProvider>();
         _customProvider.Alias.Returns("external-products-provider");
+        _logger = new CapturingLogger<ExamineXmlSitemapProvider>();
     }
 
     [Test]
@@ -140,6 +143,112 @@ public class ExamineXmlSitemapProviderTests
     }
 
     [Test]
+    public async Task GetConfiguredAsync_WhenOnlyEnglishIsSelected_ExcludesDanishOnlyDescendants()
+    {
+        var rootKey = Guid.NewGuid();
+        _sitemapRootResolver.ResolveAsync("/area/section-2/", "https://website1.dev.localhost/en/", "en")
+            .Returns(new ExamineSitemapRoot(rootKey, new HostUrl(
+                new Uri("https://website1.dev.localhost/en/"), "en", 10, rootKey, true)));
+        _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
+            new CmsUrl("/area/section-2/", new DateTime(2026, 8, 17), "https://website1.dev.localhost/en", "en", Id: 1),
+            new CmsUrl("/omraade/sektion-2/", new DateTime(2026, 8, 17), "https://website1.dev.localhost", "da", Id: 1),
+            new CmsUrl("/omraade/sektion-2/tekst-sub-side-21/test-side-0/", new DateTime(2026, 8, 17), "https://website1.dev.localhost", "da", Id: 2)
+        ]);
+        var sut = CreateProvider(new XmlSitemapsOptions
+        {
+            IncludedCultures = ["en", "da", "pl"],
+            RenderAlternateLinksForSingleCultureSitemaps = true,
+            Sitemaps =
+            {
+                ["area-2-en"] = new SitemapOptions
+                {
+                    Path = "/area/section-2/",
+                    HostName = "https://website1.dev.localhost/en/",
+                    Culture = "en",
+                    IncludedCultures = ["en"],
+                    ExcludedCultures = ["da", "pl"]
+                }
+            }
+        });
+
+        var result = await sut.GetConfiguredAsync("area-2-en") as XmlSitemap;
+
+        Assert.That(result!.Urls, Has.Count.EqualTo(1));
+        Assert.That(result.Urls[0].Location, Is.EqualTo("https://website1.dev.localhost/en/area/section-2/"));
+        Assert.That(result.Urls[0].CultureLinks!.Single().HrefLang, Is.EqualTo("en"));
+    }
+
+    [Test]
+    public async Task GetConfiguredAsync_WhenMultipleCulturesAreSelected_RendersSelectedCultureVariantsAndAlternateLinks()
+    {
+        var rootKey = Guid.NewGuid();
+        _sitemapRootResolver.ResolveAsync("/products", "https://example.com/en", "en")
+            .Returns(new ExamineSitemapRoot(rootKey, new HostUrl(
+                new Uri("https://example.com/en"), "en", 10, rootKey, true)));
+        _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
+            new CmsUrl("/produkter", new DateTime(2026, 8, 17), "https://example.com", "da", Id: 1),
+            new CmsUrl("/products", new DateTime(2026, 8, 17), "https://example.com/en", "en", Id: 1),
+            new CmsUrl("/produkty", new DateTime(2026, 8, 17), "https://example.com/pl", "pl", Id: 1)
+        ]);
+        var sut = CreateProvider(new XmlSitemapsOptions
+        {
+            Sitemaps =
+            {
+                ["products"] = new SitemapOptions
+                {
+                    Path = "/products",
+                    HostName = "https://example.com/en",
+                    Culture = "en",
+                    IncludedCultures = ["en", "da"]
+                }
+            }
+        });
+
+        var result = await sut.GetConfiguredAsync("products") as XmlSitemap;
+
+        Assert.That(result!.Urls, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Urls[0].Location, Is.EqualTo("https://example.com/en/products"));
+            Assert.That(result.Urls[0].CultureLinks!.Select(link => link.HrefLang), Is.EqualTo(new[] { "en", "da" }));
+            Assert.That(result.Urls[0].CultureLinks!.Select(link => link.Href), Is.EqualTo(new[]
+            {
+                "https://example.com/en/products",
+                "https://example.com/produkter"
+            }));
+        });
+    }
+
+    [Test]
+    public async Task GetConfiguredAsync_WhenNoUrlsMatchSelectedCultures_ReturnsEmptySitemap()
+    {
+        var rootKey = Guid.NewGuid();
+        _sitemapRootResolver.ResolveAsync("/area/section-2/", "https://website1.dev.localhost/en/", "en")
+            .Returns(new ExamineSitemapRoot(rootKey, new HostUrl(
+                new Uri("https://website1.dev.localhost/en/"), "en", 10, rootKey, true)));
+        _cmsUrlService.GetUrlsByKeyAsync(rootKey).Returns([
+            new CmsUrl("/omraade/sektion-2/", new DateTime(2026, 8, 17), "https://website1.dev.localhost", "da", Id: 1)
+        ]);
+        var sut = CreateProvider(new XmlSitemapsOptions
+        {
+            Sitemaps =
+            {
+                ["area-2-en"] = new SitemapOptions
+                {
+                    Path = "/area/section-2/",
+                    HostName = "https://website1.dev.localhost/en/",
+                    Culture = "en",
+                    IncludedCultures = ["en"]
+                }
+            }
+        });
+
+        var result = await sut.GetConfiguredAsync("area-2-en") as XmlSitemap;
+
+        Assert.That(result!.Urls, Is.Empty);
+    }
+
+    [Test]
     public void GetConfiguredAsync_WhenKeyIsMissing_ThrowsInvalidOperationException()
     {
         var sut = CreateProvider(new XmlSitemapsOptions());
@@ -147,6 +256,41 @@ public class ExamineXmlSitemapProviderTests
         AsyncTestDelegate action = async () => await sut.GetConfiguredAsync("missing");
 
         Assert.That(action, Throws.TypeOf<InvalidOperationException>());
+    }
+
+    [Test]
+    public void GetConfiguredAsync_WhenConfiguredRootCannotResolve_LogsContextAndThrowsRootContentNotFoundException()
+    {
+        _sitemapRootResolver.ResolveAsync("/missing", "https://example.com", "da")
+            .Returns((ExamineSitemapRoot?)null);
+        var sut = CreateProvider(new XmlSitemapsOptions
+        {
+            Sitemaps =
+            {
+                ["products"] = new SitemapOptions
+                {
+                    Path = "/missing",
+                    HostName = "https://example.com",
+                    Culture = "da"
+                }
+            }
+        });
+
+        AsyncTestDelegate action = async () => await sut.GetConfiguredAsync("products");
+
+        Assert.That(action, Throws.TypeOf<RootContentNotFoundException>());
+        Assert.That(_logger.Entries, Has.Some.Matches<CapturedLogEntry>(entry =>
+            entry.LogLevel == LogLevel.Debug &&
+            entry.Properties["SitemapKey"].Equals("products") &&
+            entry.Properties["Path"].Equals("/missing") &&
+            entry.Properties["HostName"].Equals("https://example.com") &&
+            entry.Properties["Culture"].Equals("da")));
+        Assert.That(_logger.Entries, Has.Some.Matches<CapturedLogEntry>(entry =>
+            entry.LogLevel == LogLevel.Information &&
+            entry.Properties["SitemapKey"].Equals("products") &&
+            entry.Properties["Path"].Equals("/missing") &&
+            entry.Properties["HostName"].Equals("https://example.com") &&
+            entry.Properties["Culture"].Equals("da")));
     }
 
     [Test]
@@ -442,6 +586,33 @@ public class ExamineXmlSitemapProviderTests
             _cmsUrlService,
             new ExamineXmlSitemapRenderer(new ExamineUrlRenderer(urlBuilder), urlSetRenderer),
             new XmlSitemapIndexRenderer(urlBuilder),
-            customProviders ?? []);
+            customProviders ?? [],
+            _logger);
     }
+
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public List<CapturedLogEntry> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            var properties = state is IReadOnlyList<KeyValuePair<string, object?>> values
+                ? values.ToDictionary(value => value.Key, value => value.Value)
+                : new Dictionary<string, object?>();
+            Entries.Add(new CapturedLogEntry(logLevel, properties));
+        }
+    }
+
+    private sealed record CapturedLogEntry(
+        LogLevel LogLevel,
+        IReadOnlyDictionary<string, object?> Properties);
 }

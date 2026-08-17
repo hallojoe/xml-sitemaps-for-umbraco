@@ -1,8 +1,10 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
 using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.Services;
@@ -11,7 +13,8 @@ public sealed class XmlSitemapStorageRefreshService(
     IXmlSitemapSourceProvider sourceProvider,
     IXmlSitemapDataSource xmlSitemapDataSource,
     IXmlSitemapXmlSerializer xmlSitemapXmlSerializer,
-    IOptions<XmlSitemapsOptions> xmlSitemapOptions) : IXmlSitemapStorageRefreshService
+    IOptions<XmlSitemapsOptions> xmlSitemapOptions,
+    ILogger<XmlSitemapStorageRefreshService> logger) : IXmlSitemapStorageRefreshService
 {
     /// <inheritdoc />
     public async Task RefreshAllAsync(CancellationToken cancellationToken = default)
@@ -19,14 +22,16 @@ public sealed class XmlSitemapStorageRefreshService(
         if (ShouldUseImplicitSingleSitemap())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await RefreshConfiguredAsync(CommonXmlSitemapApiConstants.DefaultSitemapKey, cancellationToken);
+            await RefreshConfiguredIgnoringMissingRootAsync(
+                CommonXmlSitemapApiConstants.DefaultSitemapKey,
+                cancellationToken);
             return;
         }
 
         foreach (var key in xmlSitemapOptions.Value.Sitemaps.Keys)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await RefreshConfiguredAsync(key, cancellationToken);
+            await RefreshConfiguredIgnoringMissingRootAsync(key, cancellationToken);
         }
 
         foreach (var key in xmlSitemapOptions.Value.CustomSitemaps.Keys)
@@ -115,6 +120,22 @@ public sealed class XmlSitemapStorageRefreshService(
                xmlSitemapOptions.Value.Sitemaps.Count == 0 &&
                xmlSitemapOptions.Value.CustomSitemaps.Count == 0 &&
                xmlSitemapOptions.Value.Indexes.Count == 0;
+    }
+
+    private async Task RefreshConfiguredIgnoringMissingRootAsync(
+        string key,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RefreshConfiguredAsync(key, cancellationToken);
+        }
+        catch (RootContentNotFoundException)
+        {
+            logger.LogInformation(
+                "Skipped refresh for XML sitemap {SitemapKey} because no root content could be resolved. Existing storage was retained.",
+                key);
+        }
     }
 
     private bool IsImplicitSingleSitemapKey(string key)

@@ -8,6 +8,7 @@ using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
@@ -20,7 +21,8 @@ public sealed class ExamineXmlSitemapProvider(
     ICmsUrlService cmsUrlService,
     IExamineXmlSitemapRenderer sitemapRenderer,
     IXmlSitemapIndexRenderer sitemapIndexRenderer,
-    IEnumerable<IXmlSitemapCustomProvider> customProviders) : IXmlSitemapSourceProvider
+    IEnumerable<IXmlSitemapCustomProvider> customProviders,
+    ILogger<ExamineXmlSitemapProvider> logger) : IXmlSitemapSourceProvider
 {
     /// <inheritdoc />
     public IXmlSitemapModel GetByRootKey(Guid rootKey)
@@ -66,11 +68,12 @@ public sealed class ExamineXmlSitemapProvider(
         {
             if (IsImplicitSingleSitemapKey(configuredSitemaps, key))
             {
-                var implicitRoot = await sitemapRootResolver.ResolveAsync("/");
-                if (implicitRoot is null)
-                {
-                    throw new RootContentNotFoundException();
-                }
+                var implicitRoot = await ResolveConfiguredRootAsync(
+                    key,
+                    path: "/",
+                    hostname: null,
+                    culture: null,
+                    isImplicitSingleSitemap: true);
 
                 return await RenderXmlSiteMapAsync(
                     implicitRoot.Key,
@@ -82,15 +85,12 @@ public sealed class ExamineXmlSitemapProvider(
             return await GetCustomConfiguredAsync(key);
         }
 
-        var sitemapRoot = await sitemapRootResolver.ResolveAsync(
+        var sitemapRoot = await ResolveConfiguredRootAsync(
+            key,
             sitemapOptions.Path ?? "/",
             sitemapOptions.HostName,
-            sitemapOptions.Culture);
-
-        if (sitemapRoot is null)
-        {
-            throw new RootContentNotFoundException();
-        }
+            sitemapOptions.Culture,
+            isImplicitSingleSitemap: false);
 
         return await RenderXmlSiteMapAsync(sitemapRoot.Key, sitemapOptions.HostName, sitemapOptions.Culture, sitemapOptions);
     }
@@ -148,6 +148,43 @@ public sealed class ExamineXmlSitemapProvider(
             sitemapOptions.Settings));
     }
 
+    private async Task<ExamineSitemapRoot> ResolveConfiguredRootAsync(
+        string sitemapKey,
+        string path,
+        string? hostname,
+        string? culture,
+        bool isImplicitSingleSitemap)
+    {
+        logger.LogDebug(
+            "Resolving XML sitemap root for sitemap {SitemapKey}. Path: {Path}; Hostname: {HostName}; Culture: {Culture}; Implicit single sitemap: {IsImplicitSingleSitemap}.",
+            sitemapKey,
+            path,
+            hostname,
+            culture,
+            isImplicitSingleSitemap);
+
+        var sitemapRoot = await sitemapRootResolver.ResolveAsync(path, hostname, culture);
+        if (sitemapRoot is null)
+        {
+            logger.LogInformation(
+                "No XML sitemap root was resolved for sitemap {SitemapKey}. Path: {Path}; Hostname: {HostName}; Culture: {Culture}; Implicit single sitemap: {IsImplicitSingleSitemap}.",
+                sitemapKey,
+                path,
+                hostname,
+                culture,
+                isImplicitSingleSitemap);
+
+            throw new RootContentNotFoundException();
+        }
+
+        logger.LogDebug(
+            "Resolved XML sitemap root {RootKey} for sitemap {SitemapKey}.",
+            sitemapRoot.Key,
+            sitemapKey);
+
+        return sitemapRoot;
+    }
+
     private async Task<XmlSitemap> RenderXmlSiteMapAsync(
         Guid rootKey,
         string? hostname,
@@ -174,12 +211,20 @@ public sealed class ExamineXmlSitemapProvider(
             availableCultures,
             xmlSitemapOptions.Value,
             sitemapOptions);
+        var selectedUrls = urls
+            .Where(url => cultureSelection.Cultures.Contains(url.Culture, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+        if (selectedUrls.Count == 0)
+        {
+            return new XmlSitemap();
+        }
+
         var resolvedHostname = string.IsNullOrWhiteSpace(hostname)
             ? ResolveHostname(hostUrl)
             : hostname;
 
         return sitemapRenderer.Render(new ExamineXmlSitemapRenderContext(
-            urls,
+            selectedUrls,
             defaultLanguageCode,
             cultureSelection.Cultures,
             resolvedHostname,
