@@ -145,7 +145,7 @@ public sealed class ExternalIndexUrlService(
         string? culture,
         IReadOnlyCollection<IDomain> assignedDomains,
         string? fallbackApplicationUrl, 
-        bool addTrailingSlash = true)
+        bool addTrailingSlash = false)
     {
         if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
         {
@@ -195,7 +195,7 @@ public sealed class ExternalIndexUrlService(
         return languageCodes.ToArray();
     }
     
-    internal static string RemoveIdFromLegacyRouteFormat(string url, bool addTrailingSlash = true)
+    internal static string RemoveIdFromLegacyRouteFormat(string url, bool addTrailingSlash = false)
     {
         var trimmedUrl = url.TrimStart('/');
         var separatorIndex = trimmedUrl.IndexOf('/');
@@ -219,7 +219,7 @@ public sealed class ExternalIndexUrlService(
 
         if (addTrailingSlash is false)
         {
-            return sanitizedUrl.Trim('/');
+            return sanitizedUrl == "/" ? sanitizedUrl : sanitizedUrl.TrimEnd('/');
         }
 
         return sanitizedUrl.EndsWith('/') ? sanitizedUrl : sanitizedUrl + '/';
@@ -249,7 +249,8 @@ public sealed class ExternalIndexUrlService(
 
     internal static string NormalizeHostname(string hostname, string? fallbackApplicationUrl)
     {
-        if (Uri.TryCreate(hostname, UriKind.Absolute, out _))
+        if (Uri.TryCreate(hostname, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
         {
             return hostname.TrimEnd('/');
         }

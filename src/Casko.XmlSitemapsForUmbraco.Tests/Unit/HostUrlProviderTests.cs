@@ -22,7 +22,8 @@ public class HostUrlProviderTests
         _domainService = Substitute.For<IDomainService>();
         _languageService = Substitute.For<ILanguageService>();
         _contentService = Substitute.For<IContentService>();
-        _languageService.GetDefaultLanguageAsync().Returns(CreateLanguage("da"));
+        var defaultLanguage = CreateLanguage("da");
+        _languageService.GetDefaultLanguageAsync().Returns(defaultLanguage);
     }
 
     [Test]
@@ -33,11 +34,15 @@ public class HostUrlProviderTests
         rootContent.Id.Returns(1062);
         rootContent.Key.Returns(rootKey);
         _contentService.GetById(1062).Returns(rootContent);
+        var danishDomain = CreateDomain("https://example.com/da/", "da", rootContentId: 1062, sortOrder: 20);
+        var englishDomain = CreateDomain("example.com/en/", "en", rootContentId: 1062, sortOrder: 10);
+        var polishDomain = CreateDomain("/pl/", "pl", rootContentId: 1062, sortOrder: 30);
+        var fallbackDomain = CreateDomain("", null, rootContentId: 1062, sortOrder: 40);
         _domainService.GetAllAsync(false).Returns([
-            CreateDomain("https://example.com/da/", "da", rootContentId: 1062, sortOrder: 20),
-            CreateDomain("example.com/en/", "en", rootContentId: 1062, sortOrder: 10),
-            CreateDomain("/pl/", "pl", rootContentId: 1062, sortOrder: 30),
-            CreateDomain("", null, rootContentId: 1062, sortOrder: 40)
+            danishDomain,
+            englishDomain,
+            polishDomain,
+            fallbackDomain
         ]);
         var sut = CreateProvider("https://localhost:56317/root/");
 
@@ -70,13 +75,16 @@ public class HostUrlProviderTests
         var rootContent = Substitute.For<IContent>();
         rootContent.Id.Returns(1234);
         rootContent.Key.Returns(rootKey);
-        var totalChildren = 1L;
-        _domainService.GetAllAsync(false).Returns([
-            CreateDomain("/en/", "en", rootContentId: null)
-        ]);
+        rootContent.Published.Returns(true);
+        var incompleteDomain = CreateDomain("/en/", "en", rootContentId: null);
+        _domainService.GetAllAsync(false).Returns([incompleteDomain]);
         _contentService
-            .GetPagedChildren(-1, 0, 1, out totalChildren, null, null, null, true)
-            .Returns([rootContent]);
+            .GetPagedChildren(-1, 0, 100, out Arg.Any<long>(), null, null, null)
+            .Returns(callInfo =>
+            {
+                callInfo[3] = 1L;
+                return [rootContent];
+            });
         var sut = CreateProvider("https://localhost:56317/");
 
         var result = (await sut.GetHostUrlsAsync()).Single();
@@ -98,11 +106,15 @@ public class HostUrlProviderTests
         var rootContent = Substitute.For<IContent>();
         rootContent.Id.Returns(1234);
         rootContent.Key.Returns(rootKey);
-        var totalChildren = 1L;
+        rootContent.Published.Returns(true);
         _domainService.GetAllAsync(false).Returns([]);
         _contentService
-            .GetPagedChildren(-1, 0, 1, out totalChildren, null, null, null, true)
-            .Returns([rootContent]);
+            .GetPagedChildren(-1, 0, 100, out Arg.Any<long>(), null, null, null)
+            .Returns(callInfo =>
+            {
+                callInfo[3] = 1L;
+                return [rootContent];
+            });
         var sut = CreateProvider("https://localhost:56317/");
 
         var result = (await sut.GetHostUrlsAsync()).Single();
