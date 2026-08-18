@@ -11,7 +11,6 @@ used_by:
   - Casko.XmlSitemapsForUmbraco.Package
   - Casko.XmlSitemapsForUmbraco.Providers
   - Casko.XmlSitemapsForUmbraco.Storage
-  - Casko.XmlSitemapsForUmbraco.TestSite
   - Casko.XmlSitemapsForUmbraco.Common.Serialization
 ---
 
@@ -49,7 +48,6 @@ Casko.XmlSitemapsForUmbraco.Models
        +-- Casko.XmlSitemapsForUmbraco.Package
        +-- Casko.XmlSitemapsForUmbraco.Providers
        +-- Casko.XmlSitemapsForUmbraco.Storage
-       +-- Casko.XmlSitemapsForUmbraco.TestSite
        +-- Casko.XmlSitemapsForUmbraco.Common.Serialization
 ```
 
@@ -66,7 +64,6 @@ This project has no direct project references.
 | `../Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj` | Includes the model assembly in the packaged Umbraco extension. |
 | `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Produces sitemap and sitemap index models from provider/rendering services. |
 | `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj` | Stores and refreshes rendered sitemap model content. |
-| `../Casko.XmlSitemapsForUmbraco.TestSite/Casko.XmlSitemapsForUmbraco.TestSite.csproj` | Uses the models in test-site custom sitemap provider examples. |
 | `../Casko.XmlSitemapsForUmbraco.Common.Serialization/Casko.XmlSitemapsForUmbraco.Common.Serialization.csproj` | Serializes and deserializes `IXmlSitemapModel` implementations. |
 
 ## Important files and entry points
