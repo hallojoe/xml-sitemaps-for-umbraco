@@ -98,7 +98,7 @@ public class HostUrlProvider(
 
     internal static Uri? ResolveUri(string? domainName, string? fallbackApplicationUrl)
     {
-        if (Uri.TryCreate(domainName, UriKind.Absolute, out var absoluteUri))
+        if (TryCreateHttpUri(domainName, out var absoluteUri))
         {
             return absoluteUri;
         }
@@ -140,6 +140,19 @@ public class HostUrlProvider(
         return string.IsNullOrWhiteSpace(culture)
             ? defaultCulture
             : culture;
+    }
+
+    private static bool TryCreateHttpUri(string? value, out Uri uri)
+    {
+        if (Uri.TryCreate(value, UriKind.Absolute, out var parsedUri) &&
+            (parsedUri.Scheme == Uri.UriSchemeHttp || parsedUri.Scheme == Uri.UriSchemeHttps))
+        {
+            uri = parsedUri;
+            return true;
+        }
+
+        uri = null!;
+        return false;
     }
 
     private static bool IsDefaultCulture(string culture, string? defaultCulture)

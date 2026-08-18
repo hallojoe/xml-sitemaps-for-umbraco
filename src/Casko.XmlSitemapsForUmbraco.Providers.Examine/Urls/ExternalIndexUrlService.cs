@@ -147,7 +147,7 @@ public sealed class ExternalIndexUrlService(
         string? fallbackApplicationUrl, 
         bool addTrailingSlash = false)
     {
-        if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUrl))
+        if (TryCreateHttpUri(url, out var absoluteUrl))
         {
             return new ResolvedCmsUrl(
                 RemoveIdFromLegacyRouteFormat(absoluteUrl.PathAndQuery, addTrailingSlash),
@@ -249,8 +249,7 @@ public sealed class ExternalIndexUrlService(
 
     internal static string NormalizeHostname(string hostname, string? fallbackApplicationUrl)
     {
-        if (Uri.TryCreate(hostname, UriKind.Absolute, out var uri) &&
-            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        if (TryCreateHttpUri(hostname, out _))
         {
             return hostname.TrimEnd('/');
         }
@@ -283,6 +282,19 @@ public sealed class ExternalIndexUrlService(
         }
 
         return Uri.UriSchemeHttps;
+    }
+
+    private static bool TryCreateHttpUri(string? value, out Uri uri)
+    {
+        if (Uri.TryCreate(value, UriKind.Absolute, out var parsedUri) &&
+            (parsedUri.Scheme == Uri.UriSchemeHttp || parsedUri.Scheme == Uri.UriSchemeHttps))
+        {
+            uri = parsedUri;
+            return true;
+        }
+
+        uri = null!;
+        return false;
     }
     
 }
