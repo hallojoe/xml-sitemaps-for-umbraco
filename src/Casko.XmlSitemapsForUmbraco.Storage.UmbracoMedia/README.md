@@ -6,7 +6,7 @@ framework: net10.0
 solution_role: Umbraco media-backed sitemap storage and refresh job integration
 depends_on:
   - Casko.XmlSitemapsForUmbraco.Providers
-  - Casko.XmlSitemapsForUmbraco.Serialization
+  - Casko.XmlSitemapsForUmbraco.Common.Serialization
   - Casko.XmlSitemapsForUmbraco.Storage
 used_by:
   - Casko.XmlSitemapsForUmbraco.Package
@@ -35,7 +35,7 @@ It also wires the storage layer into the public provider pipeline by registering
 
 - This project does not define storage contracts or refresh behavior; those belong in `../Casko.XmlSitemapsForUmbraco.Storage`.
 - This project does not generate live sitemap models; live providers belong in `../Casko.XmlSitemapsForUmbraco.Providers.Examine` and `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent`.
-- This project does not define XML serialization rules; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Serialization`.
+- This project does not define XML serialization rules; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Common.Serialization`.
 - This project does not expose delivery or backoffice HTTP endpoints.
 
 ## Project relationships
@@ -58,7 +58,7 @@ Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
 | Project                                                                                  | Reason |
 |------------------------------------------------------------------------------------------|---|
 | `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj`  | Supplies shared provider registrations and `IXmlSitemapProvider` contracts used by storage composition. |
-| `../Casko.XmlSitemapsForUmbraco.Serialization/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies XML serializer/deserializer registration used by stored sitemap provider and refresh services. |
+| `../Casko.XmlSitemapsForUmbraco.Common.Serialization/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies XML serializer/deserializer registration used by stored sitemap provider and refresh services. |
 | `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj`      | Supplies storage contracts, name provider, refresh service, and stored provider wrapper. |
 
 ### Used by

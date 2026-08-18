@@ -51,7 +51,7 @@ public sealed class XmlSitemapUrl
     {
         get => ChangeFrequency == ChangeFrequency.None ? null : ChangeFrequency.ToString().ToLowerInvariant();
         set => ChangeFrequency =
-            string.IsNullOrEmpty(value) ? ChangeFrequency.None : Enum.Parse<ChangeFrequency>(value);
+            string.IsNullOrEmpty(value) ? ChangeFrequency.None : Enum.Parse<ChangeFrequency>(value, ignoreCase: true);
     }
 
     /// <summary>

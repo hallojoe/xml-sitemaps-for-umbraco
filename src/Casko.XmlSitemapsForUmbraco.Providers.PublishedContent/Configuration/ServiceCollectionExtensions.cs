@@ -9,7 +9,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddXmlSitemapsPublishedContentProvider(this IServiceCollection services)
     {
-        services.AddXmlSitemapProviders();
+        services.AddXmlSitemapsProviders();
 
         services.AddScoped<IPublishedContentService, PublishedContentService>();
         services.AddScoped<IPublishedContentUrlBuilder, PublishedContentUrlBuilder>();

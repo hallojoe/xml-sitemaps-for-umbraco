@@ -26,7 +26,7 @@ if (isDevelopment)
     });
 }
 
-builder.Services.AddXmlSitemapCustomProvider<CustomSitemapProvider>();
+builder.Services.AddXmlSitemapsCustomProvider<CustomSitemapProvider>();
 
 builder.CreateUmbracoBuilder()
     .AddBackOffice()

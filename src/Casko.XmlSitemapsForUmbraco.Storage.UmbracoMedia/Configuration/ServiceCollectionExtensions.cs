@@ -1,41 +1,31 @@
-using Casko.XmlSitemapsForUmbraco.Common.Serialization.Configuration;
-using Casko.XmlSitemapsForUmbraco.Providers;
-using Casko.XmlSitemapsForUmbraco.Providers.Configuration;
-using Casko.XmlSitemapsForUmbraco.Storage.Services;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Umbraco.Extensions;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.Configuration;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddXmlSitemapsUmbracoMediaStorage(this IServiceCollection services)
+    public static IServiceCollection AddXmlSitemapsUmbracoMediaStorage(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-
-        services.AddXmlSitemapProviders();
-        services.AddXmlSitemapsSerialization();
-        services.TryAddTimeProvider();
-        
-        services.AddScoped<IXmlSitemapStorageNameProvider, XmlSitemapStorageNameProvider>();
-        services.AddScoped<IUmbracoMediaFileAccessor, UmbracoMediaFileAccessor>();
-        services.AddScoped<IXmlSitemapDataSource, UmbracoMediaXmlSitemapDataSource>();
-        services.AddScoped<IXmlSitemapStorageRefreshService, XmlSitemapStorageRefreshService>();
-        
-        // Take over default IXmlSitemapProvider
-        services.AddScoped<IXmlSitemapProvider, StoredXmlSitemapProvider>();
-        services.AddRecurringBackgroundJob<UmbracoMediaXmlSitemapRefreshBackgroundJob>();
-        
-        return services;
-    }
-
-    private static IServiceCollection TryAddTimeProvider(this IServiceCollection services)
-    {
-        if (services.Any(service => service.ServiceType == typeof(TimeProvider)))
+        var storageSection = configuration.GetSection(XmlSitemapStorageOptions.Key);
+        if (!storageSection.Exists())
         {
             return services;
         }
 
-        services.AddSingleton(TimeProvider.System);
+        services.AddXmlSitemapsStorage(configuration);
+        services.AddScoped<IUmbracoMediaFileAccessor, UmbracoMediaFileAccessor>();
+        services.AddScoped<IXmlSitemapDataSource, UmbracoMediaXmlSitemapDataSource>();
+
+        if (storageSection.GetSection(nameof(XmlSitemapStorageOptions.BackgroundJob)).Exists())
+        {
+            services.AddRecurringBackgroundJob<UmbracoMediaXmlSitemapRefreshBackgroundJob>();
+        }
+
         return services;
     }
 }

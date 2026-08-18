@@ -19,12 +19,12 @@ public sealed class XmlSitemapComposer: IComposer
 
         var xmlSitemapsOptions = new XmlSitemapsOptions();
         builder.Config.GetSection(XmlSitemapsOptions.Key).Bind(xmlSitemapsOptions);
-        
+
         // XML Sitemaps Examine provider and preferred live source.
-        builder.Services.AddXmlSitemapExamineProvider();
+        builder.Services.AddXmlSitemapExamineProvider(xmlSitemapsOptions.IndexName);
         
         // This wraps the live source and becomes the public IXmlSitemapProvider.
-        builder.Services.AddXmlSitemapsUmbracoMediaStorage();
+        builder.Services.AddXmlSitemapsUmbracoMediaStorage(builder.Config);
         
         // Delivery API
         builder.Services.AddXmlSitemapDeliveryApi(builder.Config);

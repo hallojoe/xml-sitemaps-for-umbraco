@@ -4,6 +4,7 @@ using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
 using Casko.XmlSitemapsForUmbraco.Storage;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -165,10 +166,6 @@ public class StoredXmlSitemapProviderTests
         var storedSitemap = new XmlSitemap();
         _sut = CreateService(new XmlSitemapsOptions
         {
-            Storage = new XmlSitemapStorageOptions
-            {
-                RefreshStaleAfterSeconds = 0
-            },
             Sitemaps =
             {
                 ["products"] = new SitemapOptions
@@ -176,7 +173,7 @@ public class StoredXmlSitemapProviderTests
                     HostName = "www.example.com"
                 }
             }
-        });
+        }, new XmlSitemapStorageOptions { RefreshStaleAfterSeconds = 0 });
         _xmlSitemapDataSource.ReadAsync(Arg.Any<XmlSitemapStorageKey>())
             .Returns(CreateStoredDocument(CreateSitemapStorageKey(), "<urlset />", DateTimeOffset.UtcNow.AddYears(-1)));
         _xmlSitemapXmlDeserializer.Deserialize<XmlSitemap>("<urlset />").Returns(storedSitemap);
@@ -296,7 +293,9 @@ public class StoredXmlSitemapProviderTests
         await _xmlSitemapStorageRefreshService.Received(1).RefreshIndexAsync("main");
     }
 
-    private StoredXmlSitemapProvider CreateService(XmlSitemapsOptions options)
+    private StoredXmlSitemapProvider CreateService(
+        XmlSitemapsOptions options,
+        XmlSitemapStorageOptions? storageOptions = null)
     {
         return new StoredXmlSitemapProvider(
             _sourceProvider,
@@ -304,6 +303,7 @@ public class StoredXmlSitemapProviderTests
             _xmlSitemapXmlDeserializer,
             _xmlSitemapStorageRefreshService,
             Options.Create(options),
+            Options.Create(storageOptions ?? new XmlSitemapStorageOptions()),
             TimeProvider.System);
     }
 

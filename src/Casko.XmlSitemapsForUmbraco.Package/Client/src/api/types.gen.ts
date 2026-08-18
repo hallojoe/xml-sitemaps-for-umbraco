@@ -13,7 +13,7 @@ export type XmlSitemapConfigurationResponse = {
     customSitemapCount: number;
     indexCount: number;
     globalFilters: XmlSitemapGlobalFiltersResponse;
-    storage: XmlSitemapStorageConfigurationResponse;
+    storage?: XmlSitemapStorageConfigurationResponse | null;
     sitemaps: Array<XmlSitemapConfigurationRowResponse>;
     customSitemaps: Array<XmlSitemapCustomConfigurationRowResponse>;
     indexes: Array<XmlSitemapIndexConfigurationRowResponse>;
@@ -60,7 +60,7 @@ export type XmlSitemapIndexConfigurationRowResponse = {
 export type XmlSitemapStorageConfigurationResponse = {
     refreshStaleAfterSeconds: number;
     backgroundJobEnabled: boolean;
-    backgroundJobIntervalSeconds: number;
+    backgroundJobIntervalSeconds?: number | null;
 };
 
 export type GetConfigurationData = {

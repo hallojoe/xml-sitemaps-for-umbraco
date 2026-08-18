@@ -36,7 +36,7 @@ The project does not choose a physical storage medium. `Storage.UmbracoMedia` su
 
 - This project does not implement the backing store; Umbraco media storage belongs in `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia`.
 - This project does not generate live sitemap models; live source behavior belongs in provider projects such as `../Casko.XmlSitemapsForUmbraco.Providers.Examine` and `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent`.
-- This project does not define sitemap model serialization rules; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Serialization`.
+- This project does not define sitemap model serialization rules; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Common.Serialization`.
 - This project does not expose HTTP endpoints or schedule background jobs.
 
 ## Project relationships

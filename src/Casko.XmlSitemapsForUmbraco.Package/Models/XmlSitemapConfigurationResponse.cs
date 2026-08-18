@@ -1,5 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 
 namespace Casko.XmlSitemapsForUmbraco.Package.Models;
 
@@ -59,9 +60,9 @@ public sealed record XmlSitemapConfigurationResponse
     public required XmlSitemapGlobalFiltersResponse GlobalFilters { get; init; }
 
     /// <summary>
-    /// Gets storage refresh settings.
+    /// Gets storage refresh settings when storage is configured.
     /// </summary>
-    public required XmlSitemapStorageConfigurationResponse Storage { get; init; }
+    public XmlSitemapStorageConfigurationResponse? Storage { get; init; }
 
     /// <summary>
     /// Gets configured content sitemap rows.
@@ -81,7 +82,9 @@ public sealed record XmlSitemapConfigurationResponse
     /// <summary>
     /// Creates a response from configured XML sitemap options.
     /// </summary>
-    public static XmlSitemapConfigurationResponse FromOptions(XmlSitemapsOptions options)
+    public static XmlSitemapConfigurationResponse FromOptions(
+        XmlSitemapsOptions options,
+        XmlSitemapStorageOptions? storageOptions = null)
     {
         return new XmlSitemapConfigurationResponse
         {
@@ -104,12 +107,14 @@ public sealed record XmlSitemapConfigurationResponse
                 ExcludingUrlPropertyAlias = options.ExcludingUrlPropertyAlias,
                 ExcludingUrlPropertyValue = options.ExcludingUrlPropertyValue
             },
-            Storage = new XmlSitemapStorageConfigurationResponse
-            {
-                RefreshStaleAfterSeconds = options.Storage.RefreshStaleAfterSeconds,
-                BackgroundJobEnabled = options.Storage.BackgroundJob.Enabled,
-                BackgroundJobIntervalSeconds = options.Storage.BackgroundJob.IntervalSeconds
-            },
+            Storage = storageOptions is null
+                ? null
+                : new XmlSitemapStorageConfigurationResponse
+                {
+                    RefreshStaleAfterSeconds = storageOptions.RefreshStaleAfterSeconds,
+                    BackgroundJobEnabled = storageOptions.BackgroundJob is not null,
+                    BackgroundJobIntervalSeconds = storageOptions.BackgroundJob?.IntervalSeconds
+                },
             Sitemaps = ResolveSitemapRows(options),
             CustomSitemaps = options.CustomSitemaps
                 .OrderBy(pair => pair.Key, StringComparer.Ordinal)
@@ -198,7 +203,7 @@ public sealed record XmlSitemapStorageConfigurationResponse
     /// <summary>
     /// Gets the number of seconds between background refresh job runs.
     /// </summary>
-    public required int BackgroundJobIntervalSeconds { get; init; }
+    public int? BackgroundJobIntervalSeconds { get; init; }
 }
 
 /// <summary>

@@ -8,25 +8,37 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.Examine.Configuration;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddXmlSitemapExamineProvider(this IServiceCollection services, string indexName = Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName)
+    public static IServiceCollection AddXmlSitemapExamineProvider(
+        this IServiceCollection services,
+        string indexName = Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName)
     {
-        services.AddXmlSitemapProviders();
-        
+        services.AddXmlSitemapsProviders();
         services.AddScoped<IExamineSitemapRootResolver, ExamineSitemapRootResolver>();
-        services.AddScoped<ICmsUrlService, ExternalIndexUrlService>();
 
-        // services.AddScoped<ExamineXmlSitemapProvider>();
-        if (indexName.Equals(Umbraco.Cms.Core.Constants.UmbracoIndexes.DeliveryApiContentIndexName, StringComparison.InvariantCultureIgnoreCase))
+        if (string.Equals(
+                indexName,
+                Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName,
+                StringComparison.OrdinalIgnoreCase))
         {
-            services.AddScoped<IXmlSitemapSourceProvider, ExamineXmlSitemapProvider>();
-            services.AddScoped<IXmlSitemapProvider, ExamineXmlSitemapProvider>();
+            services.AddScoped<ICmsUrlService, ExternalIndexUrlService>();
+        }
+        else if (string.Equals(
+                     indexName,
+                     Umbraco.Cms.Core.Constants.UmbracoIndexes.DeliveryApiContentIndexName,
+                     StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<ICmsUrlService, DeliveryApiContentIndexUrlService>();
         }
         else
         {
-            services.AddScoped<IXmlSitemapSourceProvider, ExamineXmlSitemapProvider>();
-            services.AddScoped<IXmlSitemapProvider, ExamineXmlSitemapProvider>();
+            throw new InvalidOperationException(
+                $"XML sitemap Examine index '{indexName}' is not supported. " +
+                $"Use '{Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName}' or " +
+                $"'{Umbraco.Cms.Core.Constants.UmbracoIndexes.DeliveryApiContentIndexName}'.");
         }
 
+        services.AddScoped<IXmlSitemapSourceProvider, ExamineXmlSitemapProvider>();
+        services.AddScoped<IXmlSitemapProvider, ExamineXmlSitemapProvider>();
 
         services.AddScoped<IExamineUrlRenderer, ExamineUrlRenderer>();
         services.AddScoped<IExamineXmlSitemapRenderer, ExamineXmlSitemapRenderer>();

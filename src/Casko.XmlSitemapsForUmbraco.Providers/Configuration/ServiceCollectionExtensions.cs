@@ -9,7 +9,7 @@ namespace Casko.XmlSitemapsForUmbraco.Providers.Configuration;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddXmlSitemapProviders(this IServiceCollection services)
+    public static IServiceCollection AddXmlSitemapsProviders(this IServiceCollection services)
     {
         services.AddScoped<IHostUrlProvider, HostUrlProvider>();
         services.AddScoped<IXmlSitemapUrlBuilder, XmlSitemapUrlBuilder>();
@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
-    public static IServiceCollection AddXmlSitemapCustomProvider<TProvider>(this IServiceCollection services)
+    public static IServiceCollection AddXmlSitemapsCustomProvider<TProvider>(this IServiceCollection services)
         where TProvider : class, IXmlSitemapCustomProvider
     {
         services.AddScoped<IXmlSitemapCustomProvider, TProvider>();

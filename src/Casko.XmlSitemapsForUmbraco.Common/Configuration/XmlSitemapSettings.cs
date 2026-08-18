@@ -109,11 +109,6 @@ public sealed class XmlSitemapsOptions
     public Dictionary<string, SitemapIndexOptions> Indexes { get; set; } = [];
 
     /// <summary>
-    /// Gets or sets storage refresh settings.
-    /// </summary>
-    public XmlSitemapStorageOptions Storage { get; set; } = new();
-
-    /// <summary>
     /// Gets or sets a value indicating whether to use the Delivery API access policy.
     /// </summary>
     public bool UseDeliveryApiAccessPolicy { get; set; } = true;
@@ -125,44 +120,6 @@ public sealed class XmlSitemapsOptions
     
 }
 
-
-/// <summary>
-/// XML sitemap storage refresh settings.
-/// </summary>
-public sealed class XmlSitemapStorageOptions
-{
-    /// <summary>
-    /// Gets or sets the number of seconds after which a stored sitemap is considered stale.
-    /// </summary>
-    public int RefreshStaleAfterSeconds { get; set; } = 3600;
-
-    /// <summary>
-    /// Gets or sets background job settings for stored sitemap refreshes.
-    /// </summary>
-    public XmlSitemapStorageBackgroundJobOptions BackgroundJob { get; set; } = new();
-}
-
-/// <summary>
-/// Stored XML sitemap background job settings.
-/// </summary>
-public sealed class XmlSitemapStorageBackgroundJobOptions
-{
-    /// <summary>
-    /// Gets or sets a value indicating whether the background refresh job is enabled.
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets the number of seconds between background refresh job runs.
-    /// </summary>
-    public int IntervalSeconds { get; set; } = 3600;
-    
-    /// <summary>
-    /// Gets or sets the number of seconds to delay the background refresh job.
-    /// </summary>
-    public int RefreshJobDelayInSeconds { get; set; } = 10;
-    
-}
 
 /// <summary>
 /// Individual sitemap configuration.

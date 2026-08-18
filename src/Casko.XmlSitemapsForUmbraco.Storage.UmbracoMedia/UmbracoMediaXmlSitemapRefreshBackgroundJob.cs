@@ -1,4 +1,4 @@
-using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -9,7 +9,7 @@ namespace Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia;
 
 public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
     IServiceScopeFactory serviceScopeFactory,
-    IOptions<XmlSitemapsOptions> xmlSitemapOptions,
+    IOptions<XmlSitemapStorageOptions> xmlSitemapStorageOptions,
     ILogger<UmbracoMediaXmlSitemapRefreshBackgroundJob> logger) : IRecurringBackgroundJob
 {
     private const int DefaultIntervalSeconds = 3600;
@@ -37,14 +37,6 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
         logger.LogInformation(
             "Running XML sitemap media refresh background job.");
 
-        if (!xmlSitemapOptions.Value.Storage.BackgroundJob.Enabled)
-        {
-            logger.LogDebug(
-                "XML sitemap media refresh background job is disabled. Skipping refresh.");
-
-            return;
-        }
-
         logger.LogDebug(
             "Creating service scope for XML sitemap media refresh.");
 
@@ -65,7 +57,7 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
     private int GetIntervalSeconds()
     {
         var intervalSeconds =
-            xmlSitemapOptions.Value.Storage.BackgroundJob.IntervalSeconds;
+            xmlSitemapStorageOptions.Value.BackgroundJob!.IntervalSeconds;
 
         if (intervalSeconds > 0)
         {
@@ -83,7 +75,7 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
     private int GetDelaySeconds()
     {
         var delaySeconds =
-            xmlSitemapOptions.Value.Storage.BackgroundJob.RefreshJobDelayInSeconds;
+            xmlSitemapStorageOptions.Value.BackgroundJob!.RefreshJobDelayInSeconds;
 
         if (delaySeconds >= MinimumDelaySeconds)
         {

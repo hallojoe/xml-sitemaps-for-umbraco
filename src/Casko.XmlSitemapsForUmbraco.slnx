@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/DemoSites/">
     <Project Path="Casko.XmlSitemapsForUmbraco.DemoSite/Casko.XmlSitemapsForUmbraco.DemoSite.csproj" />
+    <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteLanguageVariant/Casko.XmlSitemapsForUmbraco.DemoSiteLanguageVariant.csproj" />
+    <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteMixed/Casko.XmlSitemapsForUmbraco.DemoSiteMixed.csproj" />
     <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteReverseProxy/Casko.XmlSitemapsForUmbraco.DemoSiteReverseProxy.csproj" />
   </Folder>
   <Folder Name="/Tests/">
@@ -10,7 +12,7 @@
   <Project Path="Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj" />
-  <Project Path="Casko.XmlSitemapsForUmbraco.Providers.PublishedContent/Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.csproj" />
+<!--  <Project Path="Casko.XmlSitemapsForUmbraco.Providers.PublishedContent/Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.csproj" />-->
   <Project Path="Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj" />

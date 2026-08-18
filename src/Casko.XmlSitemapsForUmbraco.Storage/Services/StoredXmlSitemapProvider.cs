@@ -2,6 +2,7 @@ using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using Microsoft.Extensions.Options;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
@@ -13,6 +14,7 @@ public sealed class StoredXmlSitemapProvider(
     IXmlSitemapXmlDeserializer xmlSitemapXmlDeserializer,
     IXmlSitemapStorageRefreshService xmlSitemapStorageRefreshService,
     IOptions<XmlSitemapsOptions> xmlSitemapOptions,
+    IOptions<XmlSitemapStorageOptions> xmlSitemapStorageOptions,
     TimeProvider timeProvider) : IXmlSitemapProvider
 {
     /// <inheritdoc />
@@ -124,7 +126,7 @@ public sealed class StoredXmlSitemapProvider(
 
     private bool IsStale(XmlSitemapStoredDocument storedDocument)
     {
-        var staleAfterSeconds = xmlSitemapOptions.Value.Storage.RefreshStaleAfterSeconds;
+        var staleAfterSeconds = xmlSitemapStorageOptions.Value.RefreshStaleAfterSeconds;
         if (staleAfterSeconds <= 0)
         {
             return false;

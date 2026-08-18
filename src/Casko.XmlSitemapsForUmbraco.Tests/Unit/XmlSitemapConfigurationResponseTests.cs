@@ -1,5 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Package.Models;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using NUnit.Framework;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
@@ -23,9 +24,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(result.SitemapCount, Is.EqualTo(1));
             Assert.That(result.CustomSitemapCount, Is.Zero);
             Assert.That(result.IndexCount, Is.Zero);
-            Assert.That(result.Storage.RefreshStaleAfterSeconds, Is.EqualTo(3600));
-            Assert.That(result.Storage.BackgroundJobEnabled, Is.True);
-            Assert.That(result.Storage.BackgroundJobIntervalSeconds, Is.EqualTo(3600));
+            Assert.That(result.Storage, Is.Null);
             Assert.That(result.Sitemaps.Single().Key, Is.EqualTo("xmlsitemap"));
             Assert.That(result.Sitemaps.Single().PublicName, Is.EqualTo("xmlsitemap"));
             Assert.That(result.Sitemaps.Single().Path, Is.EqualTo("/"));
@@ -50,15 +49,13 @@ public sealed class XmlSitemapConfigurationResponseTests
             IncludedCultures = ["en", "da"],
             ExcludedCultures = ["pl"],
             ExcludingUrlPropertyAlias = "metaRobots",
-            ExcludingUrlPropertyValue = "noindex",
-            Storage =
+            ExcludingUrlPropertyValue = "noindex"
+        }, new XmlSitemapStorageOptions
+        {
+            RefreshStaleAfterSeconds = 120,
+            BackgroundJob = new XmlSitemapStorageBackgroundJobOptions
             {
-                RefreshStaleAfterSeconds = 120,
-                BackgroundJob =
-                {
-                    Enabled = false,
-                    IntervalSeconds = 600
-                }
+                IntervalSeconds = 600
             }
         });
 
@@ -76,9 +73,9 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(result.GlobalFilters.ExcludedCultures, Is.EqualTo(new[] { "pl" }));
             Assert.That(result.GlobalFilters.ExcludingUrlPropertyAlias, Is.EqualTo("metaRobots"));
             Assert.That(result.GlobalFilters.ExcludingUrlPropertyValue, Is.EqualTo("noindex"));
-            Assert.That(result.Storage.RefreshStaleAfterSeconds, Is.EqualTo(120));
-            Assert.That(result.Storage.BackgroundJobEnabled, Is.False);
-            Assert.That(result.Storage.BackgroundJobIntervalSeconds, Is.EqualTo(600));
+            Assert.That(result.Storage?.RefreshStaleAfterSeconds, Is.EqualTo(120));
+            Assert.That(result.Storage?.BackgroundJobEnabled, Is.True);
+            Assert.That(result.Storage?.BackgroundJobIntervalSeconds, Is.EqualTo(600));
         });
     }
 
