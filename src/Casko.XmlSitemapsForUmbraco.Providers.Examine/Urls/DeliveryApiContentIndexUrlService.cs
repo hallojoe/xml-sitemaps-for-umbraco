@@ -1,7 +1,6 @@
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Examine;
 using Examine.Search;
-using Casko.XmlSitemapsForUmbraco.Common.Configuration;
-using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Services;
@@ -9,148 +8,140 @@ using Umbraco.Cms.Infrastructure.Examine;
 
 namespace Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 
+/// <summary>
+/// Resolves sitemap URLs from Umbraco's culture-variant Delivery API content index.
+/// </summary>
 public sealed class DeliveryApiContentIndexUrlService(
     IOptions<UrlResolverSettings> urlResolverSettings,
     IOptions<WebRoutingSettings> webRoutingSettings,
     IOptions<RequestHandlerSettings> requestHandlerSettings,
     IOptions<XmlSitemapsOptions> xmlSitemapsOptions,
-    ILanguageService languageService,
     IDomainService domainService,
-    IHostUrlProvider hostUrlProvider,
     IDocumentUrlService documentUrlService,
     IExamineManager examineManager) : ICmsUrlService
 {
+    private const string AncestorIdsField = "ancestorIds";
+    private const string ContentIdField = "id";
+    private const string ContentKeyField = "itemId";
+    private const string CultureField = "culture";
+    private const string UpdateDateField = "updateDate";
+
     /// <inheritdoc />
     public async Task<IEnumerable<CmsUrl>> GetUrlsByKeyAsync(Guid key, CancellationToken cancellationToken = default)
     {
-        if(!examineManager.TryGetIndex(Umbraco.Cms.Core.Constants.UmbracoIndexes.DeliveryApiContentIndexName, out var index))
+        if (!examineManager.TryGetIndex(
+                Umbraco.Cms.Core.Constants.UmbracoIndexes.DeliveryApiContentIndexName,
+                out var index))
         {
             return [];
         }
 
-        List<ISearchResult> searchResultList = [];
-        
-        var skip = 0;
-        long total;
-
-        do
-        {
-            var searchResults = index.Searcher
-                .CreateQuery(IndexTypes.Content)
-                .NativeQuery("+ancestorIds:" + key.ToString("D"))
-                .Execute(new QueryOptions(skip, urlResolverSettings.Value.PageSize));
-            
-            total = searchResults.TotalItemCount;
-            
-            searchResultList.AddRange(searchResults);
-            
-            skip += urlResolverSettings.Value.PageSize;
-        }
-        while (skip < total);
-
+        var searchResults = GetSearchResults(index.Searcher, key);
+        var assignedDomains = (await domainService.GetAssignedDomainsAsync(key, false)).ToArray();
         var cmsUrls = new List<CmsUrl>();
 
-        var languages = await GetCandidateLanguagesAsync();
-
-        var assignedDomains = (await domainService.GetAssignedDomainsAsync(key, false)).ToArray();
-        
-        foreach (var searchResult in searchResultList)
+        foreach (var searchResult in searchResults)
         {
-            if (searchResult.Values.TryGetValue(
-                    xmlSitemapsOptions.Value.ExcludingUrlPropertyAlias ?? "__unknown", 
-                    out var excludingPropertyAlias) 
-                && 
-                    excludingPropertyAlias.Equals(xmlSitemapsOptions.Value.ExcludingUrlPropertyValue, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-            
-            if (!Guid.TryParse(searchResult.Values["__Key"], out var contentKey))
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (IsExcluded(searchResult) || !TryCreateCmsUrl(searchResult, assignedDomains, out var cmsUrl))
             {
                 continue;
             }
 
-            if (!int.TryParse(searchResult.Values["__NodeId"], out var contentId))
-            {
-                continue;
-            }
-
-            if (!long.TryParse(searchResult.Values["updateDate"], out var updateDateAsLong))
-            {
-                continue;
-            }
-
-            var updatedDate = new DateTime(updateDateAsLong);
-            
-            foreach (var language in languages)
-            {
-                var updatedDateForCulture = updatedDate;
-
-                if (long.TryParse(searchResult.Values["updateDate_" + language], out var updatedDateAsLongForCulture))
-                {
-                    updatedDateForCulture = new DateTime(updatedDateAsLongForCulture);
-                }
-
-                var url = documentUrlService.GetLegacyRouteFormat(contentKey, language, false);
-
-                if (url.Equals("#"))
-                {
-                    continue;
-                }
-
-                var resolvedUrl = ExternalIndexUrlService.ResolveUrl(
-                    url, 
-                    language, 
-                    assignedDomains, 
-                    webRoutingSettings.Value.UmbracoApplicationUrl, 
-                    requestHandlerSettings.Value.AddTrailingSlash);
-                
-                cmsUrls.Add(new CmsUrl(
-                    resolvedUrl.UrlPath,
-                    updatedDateForCulture,
-                    resolvedUrl.Hostname,
-                    language,
-                    contentId,
-                    contentKey));
-            }            
+            cmsUrls.Add(cmsUrl);
         }
 
         return cmsUrls;
     }
-    
-    internal async Task<string[]> GetCandidateLanguagesAsync()
+
+    private IEnumerable<ISearchResult> GetSearchResults(ISearcher searcher, Guid rootKey)
     {
-        var defaultLanguageCode = (await languageService.GetDefaultLanguageAsync())?.IsoCode;
-        var languageCodes = (await languageService.GetAllAsync())
-            .Select(language => language.IsoCode)
-            .Where(languageCode => string.IsNullOrWhiteSpace(languageCode) is false)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var searchResults = new List<ISearchResult>();
+        var skip = 0;
+        long total;
+        var rootKeyValue = rootKey.ToString("D");
 
-        if (string.IsNullOrWhiteSpace(defaultLanguageCode) is false)
+        do
         {
-            languageCodes.RemoveAll(languageCode =>
-                string.Equals(languageCode, defaultLanguageCode, StringComparison.OrdinalIgnoreCase));
-            languageCodes.Insert(0, defaultLanguageCode);
+            var results = searcher
+                .CreateQuery(IndexTypes.Content)
+                .NativeQuery($"+({ContentKeyField}:{rootKeyValue} {AncestorIdsField}:{rootKeyValue})")
+                .Execute(new QueryOptions(skip, urlResolverSettings.Value.PageSize));
+
+            total = results.TotalItemCount;
+            searchResults.AddRange(results);
+            skip += urlResolverSettings.Value.PageSize;
+        }
+        while (skip < total);
+
+        return searchResults;
+    }
+
+    private bool IsExcluded(ISearchResult searchResult)
+    {
+        var propertyAlias = xmlSitemapsOptions.Value.ExcludingUrlPropertyAlias;
+        var propertyValue = xmlSitemapsOptions.Value.ExcludingUrlPropertyValue;
+
+        return !string.IsNullOrWhiteSpace(propertyAlias) &&
+               !string.IsNullOrWhiteSpace(propertyValue) &&
+               searchResult.Values.TryGetValue(propertyAlias, out var indexedValue) &&
+               string.Equals(indexedValue, propertyValue, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool TryCreateCmsUrl(
+        ISearchResult searchResult,
+        IReadOnlyCollection<Umbraco.Cms.Core.Models.IDomain> assignedDomains,
+        out CmsUrl cmsUrl)
+    {
+        cmsUrl = null!;
+
+        if (!TryGetValue(searchResult, ContentKeyField, out var contentKeyValue) ||
+            !Guid.TryParse(contentKeyValue, out var contentKey) ||
+            !TryGetValue(searchResult, ContentIdField, out var contentIdValue) ||
+            !int.TryParse(contentIdValue, out var contentId) ||
+            !TryGetValue(searchResult, CultureField, out var culture) ||
+            !IsIncludedCulture(culture) ||
+            !TryGetValue(searchResult, UpdateDateField, out var updateDateValue) ||
+            !long.TryParse(updateDateValue, out var updateDateTicks))
+        {
+            return false;
         }
 
-        var includedCultures = xmlSitemapsOptions.Value.IncludedCultures;
-        if (includedCultures.Count > 0)
+        var url = documentUrlService.GetLegacyRouteFormat(contentKey, culture, false);
+        if (string.Equals(url, "#", StringComparison.Ordinal))
         {
-            languageCodes = languageCodes
-                .Where(languageCode => includedCultures.Contains(languageCode, StringComparer.OrdinalIgnoreCase))
-                .ToList();
+            return false;
         }
 
-        var excludedCultures = xmlSitemapsOptions.Value.ExcludedCultures;
-        if (excludedCultures.Count > 0)
-        {
-            languageCodes = languageCodes
-                .Where(languageCode => !excludedCultures.Contains(languageCode, StringComparer.OrdinalIgnoreCase))
-                .ToList();
-        }
+        var resolvedUrl = ExternalIndexUrlService.ResolveUrl(
+            url,
+            culture,
+            assignedDomains,
+            webRoutingSettings.Value.UmbracoApplicationUrl,
+            requestHandlerSettings.Value.AddTrailingSlash);
 
-        return languageCodes.ToArray();
+        cmsUrl = new CmsUrl(
+            resolvedUrl.UrlPath,
+            new DateTime(updateDateTicks),
+            resolvedUrl.Hostname,
+            culture,
+            contentId,
+            contentKey);
+        return true;
+    }
+
+    private bool IsIncludedCulture(string culture)
+    {
+        var options = xmlSitemapsOptions.Value;
+        return (options.IncludedCultures.Count == 0 ||
+                options.IncludedCultures.Contains(culture, StringComparer.OrdinalIgnoreCase)) &&
+               !options.ExcludedCultures.Contains(culture, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static bool TryGetValue(ISearchResult searchResult, string fieldName, out string value)
+    {
+        return searchResult.Values.TryGetValue(fieldName, out value!) &&
+               !string.IsNullOrWhiteSpace(value);
     }
 }
-
