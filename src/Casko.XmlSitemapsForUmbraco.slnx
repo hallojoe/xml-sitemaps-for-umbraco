@@ -4,6 +4,7 @@
     <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteLanguageVariant/Casko.XmlSitemapsForUmbraco.DemoSiteLanguageVariant.csproj" />
     <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteMixed/Casko.XmlSitemapsForUmbraco.DemoSiteMixed.csproj" />
     <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteReverseProxy/Casko.XmlSitemapsForUmbraco.DemoSiteReverseProxy.csproj" />
+    <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteSingle/Casko.XmlSitemapsForUmbraco.DemoSiteSingle.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj" />
