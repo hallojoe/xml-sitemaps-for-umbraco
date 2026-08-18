@@ -23,93 +23,6 @@
     <ItemGroup>
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Package\Casko.XmlSitemapsForUmbraco.Package.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\ContentTypes\homepage.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\ContentTypes\metacomposition.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\ContentTypes\newspage.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\ContentTypes\textpage.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\ny-side-0.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\ny-side-1.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\ny-side-2.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\ny-side-3.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\site-1.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\tekst-side.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\tekst-sub-side-2.1.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\teskst-under-side-1.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\teskst-under-side-2.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-0.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-0_pwalmtum.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-0_yxgjzyfh.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-1.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-1_awunjcgv.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-1_rj0mh500.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-2.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-2_ffggzpqv.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-2_hhhblw5r.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-3.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-3_22hci01y.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-3_zohk2eif.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-4.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-4_13rpfatx.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-4_2yqjvd2m.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Content\test-side-5.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\ApprovedColor.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\CheckboxList.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\ContentPicker.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\DatePicker.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\DatePickerWithTime.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\DateTimePickerWithTimeZone.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\Dropdown.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\DropdownMultiple.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\ImageCropper.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\ImageMediaPicker.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\LabelBigint.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\LabelBytes.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\LabelDatetime.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\LabelDecimal.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\LabelInteger.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\LabelPixels.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\LabelString.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\LabelTime.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\ListViewContent.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\ListViewMedia.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\MediaPicker.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\MemberPicker.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\MultipleImageMediaPicker.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\MultipleMediaPicker.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\MultiURLPicker.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\Numeric.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\Radiobox.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\RichtextEditor.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\Tags.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\Textarea.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\Textstring.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\Truefalse.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\UploadArticle.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\UploadAudio.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\UploadFile.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\UploadVectorGraphics.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\DataTypes\UploadVideo.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Domains\en_en.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Domains\pl_pl.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Domains\_da.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Languages\da.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Languages\en.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Languages\pl.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\MediaTypes\file.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\MediaTypes\folder.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\MediaTypes\image.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\MediaTypes\umbracomediaarticle.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\MediaTypes\umbracomediaaudio.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\MediaTypes\umbracomediavectorgraphics.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\MediaTypes\umbracomediavideo.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\MemberTypes\member.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\RelationTypes\umbMember.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Templates\maintemplate.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\Templates\pagetemplate.config" />
-      <_ContentIncludedByDefault Remove="uSyncLanguageVariantSite\v17\usync.config" />
-    </ItemGroup>
     
 <!--    <ItemGroup>-->
 <!--      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" />-->
@@ -119,8 +32,7 @@
 <!--      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />-->
 <!--      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" />-->
 <!--    </ItemGroup>-->
-
-
+    
     <PropertyGroup>
         <!-- Razor files are needed for the backoffice to work correctly -->
         <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
