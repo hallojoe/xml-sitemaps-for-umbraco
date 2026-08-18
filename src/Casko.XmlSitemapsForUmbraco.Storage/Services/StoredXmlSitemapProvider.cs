@@ -2,7 +2,6 @@ using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Common.Serialization;
 using Casko.XmlSitemapsForUmbraco.Models;
 using Casko.XmlSitemapsForUmbraco.Providers;
-using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using Microsoft.Extensions.Options;
 using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
 
@@ -12,10 +11,7 @@ public sealed class StoredXmlSitemapProvider(
     IXmlSitemapSourceProvider sourceProvider,
     IXmlSitemapDataSource xmlSitemapDataSource,
     IXmlSitemapXmlDeserializer xmlSitemapXmlDeserializer,
-    IXmlSitemapStorageRefreshService xmlSitemapStorageRefreshService,
-    IOptions<XmlSitemapsOptions> xmlSitemapOptions,
-    IOptions<XmlSitemapStorageOptions> xmlSitemapStorageOptions,
-    TimeProvider timeProvider) : IXmlSitemapProvider
+    IOptions<XmlSitemapsOptions> xmlSitemapOptions) : IXmlSitemapProvider
 {
     /// <inheritdoc />
     public IXmlSitemapModel GetByRootKey(Guid rootKey)
@@ -54,24 +50,21 @@ public sealed class StoredXmlSitemapProvider(
         {
             return await GetStoredSitemapAsync(
                 key,
-                sitemapOptions.HostName,
-                () => xmlSitemapStorageRefreshService.RefreshConfiguredAsync(key));
+                sitemapOptions.HostName);
         }
 
         if (xmlSitemapOptions.Value.CustomSitemaps.TryGetValue(key, out var customSitemapOptions))
         {
             return await GetStoredSitemapAsync(
                 key,
-                customSitemapOptions.HostName,
-                () => xmlSitemapStorageRefreshService.RefreshCustomAsync(key));
+                customSitemapOptions.HostName);
         }
 
         if (IsImplicitSingleSitemapKey(key))
         {
             return await GetStoredSitemapAsync(
                 key,
-                hostName: null,
-                () => xmlSitemapStorageRefreshService.RefreshConfiguredAsync(key));
+                hostName: null);
         }
 
         throw new InvalidOperationException("Invalid key.");
@@ -79,8 +72,7 @@ public sealed class StoredXmlSitemapProvider(
 
     private async Task<IXmlSitemapModel> GetStoredSitemapAsync(
         string key,
-        string? hostName,
-        Func<Task<IXmlSitemapModel>> refresh)
+        string? hostName)
     {
         var storageKey = new XmlSitemapStorageKey(
             XmlSitemapDocumentKind.Sitemap,
@@ -88,12 +80,12 @@ public sealed class StoredXmlSitemapProvider(
             hostName);
 
         var storedDocument = await xmlSitemapDataSource.ReadAsync(storageKey);
-        if (storedDocument is not null && !IsStale(storedDocument))
+        if (storedDocument is not null)
         {
             return xmlSitemapXmlDeserializer.Deserialize<XmlSitemap>(storedDocument.Xml);
         }
 
-        return await refresh();
+        return new XmlSitemap();
     }
 
     /// <inheritdoc />
@@ -116,28 +108,15 @@ public sealed class StoredXmlSitemapProvider(
             sitemapIndexOptions.HostName);
 
         var storedDocument = await xmlSitemapDataSource.ReadAsync(storageKey);
-        if (storedDocument is not null && !IsStale(storedDocument))
+        if (storedDocument is not null)
         {
             return xmlSitemapXmlDeserializer.Deserialize<XmlSitemapIndex>(storedDocument.Xml);
         }
 
-        return await xmlSitemapStorageRefreshService.RefreshIndexAsync(key);
-    }
-
-    private bool IsStale(XmlSitemapStoredDocument storedDocument)
-    {
-        var staleAfterSeconds = xmlSitemapStorageOptions.Value.RefreshStaleAfterSeconds;
-        if (staleAfterSeconds <= 0)
+        return new XmlSitemapIndex
         {
-            return false;
-        }
-
-        if (storedDocument.RefreshedUtc is null)
-        {
-            return true;
-        }
-
-        return storedDocument.RefreshedUtc.Value.AddSeconds(staleAfterSeconds) <= timeProvider.GetUtcNow();
+            Locations = []
+        };
     }
 
     private bool IsImplicitSingleSitemapKey(string key)

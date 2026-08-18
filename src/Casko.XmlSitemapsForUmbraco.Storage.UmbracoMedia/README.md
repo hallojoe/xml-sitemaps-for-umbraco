@@ -100,16 +100,17 @@ On write, it:
 
 1. Validates the `XmlSitemapStorageKey`.
 2. Creates the root folder when it does not exist.
-3. Looks for an existing child media item with the generated storage file name.
-4. Updates existing file content when the media item has a file path.
-5. Otherwise creates a new Umbraco file media item and sets its initial file.
+3. Creates a new file media item with a sortable UTC timestamp and unique suffix.
+4. Saves the new media item only after its file content has been set.
+5. Caches the newly published media locator and cleans up eligible obsolete versions.
 
-On read, it finds the generated file name under the root folder, opens the media file stream, reads XML as UTF-8, and returns an `XmlSitemapStoredDocument` with media key, media id, file name, media path, XML, and refreshed timestamp.
+On read, it uses `HybridCache` to resolve the latest immutable media version. Cache misses scan versioned files once; existing unversioned media remains readable for backwards compatibility. Reads open the selected media file as UTF-8 and return an `XmlSitemapStoredDocument` with media key, media id, file name, media path, XML, and refreshed timestamp.
 
 ## Configuration
 
 The background job reads:
 
+- `XmlSitemaps:Storage:VersionCleanupAfterSeconds`, default `600`; values of `0` or less disable cleanup.
 - `XmlSitemaps:Storage:BackgroundJob:Enabled`, default `true`.
 - `XmlSitemaps:Storage:BackgroundJob:IntervalSeconds`, default `3600`.
 - `XmlSitemaps:Storage:BackgroundJob:RefreshJobDelayInSeconds`, default `10`.

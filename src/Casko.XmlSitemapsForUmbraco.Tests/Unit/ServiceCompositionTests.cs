@@ -5,8 +5,6 @@ using Casko.XmlSitemapsForUmbraco.Providers.Examine;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Configuration;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Routing;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
-using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.Configuration;
-using Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.ContentReading;
 using Casko.XmlSitemapsForUmbraco.Providers.Routing;
 using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
 using Casko.XmlSitemapsForUmbraco.Storage;
@@ -30,11 +28,10 @@ public sealed class ServiceCompositionTests
         var services = new ServiceCollection();
         var configuration = CreateConfiguration(new Dictionary<string, string?>
         {
-            ["XmlSitemaps:Storage:RefreshStaleAfterSeconds"] = "600"
+            ["XmlSitemaps:Storage:VersionCleanupAfterSeconds"] = "600"
         });
 
         services.AddXmlSitemapsConfiguration(configuration);
-        services.AddXmlSitemapsPublishedContentProvider();
         services.AddXmlSitemapExamineProvider();
         services.AddXmlSitemapsUmbracoMediaStorage(configuration);
         services.AddLogging();
@@ -57,20 +54,6 @@ public sealed class ServiceCompositionTests
         {
             Assert.That(publicProvider, Is.TypeOf<StoredXmlSitemapProvider>());
             Assert.That(sourceProvider, Is.TypeOf<ExamineXmlSitemapProvider>());
-        });
-    }
-
-    [Test]
-    public void ExamineProvider_DoesNotRegisterPublishedContentServices()
-    {
-        var services = new ServiceCollection();
-
-        services.AddXmlSitemapExamineProvider();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(services.Any(service => service.ServiceType == typeof(IPublishedContentService)), Is.False);
-            Assert.That(services.Any(service => service.ServiceType == typeof(IExamineSitemapRootResolver)), Is.True);
         });
     }
 
@@ -133,7 +116,7 @@ public sealed class ServiceCompositionTests
         var services = new ServiceCollection();
         var configuration = CreateConfiguration(new Dictionary<string, string?>
         {
-            ["XmlSitemaps:Storage:RefreshStaleAfterSeconds"] = "600"
+            ["XmlSitemaps:Storage:VersionCleanupAfterSeconds"] = "600"
         });
 
         services.AddXmlSitemapsUmbracoMediaStorage(configuration);

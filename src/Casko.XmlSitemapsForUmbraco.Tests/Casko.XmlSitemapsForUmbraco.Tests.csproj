@@ -28,7 +28,6 @@
     <ItemGroup>
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Package\Casko.XmlSitemapsForUmbraco.Package.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers\Casko.XmlSitemapsForUmbraco.Providers.csproj" />
-        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers.PublishedContent\Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers.Examine\Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Delivery\Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />

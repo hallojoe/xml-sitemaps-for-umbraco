@@ -59,7 +59,7 @@ Casko.XmlSitemapsForUmbraco.Storage
 
 | Project | Reason                                                                                                                 |
 |---|------------------------------------------------------------------------------------------------------------------------|
-| `../Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies `XmlSitemapsOptions` and storage configuration values such as `RefreshStaleAfterSeconds`. Supplies XML serializer/deserializer services for storing and reading raw XML documents.                    |
+| `../Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies `XmlSitemapsOptions` and XML serializer/deserializer services for storing and reading raw XML documents.                    |
 | `../Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj` | Supplies `IXmlSitemapModel`, `XmlSitemap`, and `XmlSitemapIndex` types refreshed and returned by storage services.     |
 | `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Supplies `IXmlSitemapProvider` and `IXmlSitemapSourceProvider` contracts used by stored provider and refresh services. |
 
@@ -95,9 +95,7 @@ Casko.XmlSitemapsForUmbraco.Storage
 
 ## Configuration
 
-This project reads `XmlSitemapsOptions.Storage.RefreshStaleAfterSeconds`.
-
-If `RefreshStaleAfterSeconds` is `0` or less, stored documents are never treated as stale by `StoredXmlSitemapProvider`. If the value is positive, documents with no `RefreshedUtc` are stale, and documents older than the configured number of seconds are refreshed.
+Stored sitemap delivery is read-only. Missing documents return valid empty sitemap models; only the configured background job refreshes stored sitemap XML.
 
 ## Build and test
 

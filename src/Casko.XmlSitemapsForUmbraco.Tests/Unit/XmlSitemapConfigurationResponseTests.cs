@@ -52,7 +52,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             ExcludingUrlPropertyValue = "noindex"
         }, new XmlSitemapStorageOptions
         {
-            RefreshStaleAfterSeconds = 120,
+            VersionCleanupAfterSeconds = 120,
             BackgroundJob = new XmlSitemapStorageBackgroundJobOptions
             {
                 IntervalSeconds = 600
@@ -73,7 +73,7 @@ public sealed class XmlSitemapConfigurationResponseTests
             Assert.That(result.GlobalFilters.ExcludedCultures, Is.EqualTo(new[] { "pl" }));
             Assert.That(result.GlobalFilters.ExcludingUrlPropertyAlias, Is.EqualTo("metaRobots"));
             Assert.That(result.GlobalFilters.ExcludingUrlPropertyValue, Is.EqualTo("noindex"));
-            Assert.That(result.Storage?.RefreshStaleAfterSeconds, Is.EqualTo(120));
+            Assert.That(result.Storage?.VersionCleanupAfterSeconds, Is.EqualTo(120));
             Assert.That(result.Storage?.BackgroundJobEnabled, Is.True);
             Assert.That(result.Storage?.BackgroundJobIntervalSeconds, Is.EqualTo(600));
         });

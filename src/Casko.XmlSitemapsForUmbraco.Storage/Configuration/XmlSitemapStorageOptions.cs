@@ -11,9 +11,10 @@ public sealed class XmlSitemapStorageOptions
     public const string Key = "XmlSitemaps:Storage";
 
     /// <summary>
-    /// Gets or sets the number of seconds after which a stored sitemap is considered stale.
+    /// Gets or sets the number of seconds to retain obsolete sitemap media versions.
+    /// Set to <c>0</c> or less to disable automatic cleanup.
     /// </summary>
-    public int RefreshStaleAfterSeconds { get; set; } = 3600;
+    public int VersionCleanupAfterSeconds { get; set; } = 600;
 
     /// <summary>
     /// Gets or sets background job settings for stored sitemap refreshes.

@@ -372,13 +372,13 @@ const de = async (e, r) => {
         break;
     }
   }
-}, U = (e) => oe({
+}, V = (e) => oe({
   baseUrl: e.baseUrl,
   path: e.path,
   query: e.query,
   querySerializer: typeof e.querySerializer == "function" ? e.querySerializer : H(e.querySerializer),
   url: e.url
-}), V = (e, r) => {
+}), U = (e, r) => {
   const t = { ...e, ...r };
   return t.baseUrl?.endsWith("/") && (t.baseUrl = t.baseUrl.substring(0, t.baseUrl.length - 1)), t.headers = W(e.headers, r.headers), t;
 }, he = (e) => {
@@ -454,8 +454,8 @@ const pe = () => ({
   querySerializer: me,
   ...e
 }), ge = (e = {}) => {
-  let r = V(F(), e);
-  const t = () => ({ ...r }), s = (c) => (r = V(r, c), t()), a = pe(), d = async (c) => {
+  let r = U(F(), e);
+  const t = () => ({ ...r }), s = (c) => (r = U(r, c), t()), a = pe(), d = async (c) => {
     const i = {
       ...r,
       ...c,
@@ -467,7 +467,7 @@ const pe = () => ({
       ...i,
       security: i.security
     }), i.requestValidator && await i.requestValidator(i), i.body !== void 0 && i.bodySerializer && (i.serializedBody = i.bodySerializer(i.body)), (i.body === void 0 || i.serializedBody === "") && i.headers.delete("Content-Type");
-    const h = U(i);
+    const h = V(i);
     return { opts: i, url: h };
   }, o = async (c) => {
     const { opts: i, url: h } = await d(c), C = {
@@ -564,7 +564,7 @@ const pe = () => ({
     });
   };
   return {
-    buildUrl: U,
+    buildUrl: V,
     connect: n("CONNECT"),
     delete: n("DELETE"),
     get: n("GET"),
@@ -594,7 +594,7 @@ const pe = () => ({
   ...e,
   ...Z.getConfig()
 }), Se = ge(ye(F({
-  baseUrl: "https://localhost:44341"
+  baseUrl: "https://backoffice.dev.localhost"
 })));
 class _e {
   static getConfiguration(r) {
@@ -649,7 +649,7 @@ let w = class extends G {
           ${this._renderSummaryItem("Custom sitemaps", e.customSitemapCount)}
           ${this._renderSummaryItem("Indexes", e.indexCount)}
           ${this._renderSummaryItem("Root search level", e.rootNodeSearchLevel)}
-          ${this._renderSummaryItem("Stale after", this._formatSeconds(e.storage?.refreshStaleAfterSeconds))}
+          ${this._renderSummaryItem("Version cleanup", this._formatSeconds(e.storage?.versionCleanupAfterSeconds))}
           ${this._renderSummaryItem("Background job", this._formatBoolean(e.storage?.backgroundJobEnabled))}
           ${this._renderSummaryItem("Job interval", this._formatSeconds(e.storage?.backgroundJobIntervalSeconds))}
         </dl>
@@ -1010,4 +1010,4 @@ export {
   w as CaskoXmlSitemapsConfigurationWorkspaceViewElement,
   ze as default
 };
-//# sourceMappingURL=configuration-workspace-view.element-5ASKvGqj.js.map
+//# sourceMappingURL=configuration-workspace-view.element-CyGStWCU.js.map

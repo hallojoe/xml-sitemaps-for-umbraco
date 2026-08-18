@@ -111,7 +111,7 @@ public sealed record XmlSitemapConfigurationResponse
                 ? null
                 : new XmlSitemapStorageConfigurationResponse
                 {
-                    RefreshStaleAfterSeconds = storageOptions.RefreshStaleAfterSeconds,
+                    VersionCleanupAfterSeconds = storageOptions.VersionCleanupAfterSeconds,
                     BackgroundJobEnabled = storageOptions.BackgroundJob is not null,
                     BackgroundJobIntervalSeconds = storageOptions.BackgroundJob?.IntervalSeconds
                 },
@@ -191,9 +191,9 @@ public sealed record XmlSitemapGlobalFiltersResponse
 public sealed record XmlSitemapStorageConfigurationResponse
 {
     /// <summary>
-    /// Gets the number of seconds after which stored sitemap XML is considered stale.
+    /// Gets the number of seconds obsolete sitemap media versions are retained.
     /// </summary>
-    public required int RefreshStaleAfterSeconds { get; init; }
+    public required int VersionCleanupAfterSeconds { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the background refresh job is enabled.
