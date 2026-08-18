@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceBuildOutput</TargetsForTfmSpecificBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     </PropertyGroup>
 
     <PropertyGroup>
