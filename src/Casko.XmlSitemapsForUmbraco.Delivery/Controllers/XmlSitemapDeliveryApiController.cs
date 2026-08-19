@@ -29,13 +29,9 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapProvider.GetConfiguredAsync(sitemapName) as XmlSitemap;
-            if (xmlSiteMap is null)
-            {
-                return Results.NotFound();
-            }
-
-            return new XmlResult<XmlSitemap>(xmlSiteMap);
+            return await xmlSitemapProvider.GetConfiguredAsync(sitemapName) is not XmlSitemap xmlSiteMap 
+                ? Results.NotFound() 
+                : new XmlResult<XmlSitemap>(xmlSiteMap);
         }
         catch (Exception exception)
         {
@@ -44,38 +40,10 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
     }
 
     /// <summary>
-    /// Returns the XML sitemap or sitemap index for the specified alias.
+    /// Returns the XML sitemap or sitemap index for the specified configured key.
     /// </summary>
     [Produces(Constants.XmlMimeType)]
-    [HttpGet("path")]
-    public async Task<IResult> GetXmlSiteMapByPath(
-        [FromQuery(Name = "path")]
-        string path,
-        [FromQuery(Name = "hostname")]
-        string? hostname = null,
-        [FromHeader(Name = "culture")] string? culture = null)
-    {
-        try
-        {
-            var xmlSiteMap = await xmlSitemapProvider.GetByPathAsync(path, culture, hostname) as XmlSitemap;
-            if (xmlSiteMap is null)
-            {
-                return Results.NotFound();
-            }
-
-            return new XmlResult<XmlSitemap>(xmlSiteMap);
-        }
-        catch (Exception exception)
-        {
-            return Results.BadRequest(exception.Message);
-        }
-    }
-
-    /// <summary>
-    /// Returns the XML sitemap or sitemap index for the specified key.
-    /// </summary>
-    [Produces(Constants.XmlMimeType)]
-    [HttpGet("key")]
+    [HttpGet("xmlsitemap")]
     public async Task<IResult> GetXmlSiteMapByKey([FromQuery(Name = "key")] string key)
     {
         try
@@ -93,35 +61,12 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
             return Results.BadRequest(exception.Message);
         }
     }
-
-    /// <summary>
-    /// Returns the XML sitemap for the specified root content key.
-    /// </summary>
-    [Produces(Constants.XmlMimeType)]
-    [HttpGet("root-key")]
-    public async Task<IResult> GetXmlSiteMapByRootKey([FromQuery(Name = "key")] Guid key)
-    {
-        try
-        {
-            var xmlSiteMap = await xmlSitemapProvider.GetByRootKeyAsync(key) as XmlSitemap;
-            if (xmlSiteMap is null)
-            {
-                return Results.NotFound();
-            }
-
-            return new XmlResult<XmlSitemap>(xmlSiteMap);
-        }
-        catch (Exception exception)
-        {
-            return Results.BadRequest(exception.Message);
-        }
-    }
     
     /// <summary>
-    /// Returns the XML sitemap or sitemap index for the specified key.
+    /// Returns the XML sitemap or sitemap index for the specified configured key.
     /// </summary>
     [Produces(Constants.XmlMimeType)]
-    [HttpGet("index/key")]
+    [HttpGet("xmlsitemapindex")]
     public IResult GetXmlSiteMapIndexByKey([FromQuery(Name = "key")] string key)
     {
         try
@@ -139,5 +84,4 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvi
             return Results.BadRequest(exception.Message);
         }
     }
-    
 }

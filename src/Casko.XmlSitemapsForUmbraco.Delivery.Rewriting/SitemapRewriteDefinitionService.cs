@@ -106,8 +106,8 @@ public sealed class SitemapRewriteDefinitionService(IOptions<XmlSitemapsOptions>
     {
         var escapedKey = Uri.EscapeDataString(key);
         var route = kind == SitemapRewriteKind.SitemapIndex
-            ? $"/{XmlSitemapApiConstants.ApiRoute}/index/key"
-            : $"/{XmlSitemapApiConstants.ApiRoute}/key";
+            ? $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemapindex"
+            : $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap";
 
         return $"{route}?key={escapedKey}";
     }
