@@ -214,7 +214,7 @@ public class ExamineXmlSitemapProviderTests
             Assert.That(result.Urls[0].CultureLinks!.Select(link => link.Href), Is.EqualTo(new[]
             {
                 "https://example.com/en/products",
-                "https://example.com/produkter"
+                "https://example.com/en/produkter"
             }));
         });
     }
@@ -391,27 +391,35 @@ public class ExamineXmlSitemapProviderTests
     }
 
     [Test]
-    public void RenderUrls_UsesHostnameOverrideForLocationAndCmsHostnamesForAlternateLinks()
+    public void RenderUrls_UsesConfiguredHostnameForLocationsAndAlternateLinks()
     {
         var renderer = new ExamineUrlRenderer(new XmlSitemapUrlBuilder());
         var lastModified = new DateTime(2026, 5, 14);
         var urls = new[]
         {
-            new CmsUrl("/da/produkter", lastModified, "https://ignored.example.com", "da", Id: 10),
-            new CmsUrl("https://ignored.example.com/en/products", lastModified, "https://ignored.example.com", "en", Id: 10)
+            new CmsUrl("/produkter", lastModified, "https://ignored.example.com", "da", Id: 10),
+            new CmsUrl("/en/products", lastModified, "https://ignored.example.com/en", "en", Id: 10),
+            new CmsUrl("/pl/produkty", lastModified, "https://ignored.example.com/pl", "pl", Id: 10)
         };
 
-        var result = renderer.Render(urls, "da", ["da", "en"], "https://example.com", renderAlternateLinks: true).ToList();
+        var result = renderer.Render(
+            urls,
+            "da",
+            ["da", "en", "pl"],
+            "https://cd.dev.localhost",
+            renderAlternateLinks: true,
+            useHostnameForCultureLinks: true).ToList();
 
         Assert.That(result, Has.Count.EqualTo(1));
         Assert.Multiple(() =>
         {
-            Assert.That(result[0].Location, Is.EqualTo("https://example.com/da/produkter"));
-            Assert.That(result[0].CultureLinks!.Select(link => link.HrefLang), Is.EqualTo(new[] { "da", "en" }));
+            Assert.That(result[0].Location, Is.EqualTo("https://cd.dev.localhost/produkter"));
+            Assert.That(result[0].CultureLinks!.Select(link => link.HrefLang), Is.EqualTo(new[] { "da", "en", "pl" }));
             Assert.That(result[0].CultureLinks!.Select(link => link.Href), Is.EqualTo(new[]
             {
-                "https://ignored.example.com/da/produkter",
-                "https://ignored.example.com/en/products"
+                "https://cd.dev.localhost/produkter",
+                "https://cd.dev.localhost/en/products",
+                "https://cd.dev.localhost/pl/produkty"
             }));
         });
     }
@@ -431,7 +439,13 @@ public class ExamineXmlSitemapProviderTests
             new CmsUrl("/pl-page-1", lastModified, "https://localhost:56317/pl", "pl", Id: 20)
         };
 
-        var result = renderer.Render(urls, "da", ["da", "en", "pl"], "https://localhost:56317", renderAlternateLinks: true).ToList();
+        var result = renderer.Render(
+            urls,
+            "da",
+            ["da", "en", "pl"],
+            "https://localhost:56317",
+            renderAlternateLinks: true,
+            useHostnameForCultureLinks: false).ToList();
 
         Assert.That(result, Has.Count.EqualTo(2));
         Assert.Multiple(() =>

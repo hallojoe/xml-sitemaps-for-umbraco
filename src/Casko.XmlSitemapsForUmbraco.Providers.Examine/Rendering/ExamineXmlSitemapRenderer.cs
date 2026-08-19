@@ -14,6 +14,7 @@ public sealed class ExamineXmlSitemapRenderer(
             context.DefaultLanguageCode,
             context.AlternativeLanguageCodes,
             context.Hostname,
-            context.RenderAlternateLinks));
-    }
+            context.RenderAlternateLinks,
+            context.UseHostnameForCultureLinks));
+}
 }

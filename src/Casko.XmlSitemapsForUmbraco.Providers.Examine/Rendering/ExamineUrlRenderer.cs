@@ -11,7 +11,8 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
         string defaultLanguageCode,
         IReadOnlyCollection<string> alternativeLanguageCodes,
         string? hostname,
-        bool renderAlternateLinks)
+        bool renderAlternateLinks,
+        bool useHostnameForCultureLinks)
     {
         var urlGroups = urls
             .Where(url => string.IsNullOrWhiteSpace(url.UrlPath) is false)
@@ -30,7 +31,13 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
             {
                 Location = BuildUrl(primaryUrl, hostname),
                 LastModified = primaryUrl.LastUpdate,
-                CultureLinks = RenderCultureLinks(groupUrls, defaultLanguageCode, alternativeLanguageCodes, hostname, renderAlternateLinks)
+                CultureLinks = RenderCultureLinks(
+                    groupUrls,
+                    defaultLanguageCode,
+                    alternativeLanguageCodes,
+                    hostname,
+                    renderAlternateLinks,
+                    useHostnameForCultureLinks)
             };
         }
     }
@@ -62,7 +69,8 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
         string defaultLanguageCode,
         IReadOnlyCollection<string> alternativeLanguageCodes,
         string? hostname,
-        bool renderAlternateLinks)
+        bool renderAlternateLinks,
+        bool useHostnameForCultureLinks)
     {
         if (renderAlternateLinks is false)
         {
@@ -77,7 +85,7 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
             .Where(url => url is not null)
             .Select(url => new XHtmlLink
             {
-                Href = BuildUrl(url!, ResolveCultureLinkHostname(url!, hostname)),
+                Href = BuildUrl(url!, ResolveCultureLinkHostname(url!, hostname, useHostnameForCultureLinks)),
                 HrefLang = url!.Culture!
             })
             .Where(cultureLink => !cultureLink.Href.Contains('#'))
@@ -100,10 +108,18 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
         return urlBuilder.CombineWithHostname(urlPath, resolvedHostname);
     }
 
-    private static string? ResolveCultureLinkHostname(CmsUrl url, string? fallbackHostname)
+    private static string? ResolveCultureLinkHostname(
+        CmsUrl url,
+        string? hostname,
+        bool useHostnameForCultureLinks)
     {
+        if (useHostnameForCultureLinks && string.IsNullOrWhiteSpace(hostname) is false)
+        {
+            return hostname;
+        }
+
         return string.IsNullOrWhiteSpace(url.Hostname)
-            ? fallbackHostname
+            ? hostname
             : url.Hostname;
     }
 
