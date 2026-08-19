@@ -219,18 +219,16 @@ public sealed class ExamineXmlSitemapProvider(
             return new XmlSitemap();
         }
 
-        var useHostnameForCultureLinks = string.IsNullOrWhiteSpace(hostname) is false;
-        var resolvedHostname = useHostnameForCultureLinks
-            ? hostname
-            : ResolveHostname(hostUrl);
+        var resolvedHostname = string.IsNullOrWhiteSpace(hostname)
+            ? ResolveHostname(hostUrl)
+            : hostname;
 
         return sitemapRenderer.Render(new ExamineXmlSitemapRenderContext(
             selectedUrls,
             defaultLanguageCode,
             cultureSelection.Cultures,
             resolvedHostname,
-            cultureSelection.RenderAlternateLinks,
-            useHostnameForCultureLinks));
+            cultureSelection.RenderAlternateLinks));
     }
 
     private async Task<HostUrl?> ResolveHostUrlAsync(Guid rootKey, string? culture)

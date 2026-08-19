@@ -16,6 +16,5 @@ public interface IExamineUrlRenderer
         string defaultLanguageCode,
         IReadOnlyCollection<string> alternativeLanguageCodes,
         string? hostname,
-        bool renderAlternateLinks,
-        bool useHostnameForCultureLinks);
+        bool renderAlternateLinks);
 }

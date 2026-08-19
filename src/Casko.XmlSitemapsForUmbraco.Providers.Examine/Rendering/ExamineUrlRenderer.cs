@@ -11,8 +11,7 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
         string defaultLanguageCode,
         IReadOnlyCollection<string> alternativeLanguageCodes,
         string? hostname,
-        bool renderAlternateLinks,
-        bool useHostnameForCultureLinks)
+        bool renderAlternateLinks)
     {
         var urlGroups = urls
             .Where(url => string.IsNullOrWhiteSpace(url.UrlPath) is false)
@@ -36,8 +35,7 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
                     defaultLanguageCode,
                     alternativeLanguageCodes,
                     hostname,
-                    renderAlternateLinks,
-                    useHostnameForCultureLinks)
+                    renderAlternateLinks)
             };
         }
     }
@@ -69,8 +67,7 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
         string defaultLanguageCode,
         IReadOnlyCollection<string> alternativeLanguageCodes,
         string? hostname,
-        bool renderAlternateLinks,
-        bool useHostnameForCultureLinks)
+        bool renderAlternateLinks)
     {
         if (renderAlternateLinks is false)
         {
@@ -85,7 +82,7 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
             .Where(url => url is not null)
             .Select(url => new XHtmlLink
             {
-                Href = BuildUrl(url!, ResolveCultureLinkHostname(url!, hostname, useHostnameForCultureLinks)),
+                Href = BuildUrl(url!, ResolveCultureLinkHostname(url!, hostname)),
                 HrefLang = url!.Culture!
             })
             .Where(cultureLink => !cultureLink.Href.Contains('#'))
@@ -108,18 +105,10 @@ public sealed class ExamineUrlRenderer(IXmlSitemapUrlBuilder urlBuilder) : IExam
         return urlBuilder.CombineWithHostname(urlPath, resolvedHostname);
     }
 
-    private static string? ResolveCultureLinkHostname(
-        CmsUrl url,
-        string? hostname,
-        bool useHostnameForCultureLinks)
+    private static string? ResolveCultureLinkHostname(CmsUrl url, string? fallbackHostname)
     {
-        if (useHostnameForCultureLinks && string.IsNullOrWhiteSpace(hostname) is false)
-        {
-            return hostname;
-        }
-
         return string.IsNullOrWhiteSpace(url.Hostname)
-            ? hostname
+            ? fallbackHostname
             : url.Hostname;
     }
 

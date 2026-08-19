@@ -7,5 +7,4 @@ public sealed record ExamineXmlSitemapRenderContext(
     string DefaultLanguageCode,
     IReadOnlyCollection<string> AlternativeLanguageCodes,
     string? Hostname,
-    bool RenderAlternateLinks = true,
-    bool UseHostnameForCultureLinks = false);
+    bool RenderAlternateLinks = true);
