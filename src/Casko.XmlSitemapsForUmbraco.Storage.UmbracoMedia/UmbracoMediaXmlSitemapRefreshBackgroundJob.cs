@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -34,8 +35,12 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
 
     public async Task RunJobAsync()
     {
+        var startedAt = DateTimeOffset.UtcNow;
+        var stopwatch = Stopwatch.StartNew();
+
         logger.LogInformation(
-            "Running XML sitemap media refresh background job.");
+            "Starting XML sitemap media refresh background job at {StartedAt}.",
+            startedAt);
 
         logger.LogDebug(
             "Creating service scope for XML sitemap media refresh.");
@@ -50,8 +55,25 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
 
         await refreshService.RefreshAllAsync();
 
+        stopwatch.Stop();
+        var completedAt = DateTimeOffset.UtcNow;
+
+        logger.LogInformation(
+            "Completed XML sitemap media refresh background job at {CompletedAt}. Elapsed time: {ElapsedTime}.",
+            completedAt,
+            FormatElapsedTime(stopwatch.Elapsed));
+
         logger.LogDebug(
             "Completed refresh of all XML sitemap storage.");
+    }
+
+    private static string FormatElapsedTime(TimeSpan elapsed)
+    {
+        return elapsed.TotalHours >= 1
+            ? $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m {elapsed.Seconds}s"
+            : elapsed.TotalMinutes >= 1
+                ? $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds}s"
+                : $"{elapsed.TotalSeconds:F1}s";
     }
 
     private int GetIntervalSeconds()
