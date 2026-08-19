@@ -11,6 +11,7 @@
   </Folder>
   <Project Path="Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Delivery.Rewriting/Casko.XmlSitemapsForUmbraco.Delivery.Rewriting.csproj" />
+  <Project Path="Casko.XmlSitemapsForUmbraco.Delivery.Swagger/Casko.XmlSitemapsForUmbraco.Delivery.Swagger.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj" />
