@@ -6,7 +6,7 @@
 
 XML Sitemaps for Umbraco adds configurable XML sitemap and sitemap index delivery to Umbraco 17+ projects on .NET 10. It can render sitemaps from Umbraco content, expose friendly rewrite URLs such as `/xmlsitemap.xml`, store generated XML in Umbraco media, refresh stored files in the background, and let projects plug in custom sitemap providers for data that does not come from the content tree.
 
-The public NuGet package is `Casko.XmlSitemapsForUmbraco`. Internally the implementation is split into focused assemblies for common configuration, models, providers, published-content rendering, Examine-backed URL discovery, storage, Umbraco media storage, delivery, HTTP results, XML serialization, and the package/backoffice UI.
+The public NuGet package is `Casko.XmlSitemapsForUmbraco`. Internally the implementation is split into focused assemblies for common configuration and serialization, models, shared providers, Examine-backed URL discovery, storage, Umbraco media storage, delivery, rewriting, and the package/backoffice UI.
 
 Most sitemap behavior is registered behind interfaces, so projects can replace package services through dependency injection when the default implementation is not enough. This includes rendering, URL building, content collection, XML serialization, storage, and custom sitemap providers.
 
@@ -18,64 +18,40 @@ Install the NuGet package:
 dotnet add package Casko.XmlSitemapsForUmbraco
 ```
 
-The package composer registers HybridCache, sitemap configuration, the published-content fallback provider, the preferred Examine provider, Umbraco media storage, the delivery API, rewrite middleware, and the read-only backoffice configuration workspace.
+The package composer registers HybridCache, sitemap configuration, the Examine source provider, Umbraco media storage, the delivery API, rewrite middleware, and the read-only backoffice configuration workspace.
 
 ## Quick Start
 
-Add an `XmlSitemaps` section to `appsettings.json`:
+Add an `XmlSitemaps` section to `appsettings.json`. This minimal configuration uses the default single-sitemap mode and mirrors the language-variant demo site's settings:
 
 ```json
 {
   "XmlSitemaps": {
     "Enabled": true,
     "RewritesEnabled": true,
-    "RootNodeSearchLevel": 0,
-    "UseDeliveryApiAccessPolicy": true,
-    "IncludedCultures": [ "en", "da" ],
+    "ExcludingUrlPropertyAlias": "umbracoNaviHide",
+    "ExcludingUrlPropertyValue": "1",
+    "UseDeliveryApiAccessPolicy": false,
+    "IndexName": "ExternalIndex",
+    "IncludedCultures": [ "da", "en" ],
     "ExcludedCultures": [],
-    "ExcludingUrlPropertyAlias": "metaRobots",
-    "ExcludingUrlPropertyValue": "noindex",
-    "RenderAlternateLinksForSingleCultureSitemaps": true,
-    "Indexes": {
-      "xmlsitemap": {
-        "PublicName": "xmlsitemap",
-        "HostName": "https://www.example.com",
-        "Sitemaps": [ "xmlsitemap-en", "xmlsitemap-da" ]
-      }
-    },
-    "Sitemaps": {
-      "xmlsitemap-en": {
-        "PublicName": "xmlsitemap-en",
-        "Path": "/",
-        "HostName": "https://www.example.com",
-        "Culture": "en",
-        "IncludedCultures": [ "en" ],
-        "ExcludedCultures": [ "da" ]
-      },
-      "xmlsitemap-da": {
-        "PublicName": "xmlsitemap-da",
-        "Path": "/",
-        "HostName": "https://www.example.com",
-        "Culture": "da",
-        "IncludedCultures": [ "da" ],
-        "ExcludedCultures": [ "en" ]
-      }
-    }
+    "RenderAlternateLinksForSingleCultureSitemaps": true
   }
 }
 ```
 
-With rewrites enabled, the configured entries are available as:
+With rewrites enabled, the single sitemap is available at:
 
-- `/xmlsitemap.xml` for the sitemap index.
-- `/xmlsitemap-en.xml` and `/xmlsitemap-da.xml` for configured sitemaps.
+- `/xmlsitemap.xml`.
 
-The delivery API is also available directly:
+The delivery API can also be called directly:
 
-- `/api/sitemap/key?key=xmlsitemap-en`
-- `/api/sitemap/index/key?key=xmlsitemap`
-- `/api/sitemap/path?path=/&hostname=www.example.com`
-- `/api/sitemap/root-key?key={rootContentGuid}`
+- `/api/xmlsitemaps?name=xmlsitemap` for the default single sitemap.
+
+To use configuration mode, add `"Mode": "Configuration"` and configure `Sitemaps`, `CustomSitemaps`, and/or `Indexes` as shown below. Their direct delivery API routes are:
+
+- `/api/xmlsitemaps/xmlsitemap?key={sitemapKey}` for configured and custom sitemaps.
+- `/api/xmlsitemaps/xmlsitemapindex?key={indexKey}` for sitemap indexes.
 
 ## Configured Sitemaps
 
@@ -397,15 +373,14 @@ Duplicate public names are allowed when different `HostName` values make them un
 
 ## Stored Media Files And Refresh
 
-The package stores generated XML sitemap files in Umbraco media. Stored files are reused when fresh and rebuilt when missing or stale.
+The package stores generated XML sitemap files in Umbraco Media as immutable versions. Delivery reads the latest stored file and returns an empty sitemap or index when none has been generated yet. Refresh is performed by the optional background job, not on the delivery request path.
 
 ```json
 {
   "XmlSitemaps": {
     "Storage": {
-      "RefreshStaleAfterSeconds": 3600,
+      "VersionCleanupAfterSeconds": 600,
       "BackgroundJob": {
-        "Enabled": true,
         "IntervalSeconds": 3600,
         "RefreshJobDelayInSeconds": 10
       }
@@ -417,15 +392,14 @@ The package stores generated XML sitemap files in Umbraco media. Stored files ar
 Storage behavior:
 
 - Stored sitemap files are created in an `Xml Sitemaps` media folder.
+- Each write creates a versioned media file; the two newest versions are retained.
 - The background job starts after `Storage:BackgroundJob:RefreshJobDelayInSeconds`.
 - The job refreshes regular sitemaps, custom sitemaps, then sitemap indexes.
-- Request-time delivery rebuilds a stored sitemap if the media file is older than `RefreshStaleAfterSeconds`.
-- Set `RefreshStaleAfterSeconds` to `0` or less to disable request-time stale checks.
+- The background job is registered only when the `Storage:BackgroundJob` section exists.
 
 Important settings:
 
-- `RefreshStaleAfterSeconds`: number of seconds before a stored sitemap is treated as stale. Defaults to `3600`.
-- `BackgroundJob.Enabled`: enables the recurring refresh job. Defaults to `true`.
+- `VersionCleanupAfterSeconds`: age an older version must reach before it can be deleted. Defaults to `600`; `0` or less disables cleanup.
 - `BackgroundJob.IntervalSeconds`: number of seconds between background refresh runs. Defaults to `3600`.
 - `BackgroundJob.RefreshJobDelayInSeconds`: number of seconds to delay the first background refresh run. Defaults to `10`.
 
@@ -434,7 +408,7 @@ Important settings:
 The package includes a read-only backoffice configuration workspace. It summarizes:
 
 - Whether XML sitemaps and friendly rewrites are enabled.
-- Alternate link rendering, root search level, and storage refresh settings.
+- Alternate link rendering, root search level, and storage cleanup settings.
 - Global filters for cultures, content types, and exclusion properties.
 - Configured content sitemaps, custom sitemaps, sitemap indexes, and public rewrite links.
 
