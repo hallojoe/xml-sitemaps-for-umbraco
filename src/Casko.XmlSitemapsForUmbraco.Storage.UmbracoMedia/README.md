@@ -3,10 +3,9 @@ project: Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
 type: library
 language: C#
 framework: net10.0
-solution_role: Umbraco media-backed sitemap storage and refresh job integration
+solution_role: Umbraco Media-backed XML sitemap storage
 depends_on:
   - Casko.XmlSitemapsForUmbraco.Providers
-  - Casko.XmlSitemapsForUmbraco.Common.Serialization
   - Casko.XmlSitemapsForUmbraco.Storage
 used_by:
   - Casko.XmlSitemapsForUmbraco.Package
@@ -17,123 +16,96 @@ used_by:
 
 ## Purpose
 
-This project provides the concrete Umbraco media-backed storage implementation for generated XML sitemap documents. It stores sitemap XML files under an Umbraco media root folder, updates existing media files when possible, and registers a recurring background job that refreshes stored sitemap output.
+Provides an `IXmlSitemapDataSource` that stores generated sitemap XML as Umbraco Media items. It also registers an optional recurring background job that refreshes all stored sitemaps.
 
-It also wires the storage layer into the public provider pipeline by registering `StoredXmlSitemapProvider` as the default `IXmlSitemapProvider`.
+The generic storage contracts, refresh service, stored sitemap provider, serialization, and HTTP result helpers live in the Storage and Common projects. This project supplies the Umbraco Media implementation.
 
 ## Responsibilities
 
-- Implement `IXmlSitemapDataSource` with `UmbracoMediaXmlSitemapDataSource`.
-- Create or reuse the root media folder named `Xml Sitemaps`.
-- Create, update, read, and return stored sitemap media file metadata.
-- Isolate Umbraco media file operations behind `IUmbracoMediaFileAccessor`.
-- Register storage, serialization, shared provider services, and `TimeProvider` through `AddXmlSitemapsUmbracoMediaStorage()`.
-- Register `IXmlSitemapProvider` as `StoredXmlSitemapProvider` so configured sitemaps can be served from storage before falling back to refresh.
-- Register `UmbracoMediaXmlSitemapRefreshBackgroundJob` as a recurring Umbraco background job.
+- Read and write sitemap XML through Umbraco Media.
+- Create and use a dedicated **Xml Sitemaps** media folder.
+- Create immutable, versioned media files for writes while retaining recent versions for safe reads.
+- Cache the latest media version for one minute and fall back safely if cached media has been removed.
+- Remove old versioned files after the configured cleanup period while retaining the two newest versions.
+- Register and run the optional `UmbracoMediaXmlSitemapRefreshBackgroundJob`.
 
 ## Non-responsibilities
 
-- This project does not define storage contracts or refresh behavior; those belong in `../Casko.XmlSitemapsForUmbraco.Storage`.
-- This project does not generate live sitemap models; live providers belong in `../Casko.XmlSitemapsForUmbraco.Providers.Examine` and `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent`.
-- This project does not define XML serialization rules; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Common.Serialization`.
-- This project does not expose delivery or backoffice HTTP endpoints.
+- Generating sitemap URLs or traversing published content; that belongs to the Providers projects.
+- Defining generic sitemap storage contracts, names, refresh orchestration, or stored-provider behavior; that belongs to the Storage project.
+- XML serialization and HTTP response helpers; those belong to Common.
 
-## Project relationships
+## Registration
 
-```text
-Casko.XmlSitemapsForUmbraco.Providers
-Casko.XmlSitemapsForUmbraco.Common
-Casko.XmlSitemapsForUmbraco.Storage
-       |
-       v
-Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
-       ^
-       |
-       +-- Casko.XmlSitemapsForUmbraco.Package
-       +-- Casko.XmlSitemapsForUmbraco.Tests
+Register the Media-backed storage implementation during application startup:
+
+```csharp
+builder.Services.AddXmlSitemapsUmbracoMediaStorage(builder.Configuration);
 ```
 
-### Dependencies
+The extension does nothing unless the `XmlSitemaps:Storage` configuration section exists. When it does, it first calls `AddXmlSitemapsStorage`, which registers the generic storage services, including the stored sitemap provider, refresh service, storage-name provider, XML serialization, and a `TimeProvider` when one has not already been registered.
 
-| Project                                                                                  | Reason |
-|------------------------------------------------------------------------------------------|---|
-| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj`  | Supplies shared provider registrations and `IXmlSitemapProvider` contracts used by storage composition. |
-| `../Casko.XmlSitemapsForUmbraco.Common.Serialization/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies XML serializer/deserializer registration used by stored sitemap provider and refresh services. |
-| `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj`      | Supplies storage contracts, name provider, refresh service, and stored provider wrapper. |
+It then registers these Umbraco-specific services:
 
-### Used by
+| Service | Implementation |
+| --- | --- |
+| `IUmbracoMediaFileAccessor` | `UmbracoMediaFileAccessor` |
+| `IXmlSitemapDataSource` | `UmbracoMediaXmlSitemapDataSource` |
 
-| Project | Usage |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj` | Registers Umbraco media storage as the packaged storage implementation. |
-| `../Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj` | Tests media data source behavior, background job behavior, and service composition. |
+The refresh background job is registered only when the `XmlSitemaps:Storage:BackgroundJob` section exists.
 
-## Important files and entry points
+## Storage behavior
 
-| Path | Purpose |
-|---|---|
-| `Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj` | Defines the `net10.0` library, Umbraco package references, and direct project references. |
-| `Configuration/ServiceCollectionExtensions.cs` | Main registration entry point for media storage, serialization, refresh services, stored provider, and background job. |
-| `UmbracoMediaXmlSitemapDataSource.cs` | Concrete `IXmlSitemapDataSource` implementation backed by Umbraco media files. |
-| `IUmbracoMediaFileAccessor.cs` | Abstraction over Umbraco media file reads and writes. |
-| `UmbracoMediaFileAccessor.cs` | Umbraco implementation for reading and updating the media file property and file content stream. |
-| `UmbracoMediaXmlSitemapRefreshBackgroundJob.cs` | Recurring background job that calls `IXmlSitemapStorageRefreshService.RefreshAllAsync()`. |
+Each sitemap is stored as a media item beneath the **Xml Sitemaps** folder. A write creates a new versioned file name containing a UTC timestamp and unique suffix, rather than replacing the active file in place. This lets reads continue using a valid earlier version while a new version is being created.
 
-## Public API
+Reads resolve the newest versioned file for the sitemap key. Legacy, unversioned file names are still supported for backwards compatibility. The newest resolved version is cached for one minute; if that media item no longer exists, the cache is cleared and the lookup is retried.
 
-`AddXmlSitemapsUmbracoMediaStorage()` is the project’s main public entry point. It registers:
-
-- Shared sitemap provider services via `AddXmlSitemapProviders()`.
-- XML serialization services via `AddXmlSitemapsSerialization()`.
-- `IXmlSitemapStorageNameProvider` as `XmlSitemapStorageNameProvider`.
-- `IUmbracoMediaFileAccessor` as `UmbracoMediaFileAccessor`.
-- `IXmlSitemapDataSource` as `UmbracoMediaXmlSitemapDataSource`.
-- `IXmlSitemapStorageRefreshService` as `XmlSitemapStorageRefreshService`.
-- `IXmlSitemapProvider` as `StoredXmlSitemapProvider`.
-- `UmbracoMediaXmlSitemapRefreshBackgroundJob` as a recurring background job.
-
-## Storage Behavior
-
-`UmbracoMediaXmlSitemapDataSource` stores files below the root media folder `Xml Sitemaps`.
-
-On write, it:
-
-1. Validates the `XmlSitemapStorageKey`.
-2. Creates the root folder when it does not exist.
-3. Creates a new file media item with a sortable UTC timestamp and unique suffix.
-4. Saves the new media item only after its file content has been set.
-5. Caches the newly published media locator and cleans up eligible obsolete versions.
-
-On read, it uses `HybridCache` to resolve the latest immutable media version. Cache misses scan versioned files once; existing unversioned media remains readable for backwards compatibility. Reads open the selected media file as UTF-8 and return an `XmlSitemapStoredDocument` with media key, media id, file name, media path, XML, and refreshed timestamp.
+Version cleanup runs after a successful write. It retains the two newest versioned files and removes older versions only after `VersionCleanupAfterSeconds` has elapsed. Set that value to `0` or a negative value to disable cleanup.
 
 ## Configuration
 
-The background job reads:
-
-- `XmlSitemaps:Storage:VersionCleanupAfterSeconds`, default `600`; values of `0` or less disable cleanup.
-- `XmlSitemaps:Storage:BackgroundJob:Enabled`, default `true`.
-- `XmlSitemaps:Storage:BackgroundJob:IntervalSeconds`, default `3600`.
-- `XmlSitemaps:Storage:BackgroundJob:RefreshJobDelayInSeconds`, default `10`.
-
-`UmbracoMediaXmlSitemapRefreshBackgroundJob` enforces a minimum delay of 10 seconds. If `IntervalSeconds` is `0` or less, it falls back to 3600 seconds.
-
-## Build and test
-
-From the repository root:
-
-```bash
-dotnet build src/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj
-dotnet test src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj
+```json
+{
+  "XmlSitemaps": {
+    "Storage": {
+      "VersionCleanupAfterSeconds": 600,
+      "BackgroundJob": {
+        "IntervalSeconds": 3600,
+        "RefreshJobDelayInSeconds": 10
+      }
+    }
+  }
+}
 ```
 
-There is no dedicated test project for this library. Existing tests cover it through `../Casko.XmlSitemapsForUmbraco.Tests`, especially `UmbracoMediaXmlSitemapDataSourceTests`, `UmbracoMediaXmlSitemapRefreshBackgroundJobTests`, and `ServiceCompositionTests`.
+| Setting | Default | Description |
+| --- | ---: | --- |
+| `XmlSitemaps:Storage:VersionCleanupAfterSeconds` | `600` | Age an old version must reach before it may be deleted. `<= 0` disables version cleanup. |
+| `XmlSitemaps:Storage:BackgroundJob:IntervalSeconds` | `3600` | Refresh interval in seconds. A non-positive configured value falls back to `3600`. |
+| `XmlSitemaps:Storage:BackgroundJob:RefreshJobDelayInSeconds` | `10` | Initial delay in seconds before refreshing. Values below `10` are raised to `10`. |
 
-## Agent guidance
+Omit the `BackgroundJob` section entirely to avoid registering the scheduled refresh job. If it is present, the job logs its UTC start and completion times plus a human-readable elapsed duration at Information level.
 
-When modifying this project:
+## Important files
 
-1. Keep `AddXmlSitemapsUmbracoMediaStorage()` aligned with constructor dependencies in the storage, serialization, and provider services it registers.
-2. Inspect `../Casko.XmlSitemapsForUmbraco.Storage` before changing data-source semantics or stored document fields.
-3. Preserve the root media folder name and file-name matching behavior unless migration or compatibility work is included.
-4. Update tests when changing background job timing, enablement rules, media read/write behavior, or provider registration order.
-5. Update this README when direct project references, storage behavior, background job configuration, or DI ownership changes.
+| File | Responsibility |
+| --- | --- |
+| `Configuration/ServiceCollectionExtensions.cs` | Registers Media storage and the optional job. |
+| `Storage/UmbracoMediaXmlSitemapDataSource.cs` | Versioned Media read/write, caching, and cleanup. |
+| `Storage/UmbracoMediaFileAccessor.cs` | Reads and writes the Umbraco Media file property. |
+| `UmbracoMediaXmlSitemapRefreshBackgroundJob.cs` | Scheduled refresh-job configuration and execution. |
+
+## Validation
+
+Run the focused test suite when changing this project:
+
+```powershell
+dotnet test src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj --filter "FullyQualifiedName~UmbracoMedia"
+```
+
+## Development notes
+
+- Preserve versioned-write behavior; do not replace the active media file in place.
+- Keep cleanup conservative: retain two latest versions and never remove versions younger than the configured cleanup age.
+- Keep the background job opt-in through the presence of its configuration section.
+- Use `IUmbracoMediaFileAccessor` rather than accessing Media file properties directly from the data source.

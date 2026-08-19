@@ -3,7 +3,7 @@ project: Casko.XmlSitemapsForUmbraco.Storage
 type: library
 language: C#
 framework: net10.0
-solution_role: Stored sitemap abstractions, refresh service, and cached provider wrapper
+solution_role: Sitemap storage contracts, stored provider, and refresh service
 depends_on:
   - Casko.XmlSitemapsForUmbraco.Common
   - Casko.XmlSitemapsForUmbraco.Models
@@ -18,102 +18,74 @@ used_by:
 
 ## Purpose
 
-This project defines the storage layer contracts and services for generated sitemap XML. It sits between live sitemap providers and concrete backing stores, letting configured sitemap XML be read from storage, refreshed when missing or stale, and written back as raw XML documents.
+Defines the storage-layer contracts and services for generated sitemap XML. It separates sitemap generation from the physical backing store: the storage project names documents, serializes refreshed models, and serves previously stored XML; `Storage.UmbracoMedia` supplies the concrete Media-backed data source.
 
-The project does not choose a physical storage medium. `Storage.UmbracoMedia` supplies the Umbraco media-backed implementation of the `IXmlSitemapDataSource` abstraction.
+Stored delivery is read-only. A missing stored sitemap or index is represented by an empty model; serving a request does not trigger a refresh.
 
 ## Responsibilities
 
-- Define stored document identity through `XmlSitemapStorageKey` and `XmlSitemapDocumentKind`.
-- Represent stored raw XML and optional media metadata through `XmlSitemapStoredDocument`.
-- Define `IXmlSitemapDataSource` for reading and writing stored XML documents.
-- Define stable storage file-name generation through `IXmlSitemapStorageNameProvider` and `XmlSitemapStorageNameProvider`.
-- Define refresh operations through `IXmlSitemapStorageRefreshService`.
-- Implement `XmlSitemapStorageRefreshService`, which rebuilds configured sitemaps, custom sitemaps, and sitemap indexes from `IXmlSitemapSourceProvider`, serializes them, and writes them to `IXmlSitemapDataSource`.
-- Implement `StoredXmlSitemapProvider`, which exposes `IXmlSitemapProvider` while serving configured sitemap and index requests from storage when possible.
+- Define storage identity through `XmlSitemapStorageKey` and `XmlSitemapDocumentKind`.
+- Define `IXmlSitemapDataSource` and `XmlSitemapStoredDocument` for raw XML persistence.
+- Provide `XmlSitemapStorageNameProvider` for stable file names based on document kind, host, and alias.
+- Provide `XmlSitemapStorageRefreshService`, which generates configured, custom, and index models from `IXmlSitemapSourceProvider`, serializes them, and writes them to the data source.
+- Provide `StoredXmlSitemapProvider`, the public provider wrapper that serves configured sitemap and index documents from storage while delegating root-key and path requests to the live source provider.
+- Register generic storage services through `AddXmlSitemapsStorage` when `XmlSitemaps:Storage` is configured.
 
-## Non-responsibilities
+## Registration
 
-- This project does not implement the backing store; Umbraco media storage belongs in `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia`.
-- This project does not generate live sitemap models; live source behavior belongs in provider projects such as `../Casko.XmlSitemapsForUmbraco.Providers.Examine` and `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent`.
-- This project does not define sitemap model serialization rules; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Common.Serialization`.
-- This project does not expose HTTP endpoints or schedule background jobs.
+```csharp
+services.AddXmlSitemapsStorage(configuration);
+```
 
-## Project relationships
+The extension does nothing unless `XmlSitemaps:Storage` exists. Otherwise it configures `XmlSitemapStorageOptions`, registers shared provider and serialization services, adds `TimeProvider.System` only when no `TimeProvider` is registered, and registers these scoped services:
+
+| Service | Implementation |
+| --- | --- |
+| `IXmlSitemapStorageNameProvider` | `XmlSitemapStorageNameProvider` |
+| `IXmlSitemapStorageRefreshService` | `XmlSitemapStorageRefreshService` |
+| `IXmlSitemapProvider` | `StoredXmlSitemapProvider` |
+
+An application must also register an `IXmlSitemapSourceProvider` and a concrete `IXmlSitemapDataSource`. The package does this through the Examine and Umbraco Media projects.
+
+## Refresh behavior
+
+`RefreshAllAsync` refreshes the implicit default sitemap when running in single-sitemap mode without explicit sitemap, custom-sitemap, or index entries. Otherwise it refreshes configured sitemaps, then custom sitemaps, then indexes.
+
+If a configured sitemap root cannot be resolved, that sitemap is skipped and any existing stored document is retained. Invalid keys and other failures are surfaced to the caller.
+
+## Storage names and configuration
+
+File names follow this form:
 
 ```text
-Casko.XmlSitemapsForUmbraco.Common
-Casko.XmlSitemapsForUmbraco.Models
-Casko.XmlSitemapsForUmbraco.Providers
-       |
-       v
-Casko.XmlSitemapsForUmbraco.Storage
-       ^
-       |
-       +-- Casko.XmlSitemapsForUmbraco.Package
-       +-- Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
-       +-- Casko.XmlSitemapsForUmbraco.Tests
+sitemap--{normalized-host}--{normalized-alias}.xml
+sitemap-index--{normalized-host}--{normalized-alias}.xml
 ```
 
-### Dependencies
+An absent or unparseable host becomes `default`; host paths and ports do not form part of the file name. Segments are lower-cased and normalized to hyphen-separated alphanumeric values.
 
-| Project | Reason                                                                                                                 |
-|---|------------------------------------------------------------------------------------------------------------------------|
-| `../Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies `XmlSitemapsOptions` and XML serializer/deserializer services for storing and reading raw XML documents.                    |
-| `../Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj` | Supplies `IXmlSitemapModel`, `XmlSitemap`, and `XmlSitemapIndex` types refreshed and returned by storage services.     |
-| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Supplies `IXmlSitemapProvider` and `IXmlSitemapSourceProvider` contracts used by stored provider and refresh services. |
+`XmlSitemaps:Storage` is also the configuration section used by concrete storage implementations. `XmlSitemapStorageOptions` currently provides `VersionCleanupAfterSeconds` (default `600`); its value is consumed by the Media-backed implementation.
 
-### Used by
+## Important files
 
-| Project | Usage |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj` | Includes storage services in the packaged output. |
-| `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj` | Provides the concrete Umbraco media data source, registers storage services, and schedules refresh work. |
-| `../Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj` | Tests stored provider behavior, refresh behavior, data-source defaults, and file-name normalization. |
+| File | Responsibility |
+| --- | --- |
+| `Configuration/ServiceCollectionExtensions.cs` | Generic storage service registration. |
+| `IXmlSitemapDataSource.cs` | Raw XML backing-store abstraction. |
+| `IXmlSitemapStorageRefreshService.cs` | Refresh-service contract. |
+| `XmlSitemapStorageKey.cs` | Validated storage key. |
+| `XmlSitemapStorageNameProvider.cs` | Stable storage-file naming. |
+| `Services/StoredXmlSitemapProvider.cs` | Storage-backed public provider. |
+| `Services/XmlSitemapStorageRefreshService.cs` | Refresh, serialization, and write orchestration. |
 
-## Important files and entry points
+## Validation
 
-| Path | Purpose |
-|---|---|
-| `Casko.XmlSitemapsForUmbraco.Storage.csproj` | Defines the `net10.0` storage library and direct project references. |
-| `IXmlSitemapDataSource.cs` | Backing-store abstraction for reading, writing, and checking stored XML sitemap documents. |
-| `IXmlSitemapStorageRefreshService.cs` | Refresh service contract for all configured documents, individual configured sitemaps, custom sitemaps, and indexes. |
-| `XmlSitemapStorageKey.cs` | Storage identity record containing document kind, alias, and host name. |
-| `XmlSitemapDocumentKind.cs` | Distinguishes sitemap documents from sitemap index documents. |
-| `XmlSitemapStoredDocument.cs` | Raw XML document record returned by storage data sources. |
-| `XmlSitemapStorageNameProvider.cs` | Builds normalized file names such as `sitemap--default--products.xml` and `sitemap-index--example-com--main.xml`. |
-| `Services/StoredXmlSitemapProvider.cs` | Public provider wrapper that serves configured sitemaps and indexes from storage when available and fresh. |
-| `Services/XmlSitemapStorageRefreshService.cs` | Refresh implementation that calls the live source provider, serializes generated models, and writes stored XML. |
-
-## Public API
-
-`IXmlSitemapDataSource` is the storage adapter contract. Implementations must provide `ReadAsync()` and `WriteAsync()`; the default interface method `ExistsAsync()` checks existence by calling `ReadAsync()`.
-
-`StoredXmlSitemapProvider` delegates root-key and path requests directly to `IXmlSitemapSourceProvider`. For configured sitemap, custom sitemap, and index requests, it reads storage first. If the stored document exists and is not stale, it deserializes and returns it. If the document is missing or stale, it calls `IXmlSitemapStorageRefreshService`.
-
-`XmlSitemapStorageRefreshService.RefreshAllAsync()` refreshes configured sitemaps first, then configured custom sitemaps, then configured sitemap indexes.
-
-## Configuration
-
-Stored sitemap delivery is read-only. Missing documents return valid empty sitemap models; only the configured background job refreshes stored sitemap XML.
-
-## Build and test
-
-From the repository root:
-
-```bash
-dotnet build src/Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj
-dotnet test src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj
+```powershell
+dotnet test src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj --filter "FullyQualifiedName~StoredXmlSitemapProvider|FullyQualifiedName~XmlSitemapStorageRefreshService|FullyQualifiedName~XmlSitemapStorageNameProvider"
 ```
 
-There is no dedicated test project for this library. Existing tests cover it through `../Casko.XmlSitemapsForUmbraco.Tests`, especially `StoredXmlSitemapProviderTests`, `XmlSitemapStorageRefreshServiceTests`, `XmlSitemapStorageNameProviderTests`, and `XmlSitemapDataSourceTests`.
+## Development notes
 
-## Agent guidance
-
-When modifying this project:
-
-1. Treat `IXmlSitemapDataSource`, `IXmlSitemapStorageRefreshService`, `XmlSitemapStorageKey`, and `XmlSitemapStoredDocument` as cross-project contracts.
-2. Inspect `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia` before changing data-source semantics, stored document fields, or storage file-name behavior.
-3. Keep physical storage details out of this project; add backing-store behavior in concrete storage projects.
-4. Keep refresh behavior aligned with `XmlSitemapsOptions` and serializer/deserializer expectations.
-5. Update tests and this README when staleness rules, refresh order, storage keys, file-name normalization, or direct project references change.
+- Treat `IXmlSitemapDataSource`, storage keys, and stored-document fields as cross-project contracts.
+- Keep physical storage behavior in a concrete storage project.
+- Preserve the read-only behavior of `StoredXmlSitemapProvider`; refresh is explicit or scheduled by the host application.

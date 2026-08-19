@@ -3,7 +3,7 @@ project: Casko.XmlSitemapsForUmbraco.Providers.Examine
 type: library
 language: C#
 framework: net10.0
-solution_role: Examine-backed sitemap source provider and URL index integration
+solution_role: Examine-backed live sitemap source provider
 depends_on:
   - Casko.XmlSitemapsForUmbraco.Common
   - Casko.XmlSitemapsForUmbraco.Providers
@@ -16,110 +16,69 @@ used_by:
 
 ## Purpose
 
-This project provides an Examine-backed sitemap source provider. It uses Umbraco's `ExternalIndex` to resolve indexed content URLs for a root content key, then renders those URLs into sitemap models using the shared provider contracts and sitemap renderers.
+Provides the live `IXmlSitemapSourceProvider` implementation. It finds content beneath a resolved root in an Umbraco Examine index, resolves culture-specific routes and domains, and renders the results into sitemap models.
 
-It is intended as the preferred live source provider registered by the package composer, with root and configured path lookup resolved from Umbraco host URL and document route services rather than the published content cache.
+The package selects this provider through `XmlSitemaps:IndexName`; supported values are Umbraco's `ExternalIndex` and `DeliveryApiContentIndex`.
 
 ## Responsibilities
 
-- Implement `IXmlSitemapSourceProvider` through `ExamineXmlSitemapProvider`.
-- Resolve configured content sitemaps, custom sitemaps, root-key requests, path requests, and sitemap indexes.
-- Read indexed URLs through `ICmsUrlService` / `ContentUrlService`.
-- Render `CmsUrl` records into `XmlSitemapUrl` entries with primary URLs and alternate culture links.
-- Add `pathKeys` values to Umbraco's `ExternalIndex` content items through `ExternalIndexUrlFieldsComponent`.
-- Register the Examine provider, route resolver, renderers, and URL service through `AddXmlSitemapExamineProvider()`.
-- Append the index field component through `ExternalIndexUrlFieldsComposer`.
+- Implement root-key, path, configured sitemap, custom sitemap, and sitemap-index access through `ExamineXmlSitemapProvider`.
+- Resolve configured roots from host URLs and document routes without using the published-content cache.
+- Read indexed content URLs through `ICmsUrlService`.
+- Render `CmsUrl` records into primary locations and culture alternate links.
+- Support both `ExternalIndexUrlService` and `DeliveryApiContentIndexUrlService`.
+- Add the `pathKeys` field required by ExternalIndex queries through `ExternalIndexUrlFieldsComponent`.
 
-## Non-responsibilities
+## Registration
 
-- This project does not define the sitemap model types; those come through `../Casko.XmlSitemapsForUmbraco.Providers` and `../Casko.XmlSitemapsForUmbraco.Models`.
-- This project does not use the published content cache for root or path resolution; host roots come from `IHostUrlProvider` and subsection paths resolve through `IDocumentUrlService`.
-- This project does not serialize XML, store generated sitemap XML, or expose HTTP endpoints.
-- This project should not contain package composition beyond its own provider registration and Umbraco component registration.
-
-## Project relationships
-
-```text
-Casko.XmlSitemapsForUmbraco.Common
-Casko.XmlSitemapsForUmbraco.Providers
-       |
-       v
-Casko.XmlSitemapsForUmbraco.Providers.Examine
-       ^
-       |
-       +-- Casko.XmlSitemapsForUmbraco.Package
-       +-- Casko.XmlSitemapsForUmbraco.Tests
+```csharp
+services.AddXmlSitemapExamineProvider(indexName);
 ```
 
-### Dependencies
+The extension registers shared provider services, `IExamineSitemapRootResolver`, the selected `ICmsUrlService`, `IExamineUrlRenderer`, `IExamineXmlSitemapRenderer`, and `ExamineXmlSitemapProvider` as both `IXmlSitemapSourceProvider` and `IXmlSitemapProvider`.
 
-| Project | Reason |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj` | Supplies `XmlSitemapsOptions`, shared exceptions, and Examine URL/indexing support types used by this provider. |
-| `../Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj` | Supplies provider contracts, custom provider contracts, sitemap render contexts, host URL contracts, culture selection, and shared URL set/index rendering. |
+Only the two supported Umbraco indexes may be passed to the registration method; an unsupported name throws an `InvalidOperationException`. Package composition passes `XmlSitemaps:IndexName`, whose default is `ExternalIndex`.
 
-### Used by
+`ExternalIndexUrlFieldsComposer` appends the ExternalIndex field component only when that index is selected. The component adds `pathKeys` from each content item's ancestor path during indexing.
 
-| Project | Usage |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj` | Registers this provider as the preferred live sitemap source in package composition. |
-| `../Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj` | Tests Examine provider behavior, URL rendering, and service composition. |
+## URL and culture behavior
 
-## Important files and entry points
+Both URL services create `CmsUrl` values from Umbraco document routes, assigned domains, routing settings, and the configured culture filters. A culture's assigned domain may include a path prefix, such as `/en` or `/pl`.
 
-| Path | Purpose |
-|---|---|
-| `Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj` | Defines the `net10.0` library, Umbraco/Options package references, and direct project references. |
-| `ExamineXmlSitemapProvider.cs` | Main `IXmlSitemapSourceProvider` implementation for root-key, path, configured sitemap, custom sitemap, and index access. |
-| `Configuration/ServiceCollectionExtensions.cs` | Registers shared provider services, `ContentUrlService`, `ExamineXmlSitemapProvider`, the route resolver, and Examine renderers. |
-| `Configuration/ExternalIndexUrlFieldsComposer.cs` | Appends `ExternalIndexUrlFieldsComponent` to Umbraco composition. |
-| `Indexing/FieldsComponent.cs` | Adds `pathKeys` values to ExternalIndex content entries during `TransformingIndexValues`. |
-| `Indexing/Constants.cs` | Defines the `pathKeys` Examine field name. |
-| `Routing/IExamineSitemapRootResolver.cs` | Defines the narrow root/path resolver contract used by the provider. |
-| `Routing/ExamineSitemapRootResolver.cs` | Selects host roots through `IHostUrlProvider` and resolves subsection paths through `IDocumentUrlService`. |
-| `Urls/UrlService.cs` | Defines `UrlResolverSettings`, `CmsUrl`, `ICmsUrlService`, and the `ContentUrlService` implementation that pages through `ExternalIndex` results. |
-| `Rendering/ExamineXmlSitemapRenderer.cs` | Converts an Examine render context into an `XmlSitemap` through URL rendering and URL set rendering. |
-| `Rendering/ExamineUrlRenderer.cs` | Groups `CmsUrl` records, selects primary URLs, builds alternate culture links, and normalizes host/path output. |
-| `Rendering/ExamineXmlSitemapRenderContext.cs` | Carries indexed URLs, default culture, alternate cultures, host name, and alternate-link behavior into rendering. |
-
-## Public API
-
-`AddXmlSitemapExamineProvider()` is the main registration entry point. It registers the shared provider renderers, `IExamineSitemapRootResolver`, `ICmsUrlService`, `ExamineXmlSitemapProvider`, and Examine renderers.
-
-`ExamineXmlSitemapProvider` implements `IXmlSitemapSourceProvider`, so consumers can use the standard provider methods:
-
-- `GetByRootKey` / `GetByRootKeyAsync`
-- `GetByPath` / `GetByPathAsync`
-- `GetConfigured` / `GetConfiguredAsync`
-- `GetIndex` / `GetIndexAsync`
-
-`ExternalIndexUrlFieldsComposer` is the Umbraco composition entry point that registers the component responsible for adding the `pathKeys` index field used by `ContentUrlService`.
+For each content item, the renderer groups culture variants by content id, selects the configured/default culture as the primary sitemap location, and emits alternate links for the selected cultures when alternates are enabled. Primary locations use the configured sitemap host when supplied. Alternate links prefer each culture URL's `CmsUrl.Hostname`, falling back to the resolved sitemap host only when that culture host is absent.
 
 ## Configuration
 
-This project reads `XmlSitemapsOptions` for configured sitemaps, custom sitemaps, sitemap indexes, culture filtering, alternate-link behavior, and public sitemap names.
+| Setting | Description |
+| --- | --- |
+| `XmlSitemaps:IndexName` | Selects `ExternalIndex` (default) or `DeliveryApiContentIndex`. |
+| `XmlSitemaps:IncludedCultures` / `ExcludedCultures` | Filters cultures included in URLs. |
+| `XmlSitemaps:ExcludingUrlPropertyAlias` / `ExcludingUrlPropertyValue` | Excludes matching indexed content from sitemap URLs. |
 
-`UrlResolverSettings` uses configuration key `Casko:Search:Url` and currently exposes `PageSize`, defaulting to `1000`.
+The URL services use `UrlResolverSettings.PageSize` with a default of `1000` when paging index results.
 
-`ContentUrlService` builds URL records from Umbraco's configured languages, ordered with the default language first, then applies `XmlSitemapsOptions.IncludedCultures` and `ExcludedCultures`.
+## Important files
 
-## Build and test
+| File | Responsibility |
+| --- | --- |
+| `ExamineXmlSitemapProvider.cs` | Live provider and configured/custom/index sitemap orchestration. |
+| `Configuration/ServiceCollectionExtensions.cs` | Index-specific DI registration. |
+| `Configuration/ExternalIndexUrlFieldsComposer.cs` | Conditional ExternalIndex component registration. |
+| `Indexing/FieldsComponent.cs` | Adds the `pathKeys` indexed field. |
+| `Routing/ExamineSitemapRootResolver.cs` | Resolves configured host roots and subsection paths. |
+| `Urls/ExternalIndexUrlService.cs` | Reads and converts ExternalIndex results. |
+| `Urls/DeliveryApiContentIndexUrlService.cs` | Reads and converts Delivery API index results. |
+| `Rendering/ExamineUrlRenderer.cs` | Groups culture variants and renders locations/alternates. |
 
-From the repository root:
+## Validation
 
-```bash
-dotnet build src/Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj
-dotnet test src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj
+```powershell
+dotnet test src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj --filter "FullyQualifiedName~ExamineXmlSitemapProvider|FullyQualifiedName~ExamineUrlRenderer|FullyQualifiedName~ServiceComposition"
 ```
 
-There is no dedicated test project for this library. Existing tests cover it through `../Casko.XmlSitemapsForUmbraco.Tests`, especially `ExamineXmlSitemapProviderTests` and `ServiceCompositionTests`.
+## Development notes
 
-## Agent guidance
-
-When modifying this project:
-
-1. Keep `pathKeys` indexing behavior aligned between `ExternalIndexUrlFieldsComponent` and `ContentUrlService`.
-2. Inspect `ExamineXmlSitemapProviderTests` before changing configured sitemap lookup, custom sitemap fallback, culture filtering, URL grouping, or alternate-link rendering.
-3. Keep Examine root/path resolution on `IHostUrlProvider` and `IDocumentUrlService`; avoid adding published-content cache dependencies here.
-4. Keep DI registration in `Configuration/ServiceCollectionExtensions.cs` aligned with provider and renderer constructor dependencies.
-5. Update this README when direct project references, registration entry points, index field names, URL resolver settings, or rendering rules change.
+- Keep ExternalIndex `pathKeys` indexing and querying aligned.
+- Preserve the culture-specific hostname fallback for alternate links.
+- Keep root and path resolution on `IHostUrlProvider` and `IDocumentUrlService`.
+- Update tests when index selection, URL grouping, culture selection, or rendering behavior changes.

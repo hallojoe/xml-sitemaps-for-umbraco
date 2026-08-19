@@ -3,17 +3,16 @@ project: Casko.XmlSitemapsForUmbraco.Providers
 type: library
 language: C#
 framework: net10.0
-solution_role: Provider abstractions and shared sitemap rendering helpers
+solution_role: Provider contracts and shared sitemap rendering services
 depends_on:
+  - Casko.XmlSitemapsForUmbraco.Common
   - Casko.XmlSitemapsForUmbraco.Models
 used_by:
   - Casko.XmlSitemapsForUmbraco.Delivery
   - Casko.XmlSitemapsForUmbraco.Package
   - Casko.XmlSitemapsForUmbraco.Providers.Examine
-  - Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
   - Casko.XmlSitemapsForUmbraco.Storage
   - Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
-  - Casko.XmlSitemapsForUmbraco.TestSite
   - Casko.XmlSitemapsForUmbraco.Tests
 ---
 
@@ -21,111 +20,72 @@ used_by:
 
 ## Purpose
 
-This project defines the provider contracts and shared rendering helpers used to produce sitemap models. It sits between the model contracts in `Casko.XmlSitemapsForUmbraco.Models` and concrete provider implementations such as published-content, Examine, storage, delivery, and package composition projects.
-
-The project owns the common abstractions for public sitemap access, live source providers, custom sitemap providers, sitemap index rendering, URL set rendering, and sitemap URL building.
+Defines the public sitemap-provider contracts and shared rendering services. It sits between the Common/Models contracts and concrete providers, such as the Examine implementation, without querying content or storing XML itself.
 
 ## Responsibilities
 
-- Define the public sitemap provider contract through `IXmlSitemapProvider`.
-- Define `IXmlSitemapSourceProvider` for live sitemap providers before storage or caching decorators are applied.
-- Define custom sitemap extension points through `IXmlSitemapCustomProvider` and `XmlSitemapCustomProviderContext`.
-- Provide shared sitemap rendering services: `IXmlSitemapIndexRenderer`, `IXmlSitemapUrlSetRenderer`, and `IXmlSitemapUrlBuilder`.
-- Provide render context records for sitemap indexes, URL sets, and URL rendering.
-- Centralize delivery API route constants used by URL builders and consumers in `XmlSitemapApiConstants`.
-- Register shared provider services and custom providers through `Configuration/ServiceCollectionExtensions.cs`.
+- Define `IXmlSitemapProvider` for public root-key, path, configured-sitemap, and index access.
+- Define `IXmlSitemapSourceProvider` for live providers before storage wraps public access.
+- Define the custom-sitemap extension point through `IXmlSitemapCustomProvider` and `XmlSitemapCustomProviderContext`.
+- Provide URL, URL-set, and sitemap-index rendering contracts and implementations.
+- Provide render contexts, culture selection, and host-URL contracts shared by provider implementations.
+- Register shared services and custom providers through the `IServiceCollection` extensions.
 
-## Non-responsibilities
+## Registration
 
-- This project does not query Umbraco content or Examine indexes. Concrete source behavior belongs in `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent` and `../Casko.XmlSitemapsForUmbraco.Providers.Examine`.
-- This project does not serialize XML; serialization belongs in `../Casko.XmlSitemapsForUmbraco.Common/Serialization`.
-- This project does not cache, store, or refresh sitemap output; storage behavior belongs in `../Casko.XmlSitemapsForUmbraco.Storage` and `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia`.
-- This project does not expose HTTP endpoints; delivery and backoffice API behavior belongs in `../Casko.XmlSitemapsForUmbraco.Delivery` and `../Casko.XmlSitemapsForUmbraco.Package`.
-
-## Project relationships
-
-```text
-Casko.XmlSitemapsForUmbraco.Models
-       |
-       v
-Casko.XmlSitemapsForUmbraco.Providers
-       ^
-       |
-       +-- Casko.XmlSitemapsForUmbraco.Delivery
-       +-- Casko.XmlSitemapsForUmbraco.Package
-       +-- Casko.XmlSitemapsForUmbraco.Providers.Examine
-       +-- Casko.XmlSitemapsForUmbraco.Providers.PublishedContent
-       +-- Casko.XmlSitemapsForUmbraco.Storage
-       +-- Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia
-       +-- Casko.XmlSitemapsForUmbraco.TestSite
-       +-- Casko.XmlSitemapsForUmbraco.Tests
+```csharp
+services.AddXmlSitemapsProviders();
+services.AddXmlSitemapsCustomProvider<MyCustomSitemapProvider>();
 ```
 
-### Dependencies
+`AddXmlSitemapsProviders` registers these scoped services:
 
-| Project | Reason |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj` | Supplies `IXmlSitemapModel`, `XmlSitemap`, `XmlSitemapIndex`, `XmlSitemapUrl`, and related sitemap model types returned by provider and renderer contracts. |
+| Service | Implementation |
+| --- | --- |
+| `IHostUrlProvider` | `HostUrlProvider` |
+| `IXmlSitemapUrlBuilder` | `XmlSitemapUrlBuilder` |
+| `IXmlSitemapUrlSetRenderer` | `XmlSitemapUrlSetRenderer` |
+| `IXmlSitemapIndexRenderer` | `XmlSitemapIndexRenderer` |
 
-### Used by
+`AddXmlSitemapsCustomProvider<TProvider>` adds the supplied provider as a scoped `IXmlSitemapCustomProvider`.
 
-| Project | Usage |
-|---|---|
-| `../Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj` | Uses provider contracts to serve sitemap models through delivery API routes. |
-| `../Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj` | Includes provider contracts and shared renderers in package composition and NuGet output. |
-| `../Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj` | Builds an Examine-backed provider using shared contracts and renderers. |
-| `../Casko.XmlSitemapsForUmbraco.Providers.PublishedContent/Casko.XmlSitemapsForUmbraco.Providers.PublishedContent.csproj` | Builds a published-content provider using shared contracts and renderers. |
-| `../Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj` | Wraps provider output with stored sitemap retrieval and refresh behavior. |
-| `../Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj` | Registers storage behavior and shared provider services for Umbraco media-backed sitemap storage. |
-| `../Casko.XmlSitemapsForUmbraco.TestSite/Casko.XmlSitemapsForUmbraco.TestSite.csproj` | Registers a dummy custom sitemap provider against `IXmlSitemapCustomProvider`. |
-| `../Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj` | Tests provider contracts, shared renderers, service composition, and concrete consumers. |
+## Boundaries
 
-## Important files and entry points
+- Content querying and Examine index access belong to `Providers.Examine`.
+- XML serialization, API constants, and configuration types belong to Common.
+- Stored-document retrieval and refresh orchestration belong to Storage.
+- HTTP endpoints belong to Delivery and Package.
 
-| Path | Purpose |
-|---|---|
-| `Casko.XmlSitemapsForUmbraco.Providers.csproj` | Defines the `net10.0` library, direct model dependency, and dependency injection abstractions package. |
-| `IXmlSitemapProvider.cs` | Main public provider contract for root-key, path, configured sitemap, and sitemap index access. |
-| `IXmlSitemapSourceProvider.cs` | Marker interface for live providers before storage or caching wrappers are applied. |
-| `IXmlSitemapCustomProvider.cs` | Custom sitemap provider contract implemented by user or test-site providers. |
-| `XmlSitemapCustomProviderContext.cs` | Context passed to custom providers, including key, host name, and custom settings. |
-| `XmlSitemapApiConstants.cs` | Delivery API route, name, title, version, and rewrite-key constants. |
-| `Configuration/ServiceCollectionExtensions.cs` | Registers shared renderers and custom sitemap providers with `IServiceCollection`. |
-| `SitemapRendering/Contexts` | Render context records for sitemap URL sets and sitemap indexes. |
-| `SitemapRendering/Indexes/XmlSitemapIndexRenderer.cs` | Builds `XmlSitemapIndex` models from configured sitemap aliases and location mode. |
-| `SitemapRendering/UrlSets/XmlSitemapUrlSetRenderer.cs` | Builds `XmlSitemap` models from valid, distinct URL entries. |
-| `SitemapRendering/Urls/XmlSitemapUrlBuilder.cs` | Builds delivery API URLs, legacy `.xml` URLs, and host-prefixed relative URLs. |
+## Important files
 
-## Public API
+| File or directory | Responsibility |
+| --- | --- |
+| `IXmlSitemapProvider.cs` | Public sitemap access contract. |
+| `IXmlSitemapSourceProvider.cs` | Live-source provider contract. |
+| `IXmlSitemapCustomProvider.cs` | Custom sitemap extension point. |
+| `Configuration/ServiceCollectionExtensions.cs` | Shared renderer and custom-provider registration. |
+| `Rendering/Contexts` | Sitemap, URL, index, and culture-selection contexts. |
+| `Rendering/Indexes/XmlSitemapIndexRenderer.cs` | Builds index models and their sitemap locations. |
+| `Rendering/UrlSets/XmlSitemapUrlSetRenderer.cs` | Builds sitemap models from valid, distinct URL entries. |
+| `Rendering/Urls/XmlSitemapUrlBuilder.cs` | Builds delivery API, legacy `.xml`, and host-prefixed URLs. |
+| `Routing/HostUrlProvider.cs` | Resolves configured Umbraco host URLs for provider implementations. |
 
-`IXmlSitemapProvider` is the broad sitemap access contract. It exposes sync and async methods for:
+## Public contracts
 
-- `GetByRootKey` / `GetByRootKeyAsync`
-- `GetByPath` / `GetByPathAsync`
-- `GetConfigured` / `GetConfiguredAsync`
-- `GetIndex` / `GetIndexAsync`
+`IXmlSitemapProvider` exposes synchronous and asynchronous methods for `GetByRootKey`, `GetByPath`, `GetConfigured`, and `GetIndex`.
 
-`IXmlSitemapCustomProvider` is the extension point for custom sitemap sources. Implementations provide an `Alias` that configuration can refer to, and return an `XmlSitemap` from `GetSitemapAsync(XmlSitemapCustomProviderContext, CancellationToken)`.
+`IXmlSitemapCustomProvider` implementations expose an `Alias` and create an `XmlSitemap` from `XmlSitemapCustomProviderContext`, which contains the sitemap key, configured host name, and custom settings.
 
-`AddXmlSitemapProviders()` registers shared scoped renderer services. `AddXmlSitemapCustomProvider<TProvider>()` registers custom provider implementations as scoped `IXmlSitemapCustomProvider` instances.
+The shared URL builder uses the delivery API constants from Common to construct current API URLs and preserves support for legacy `.xml` locations.
 
-## Build and test
+## Validation
 
-From the repository root:
-
-```bash
-dotnet build src/Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj
-dotnet test src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj
+```powershell
+dotnet test src/Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj --filter "FullyQualifiedName~XmlSitemapUrl|FullyQualifiedName~XmlSitemapIndex|FullyQualifiedName~ServiceComposition"
 ```
 
-There is no dedicated test project for this library. Existing tests cover provider behavior through `../Casko.XmlSitemapsForUmbraco.Tests`, especially service composition, sitemap rendering, custom provider, Examine provider, and published-content provider tests.
+## Development notes
 
-## Agent guidance
-
-When modifying this project:
-
-1. Treat provider interfaces and render context records as cross-project contracts.
-2. Inspect direct consumers before changing method signatures, route constants, custom provider context fields, or renderer output rules.
-3. Keep Umbraco-specific content querying out of this project; add concrete behavior in provider implementation projects.
-4. Keep dependency injection helpers aligned with the concrete renderer services they register.
-5. Update tests and this README when public provider contracts, route constants, direct project references, or renderer behavior change.
+- Treat provider interfaces and rendering contexts as cross-project contracts.
+- Keep this project independent of concrete Umbraco content querying.
+- Update direct consumers and tests whenever public signatures or rendering rules change.
