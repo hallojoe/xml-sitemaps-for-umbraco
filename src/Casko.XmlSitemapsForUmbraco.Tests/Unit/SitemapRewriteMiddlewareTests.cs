@@ -20,7 +20,7 @@ public class SitemapRewriteMiddlewareTests
             {
                 callInfo[2] = new SitemapRewriteDefinition(
                     "/xmlsitemap-host-dk-en.xml",
-                    $"/{XmlSitemapApiConstants.ApiRoute}/key?key=xmlsitemap-host-dk-en",
+                    $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap?key=xmlsitemap-host-dk-en",
                     "xmlsitemap-host-dk-en",
                     "xmlsitemap-host-dk-en",
                     SitemapRewriteKind.Sitemap,
@@ -34,7 +34,7 @@ public class SitemapRewriteMiddlewareTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(context.Request.Path.Value, Is.EqualTo($"/{XmlSitemapApiConstants.ApiRoute}/key"));
+            Assert.That(context.Request.Path.Value, Is.EqualTo($"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap"));
             Assert.That(context.Request.QueryString.Value, Is.EqualTo("?key=xmlsitemap-host-dk-en"));
         });
     }
@@ -50,7 +50,7 @@ public class SitemapRewriteMiddlewareTests
             {
                 callInfo[2] = new SitemapRewriteDefinition(
                     "/xmlsitemap.xml",
-                    $"/{XmlSitemapApiConstants.ApiRoute}/index/key?key=xmlsitemap",
+                    $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemapindex?key=xmlsitemap",
                     "xmlsitemap",
                     "xmlsitemap",
                     SitemapRewriteKind.SitemapIndex,
@@ -64,7 +64,7 @@ public class SitemapRewriteMiddlewareTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(context.Request.Path.Value, Is.EqualTo($"/{XmlSitemapApiConstants.ApiRoute}/index/key"));
+            Assert.That(context.Request.Path.Value, Is.EqualTo($"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemapindex"));
             Assert.That(context.Request.QueryString.Value, Is.EqualTo("?key=xmlsitemap"));
         });
     }
