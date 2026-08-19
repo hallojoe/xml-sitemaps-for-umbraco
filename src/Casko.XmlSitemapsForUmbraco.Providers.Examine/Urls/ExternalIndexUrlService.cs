@@ -22,6 +22,7 @@ public sealed class ExternalIndexUrlService(
     IOptions<WebRoutingSettings> webRoutingSettings,
     IOptions<RequestHandlerSettings> requestHandlerSettings,
     IOptions<XmlSitemapsOptions> xmlSitemapsOptions,
+    IExamineSitemapSearchResultFilter searchResultFilter,
     ILanguageService languageService,
     IDomainService domainService,
     IDocumentUrlService documentUrlService,
@@ -63,11 +64,7 @@ public sealed class ExternalIndexUrlService(
         
         foreach (var searchResult in searchResultList)
         {
-            if (searchResult.Values.TryGetValue(
-                    xmlSitemapsOptions.Value.ExcludingUrlPropertyAlias ?? "__unknown", 
-                    out var excludingPropertyAlias) 
-                && 
-                    excludingPropertyAlias.Equals(xmlSitemapsOptions.Value.ExcludingUrlPropertyValue, StringComparison.OrdinalIgnoreCase))
+            if (!searchResultFilter.IsIncluded(searchResult))
             {
                 continue;
             }

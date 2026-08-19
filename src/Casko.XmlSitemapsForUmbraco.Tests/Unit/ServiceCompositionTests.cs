@@ -87,6 +87,18 @@ public sealed class ServiceCompositionTests
     }
 
     [Test]
+    public void ExamineProvider_RegistersSharedSearchResultFilter()
+    {
+        var services = new ServiceCollection();
+
+        services.AddXmlSitemapExamineProvider();
+
+        Assert.That(
+            services.Single(service => service.ServiceType == typeof(IExamineSitemapSearchResultFilter)).ImplementationType,
+            Is.EqualTo(typeof(ExamineSitemapSearchResultFilter)));
+    }
+
+    [Test]
     public void ExamineProvider_WhenUsingDeliveryApiContentIndex_RegistersDeliveryApiUrlService()
     {
         var services = new ServiceCollection();

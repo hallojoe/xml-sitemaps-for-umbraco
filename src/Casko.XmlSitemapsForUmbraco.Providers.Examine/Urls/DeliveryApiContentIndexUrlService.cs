@@ -16,6 +16,7 @@ public sealed class DeliveryApiContentIndexUrlService(
     IOptions<WebRoutingSettings> webRoutingSettings,
     IOptions<RequestHandlerSettings> requestHandlerSettings,
     IOptions<XmlSitemapsOptions> xmlSitemapsOptions,
+    IExamineSitemapSearchResultFilter searchResultFilter,
     IDomainService domainService,
     IDocumentUrlService documentUrlService,
     IExamineManager examineManager) : ICmsUrlService
@@ -44,7 +45,8 @@ public sealed class DeliveryApiContentIndexUrlService(
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (IsExcluded(searchResult) || !TryCreateCmsUrl(searchResult, assignedDomains, out var cmsUrl))
+            if (!searchResultFilter.IsIncluded(searchResult) ||
+                !TryCreateCmsUrl(searchResult, assignedDomains, out var cmsUrl))
             {
                 continue;
             }
@@ -76,17 +78,6 @@ public sealed class DeliveryApiContentIndexUrlService(
         while (skip < total);
 
         return searchResults;
-    }
-
-    private bool IsExcluded(ISearchResult searchResult)
-    {
-        var propertyAlias = xmlSitemapsOptions.Value.ExcludingUrlPropertyAlias;
-        var propertyValue = xmlSitemapsOptions.Value.ExcludingUrlPropertyValue;
-
-        return !string.IsNullOrWhiteSpace(propertyAlias) &&
-               !string.IsNullOrWhiteSpace(propertyValue) &&
-               searchResult.Values.TryGetValue(propertyAlias, out var indexedValue) &&
-               string.Equals(indexedValue, propertyValue, StringComparison.OrdinalIgnoreCase);
     }
 
     private bool TryCreateCmsUrl(

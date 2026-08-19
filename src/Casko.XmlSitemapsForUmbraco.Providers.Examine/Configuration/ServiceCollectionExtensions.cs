@@ -14,6 +14,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddXmlSitemapsProviders();
         services.AddScoped<IExamineSitemapRootResolver, ExamineSitemapRootResolver>();
+        services.AddScoped<IExamineSitemapSearchResultFilter, ExamineSitemapSearchResultFilter>();
 
         if (string.Equals(
                 indexName,
