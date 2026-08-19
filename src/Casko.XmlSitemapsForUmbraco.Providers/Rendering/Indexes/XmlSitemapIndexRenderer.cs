@@ -1,8 +1,8 @@
 using Casko.XmlSitemapsForUmbraco.Models;
-using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
-using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
+using Casko.XmlSitemapsForUmbraco.Providers.Rendering.Contexts;
+using Casko.XmlSitemapsForUmbraco.Providers.Rendering.Urls;
 
-namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
+namespace Casko.XmlSitemapsForUmbraco.Providers.Rendering.Indexes;
 
 public sealed class XmlSitemapIndexRenderer(IXmlSitemapUrlBuilder urlBuilder) : IXmlSitemapIndexRenderer
 {

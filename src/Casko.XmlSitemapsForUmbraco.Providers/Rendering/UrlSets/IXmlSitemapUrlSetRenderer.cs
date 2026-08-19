@@ -1,6 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Models;
 
-namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.UrlSets;
+namespace Casko.XmlSitemapsForUmbraco.Providers.Rendering.UrlSets;
 
 /// <summary>
 /// Builds XML sitemap models from rendered sitemap URLs.

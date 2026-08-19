@@ -1,7 +1,7 @@
+using Casko.XmlSitemapsForUmbraco.Providers.Rendering.Indexes;
+using Casko.XmlSitemapsForUmbraco.Providers.Rendering.Urls;
+using Casko.XmlSitemapsForUmbraco.Providers.Rendering.UrlSets;
 using Casko.XmlSitemapsForUmbraco.Providers.Routing;
-using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
-using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
-using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.UrlSets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

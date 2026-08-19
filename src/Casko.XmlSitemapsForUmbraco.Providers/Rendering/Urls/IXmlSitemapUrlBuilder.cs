@@ -1,4 +1,4 @@
-namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
+namespace Casko.XmlSitemapsForUmbraco.Providers.Rendering.Urls;
 
 /// <summary>
 /// Builds URLs used by sitemap and sitemap index models.

@@ -6,7 +6,6 @@ using Casko.XmlSitemapsForUmbraco.Providers.Examine.Configuration;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Routing;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
 using Casko.XmlSitemapsForUmbraco.Providers.Routing;
-using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Urls;
 using Casko.XmlSitemapsForUmbraco.Storage;
 using Casko.XmlSitemapsForUmbraco.Storage.Services;
 using Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia;

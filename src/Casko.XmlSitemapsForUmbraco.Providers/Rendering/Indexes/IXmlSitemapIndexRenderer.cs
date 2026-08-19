@@ -1,7 +1,7 @@
 using Casko.XmlSitemapsForUmbraco.Models;
-using Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
+using Casko.XmlSitemapsForUmbraco.Providers.Rendering.Contexts;
 
-namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Indexes;
+namespace Casko.XmlSitemapsForUmbraco.Providers.Rendering.Indexes;
 
 /// <summary>
 /// Builds XML sitemap index models from configured sitemap aliases.

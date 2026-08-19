@@ -1,4 +1,4 @@
-namespace Casko.XmlSitemapsForUmbraco.Providers.SitemapRendering.Contexts;
+namespace Casko.XmlSitemapsForUmbraco.Providers.Rendering.Contexts;
 
 public sealed record XmlSitemapUrlRenderContext(
     string DefaultLanguageCode,
