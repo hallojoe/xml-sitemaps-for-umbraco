@@ -1,5 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Delivery.Configuration;
+using Casko.XmlSitemapsForUmbraco.Delivery.Rewriting.Configuration;
 using Casko.XmlSitemapsForUmbraco.Providers.Examine.Configuration;
 using Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.Configuration;
 using Microsoft.Extensions.Configuration;
@@ -28,5 +29,8 @@ public sealed class XmlSitemapComposer: IComposer
         
         // Delivery API
         builder.Services.AddXmlSitemapDeliveryApi(builder.Config);
+        
+        // Delivery API rewrites
+        builder.Services.AddXmlSitemapsDeliveryApiRewrites(builder.Config, xmlSitemapsOptions.RewritesEnabled);
     }
 }

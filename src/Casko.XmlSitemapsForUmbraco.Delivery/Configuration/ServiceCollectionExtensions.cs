@@ -12,8 +12,7 @@ namespace Casko.XmlSitemapsForUmbraco.Delivery.Configuration;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddXmlSitemapDeliveryApi(this IServiceCollection services,
-        IConfiguration configuration, bool addRewritePipeline = true)
+    public static IServiceCollection AddXmlSitemapDeliveryApi(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddXmlSitemapsConfiguration(configuration);
 
@@ -28,11 +27,6 @@ public static class ServiceCollectionExtensions
                 $"{XmlSitemapApiConstants.ApiName}-controllers",
                 endpoints: app => app.UseEndpoints(endpoints => endpoints.MapControllers())));
         });
-
-        if (addRewritePipeline)
-        {
-            services.AddXmlSitemapApiRewritePipeline(configuration);
-        }
         
         return services;
     }
