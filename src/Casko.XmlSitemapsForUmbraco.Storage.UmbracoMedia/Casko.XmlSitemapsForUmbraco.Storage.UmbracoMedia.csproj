@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers\Casko.XmlSitemapsForUmbraco.Providers.csproj" />
       <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" />
     </ItemGroup>
 

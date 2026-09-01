@@ -10,5 +10,4 @@ public interface IUmbracoMediaFileAccessor
 
     public void SetInitialFile(IMedia media, string fileName, Stream content);
 
-    public void UpdateFileContent(string filePath, Stream content);
 }

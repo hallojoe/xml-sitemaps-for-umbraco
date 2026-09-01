@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Umbraco.Web.UI.SingleSite": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "launchUrl": "https://single-site.dev.localhost:4443/umbraco/",
+      "applicationUrl": "https://localhost:44317;http://localhost:54317",
+      "environmentVariables": {
+        "ConnectionStrings__umbracoDbDSN_ProviderName": "Microsoft.Data.SqlClient",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CASKO_XML_SITEMAPS_SETTINGS_FILE": "appsettings.XmlSitemapsForUmbraco.json",
+        "CASKO_INSTANCE_NAME": "single-site",
+        "FORWARD_HEADERS_ENABLED": "true",
+        "TEMP": "..\\aspnet\\temp\\single-site",
+        "TMP": "..\\aspnet\\temp\\single-site",
+        "TMPDIR": "../aspnet/temp/single-site",
+        "Umbraco__CMS__Global__InstallMissingDatabase": "true",
+        "Umbraco__CMS__Global__UmbracoMediaPhysicalRootPath": "../../aspnet/temp/single-site/media",
+        "Umbraco__CMS__Logging__Directory": "../aspnet/logs",
+        "Umbraco__CMS__Logging__FileNameFormat": "UmbracoTraceLog.SingleSite.{0}.json",
+        "Umbraco__CMS__Security__BackOfficeHost": "https://single-site.dev.localhost:4443",
+        "Umbraco__CMS__WebRouting__UmbracoApplicationUrl": "https://single-site.dev.localhost:4443/",
+        "uSync__Settings__ImportAtStartup": "None",
+        "uSync__Settings__RootFolder": "uSyncSingleSite/v17"
+      }
+    },
+    "Umbraco.Web.UI.MixedSite": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:44327;http://localhost:54327",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CASKO_XML_SITEMAPS_SETTINGS_FILE": "appsettings.XmlSitemapsForUmbraco.Mixed.json",
+        "CASKO_INSTANCE_NAME": "mixed-site",
+        "FORWARD_HEADERS_ENABLED": "true",
+        "TEMP": "..\\aspnet\\temp\\mixed-site",
+        "TMP": "..\\aspnet\\temp\\mixed-site",
+        "TMPDIR": "../aspnet/temp/mixed-site",
+        "Umbraco__CMS__Global__InstallMissingDatabase": "true",
+        "Umbraco__CMS__Global__UmbracoMediaPhysicalRootPath": "../../aspnet/temp/mixed-site/media",
+        "Umbraco__CMS__Logging__Directory": "../aspnet/logs",
+        "Umbraco__CMS__Logging__FileNameFormat": "UmbracoTraceLog.MixedSite.{0}.json",
+        "Umbraco__CMS__Security__BackOfficeHost": "https://mixed-site.dev.localhost:4443",
+        "Umbraco__CMS__WebRouting__UmbracoApplicationUrl": "https://mixed-site.dev.localhost:4443/",
+        "uSync__Settings__ImportAtStartup": "None",
+        "uSync__Settings__RootFolder": "uSyncMixed/uSync/v17"
+      }
+    },
+    "Umbraco.Web.UI.LanguageVariantSite": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:44337;http://localhost:54337",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CASKO_XML_SITEMAPS_SETTINGS_FILE": "appsettings.XmlSitemapsForUmbraco.LanguageVariant.json",
+        "CASKO_INSTANCE_NAME": "language-variant-site",
+        "FORWARD_HEADERS_ENABLED": "true",
+        "TEMP": "..\\aspnet\\temp\\language-variant-site",
+        "TMP": "..\\aspnet\\temp\\language-variant-site",
+        "TMPDIR": "../aspnet/temp/language-variant-site",
+        "Umbraco__CMS__Global__InstallMissingDatabase": "true",
+        "Umbraco__CMS__Global__UmbracoMediaPhysicalRootPath": "../../aspnet/temp/language-variant-site/media",
+        "Umbraco__CMS__Logging__Directory": "../aspnet/logs",
+        "Umbraco__CMS__Logging__FileNameFormat": "UmbracoTraceLog.LanguageVariantSite.{0}.json",
+        "Umbraco__CMS__Security__BackOfficeHost": "https://language-variant-site.dev.localhost:4443",
+        "Umbraco__CMS__WebRouting__UmbracoApplicationUrl": "https://language-variant-site.dev.localhost:4443/",
+        "uSync__Settings__ImportAtStartup": "None",
+        "uSync__Settings__RootFolder": "uSyncLanguageVariant/uSync/v17"
+      }
+    },
+    "Umbraco.Web.UI.ManySite": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:44347;http://localhost:54347",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CASKO_XML_SITEMAPS_SETTINGS_FILE": "appsettings.XmlSitemapsForUmbraco.Many.json",
+        "CASKO_INSTANCE_NAME": "many-site",
+        "FORWARD_HEADERS_ENABLED": "true",
+        "TEMP": "..\\aspnet\\temp\\many-site",
+        "TMP": "..\\aspnet\\temp\\many-site",
+        "TMPDIR": "../aspnet/temp/many-site",
+        "Umbraco__CMS__Global__InstallMissingDatabase": "true",
+        "Umbraco__CMS__Global__UmbracoMediaPhysicalRootPath": "../../aspnet/temp/many-site/media",
+        "Umbraco__CMS__Logging__Directory": "../aspnet/logs",
+        "Umbraco__CMS__Logging__FileNameFormat": "UmbracoTraceLog.ManySite.{0}.json",
+        "Umbraco__CMS__Security__BackOfficeHost": "https://many-1-site.dev.localhost:4443",
+        "Umbraco__CMS__WebRouting__UmbracoApplicationUrl": "https://many-1-site.dev.localhost:4443/",
+        "uSync__Settings__ImportAtStartup": "None",
+        "uSync__Settings__RootFolder": "uSync/v17"
+      }
+    }
+  }
+}

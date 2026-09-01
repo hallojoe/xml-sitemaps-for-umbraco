@@ -6,7 +6,11 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-        <CoverletExclude>[Casko.XmlSitemapsForUmbraco.TestSite]*</CoverletExclude>
+        <CoverletExclude>
+            [Casko.XmlSitemapsForUmbraco.DemoSite]*,
+            [Casko.XmlSitemapsForUmbraco.DemoSingleSite]*,
+            [Casko.XmlSitemapsForUmbraco.DemoSingleLanguageVariantSite]*
+        </CoverletExclude>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,10 +26,12 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Package\Casko.XmlSitemapsForUmbraco.Package.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers\Casko.XmlSitemapsForUmbraco.Providers.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers.Examine\Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Delivery\Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" />
-        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.TestSite\Casko.XmlSitemapsForUmbraco.TestSite.csproj" />
     </ItemGroup>
 
     <ItemGroup>

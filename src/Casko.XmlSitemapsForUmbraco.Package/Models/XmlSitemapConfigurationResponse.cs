@@ -1,4 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 
 namespace Casko.XmlSitemapsForUmbraco.Package.Models;
 
@@ -18,6 +20,11 @@ public sealed record XmlSitemapConfigurationResponse
     public required bool RewritesEnabled { get; init; }
 
     /// <summary>
+    /// Gets the configured sitemap mode.
+    /// </summary>
+    public required XmlSitemapsMode Mode { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether alternate links are rendered for single-culture sitemaps.
     /// </summary>
     public required bool RenderAlternateLinksForSingleCultureSitemaps { get; init; }
@@ -26,6 +33,11 @@ public sealed record XmlSitemapConfigurationResponse
     /// Gets the configured root node search level.
     /// </summary>
     public required int RootNodeSearchLevel { get; init; }
+
+    /// <summary>
+    /// Gets document type aliases used to discover the root node in single mode.
+    /// </summary>
+    public required IReadOnlyList<string> RootContentTypeAliases { get; init; }
 
     /// <summary>
     /// Gets the number of configured content sitemaps.
@@ -48,9 +60,9 @@ public sealed record XmlSitemapConfigurationResponse
     public required XmlSitemapGlobalFiltersResponse GlobalFilters { get; init; }
 
     /// <summary>
-    /// Gets storage refresh settings.
+    /// Gets storage refresh settings when storage is configured.
     /// </summary>
-    public required XmlSitemapStorageConfigurationResponse Storage { get; init; }
+    public XmlSitemapStorageConfigurationResponse? Storage { get; init; }
 
     /// <summary>
     /// Gets configured content sitemap rows.
@@ -70,16 +82,20 @@ public sealed record XmlSitemapConfigurationResponse
     /// <summary>
     /// Creates a response from configured XML sitemap options.
     /// </summary>
-    public static XmlSitemapConfigurationResponse FromOptions(XmlSitemapsOptions options)
+    public static XmlSitemapConfigurationResponse FromOptions(
+        XmlSitemapsOptions options,
+        XmlSitemapStorageOptions? storageOptions = null)
     {
         return new XmlSitemapConfigurationResponse
         {
             Enabled = options.Enabled,
             RewritesEnabled = options.RewritesEnabled,
+            Mode = options.Mode,
             RenderAlternateLinksForSingleCultureSitemaps =
                 options.RenderAlternateLinksForSingleCultureSitemaps,
             RootNodeSearchLevel = options.RootNodeSearchLevel,
-            SitemapCount = options.Sitemaps.Count,
+            RootContentTypeAliases = options.RootContentTypeAliases,
+            SitemapCount = ResolveSitemapRows(options).Count,
             CustomSitemapCount = options.CustomSitemaps.Count,
             IndexCount = options.Indexes.Count,
             GlobalFilters = new XmlSitemapGlobalFiltersResponse
@@ -91,16 +107,15 @@ public sealed record XmlSitemapConfigurationResponse
                 ExcludingUrlPropertyAlias = options.ExcludingUrlPropertyAlias,
                 ExcludingUrlPropertyValue = options.ExcludingUrlPropertyValue
             },
-            Storage = new XmlSitemapStorageConfigurationResponse
-            {
-                RefreshStaleAfterSeconds = options.Storage.RefreshStaleAfterSeconds,
-                BackgroundJobEnabled = options.Storage.BackgroundJob.Enabled,
-                BackgroundJobIntervalSeconds = options.Storage.BackgroundJob.IntervalSeconds
-            },
-            Sitemaps = options.Sitemaps
-                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                .Select(pair => XmlSitemapConfigurationRowResponse.FromOptions(pair.Key, pair.Value))
-                .ToArray(),
+            Storage = storageOptions is null
+                ? null
+                : new XmlSitemapStorageConfigurationResponse
+                {
+                    VersionCleanupAfterSeconds = storageOptions.VersionCleanupAfterSeconds,
+                    BackgroundJobEnabled = storageOptions.BackgroundJob is not null,
+                    BackgroundJobIntervalSeconds = storageOptions.BackgroundJob?.IntervalSeconds
+                },
+            Sitemaps = ResolveSitemapRows(options),
             CustomSitemaps = options.CustomSitemaps
                 .OrderBy(pair => pair.Key, StringComparer.Ordinal)
                 .Select(pair => XmlSitemapCustomConfigurationRowResponse.FromOptions(pair.Key, pair.Value))
@@ -110,6 +125,27 @@ public sealed record XmlSitemapConfigurationResponse
                 .Select(pair => XmlSitemapIndexConfigurationRowResponse.FromOptions(pair.Key, pair.Value, options))
                 .ToArray()
         };
+    }
+
+    private static IReadOnlyList<XmlSitemapConfigurationRowResponse> ResolveSitemapRows(XmlSitemapsOptions options)
+    {
+        var rows = options.Sitemaps
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .Select(pair => XmlSitemapConfigurationRowResponse.FromOptions(pair.Key, pair.Value))
+            .ToList();
+
+        if (options.Mode == XmlSitemapsMode.Single && rows.Count == 0)
+        {
+            rows.Add(XmlSitemapConfigurationRowResponse.FromOptions(
+                XmlSitemapApiConstants.DefaultSitemapKey,
+                new SitemapOptions
+                {
+                    Path = "/",
+                    PublicName = XmlSitemapApiConstants.DefaultSitemapKey
+                }));
+        }
+
+        return rows;
     }
 }
 
@@ -155,9 +191,9 @@ public sealed record XmlSitemapGlobalFiltersResponse
 public sealed record XmlSitemapStorageConfigurationResponse
 {
     /// <summary>
-    /// Gets the number of seconds after which stored sitemap XML is considered stale.
+    /// Gets the number of seconds obsolete sitemap media versions are retained.
     /// </summary>
-    public required int RefreshStaleAfterSeconds { get; init; }
+    public required int VersionCleanupAfterSeconds { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the background refresh job is enabled.
@@ -167,7 +203,7 @@ public sealed record XmlSitemapStorageConfigurationResponse
     /// <summary>
     /// Gets the number of seconds between background refresh job runs.
     /// </summary>
-    public required int BackgroundJobIntervalSeconds { get; init; }
+    public int? BackgroundJobIntervalSeconds { get; init; }
 }
 
 /// <summary>

@@ -10,7 +10,7 @@ public sealed class XmlSitemapDeliveryApiIntegrationTests : UmbracoTestServerBas
     [Test]
     public async Task DirectRoute_ReturnsControllerResponse_InsteadOfWebsite404()
     {
-        using var response = await Client.GetAsync(PrepareUrl($"/{XmlSitemapApiConstants.ApiRoute}/key?key=missing-sitemap"));
+        using var response = await Client.GetAsync(PrepareUrl($"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap?key=missing-sitemap"));
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Multiple(() =>
@@ -44,8 +44,8 @@ public sealed class XmlSitemapDeliveryApiIntegrationTests : UmbracoTestServerBas
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(response.Content.Headers.ContentType, Is.Not.Null);
             Assert.That(response.Content.Headers.ContentType!.MediaType, Is.EqualTo("application/json"));
-            Assert.That(body, Does.Contain($"\"/{XmlSitemapApiConstants.ApiRoute}/key\""));
-            Assert.That(body, Does.Contain($"\"/{XmlSitemapApiConstants.ApiRoute}/path\""));
+            Assert.That(body, Does.Contain($"\"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap\""));
+            Assert.That(body, Does.Contain($"\"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemapindex\""));
         });
     }
 }

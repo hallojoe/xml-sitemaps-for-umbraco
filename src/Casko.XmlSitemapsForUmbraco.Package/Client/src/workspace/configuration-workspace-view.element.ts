@@ -73,7 +73,7 @@ export class CaskoXmlSitemapsConfigurationWorkspaceViewElement extends UmbLitEle
           ${this._renderSummaryItem("Custom sitemaps", configuration.customSitemapCount)}
           ${this._renderSummaryItem("Indexes", configuration.indexCount)}
           ${this._renderSummaryItem("Root search level", configuration.rootNodeSearchLevel)}
-          ${this._renderSummaryItem("Stale after", this._formatSeconds(configuration.storage?.refreshStaleAfterSeconds))}
+          ${this._renderSummaryItem("Version cleanup", this._formatSeconds(configuration.storage?.versionCleanupAfterSeconds))}
           ${this._renderSummaryItem("Background job", this._formatBoolean(configuration.storage?.backgroundJobEnabled))}
           ${this._renderSummaryItem("Job interval", this._formatSeconds(configuration.storage?.backgroundJobIntervalSeconds))}
         </dl>

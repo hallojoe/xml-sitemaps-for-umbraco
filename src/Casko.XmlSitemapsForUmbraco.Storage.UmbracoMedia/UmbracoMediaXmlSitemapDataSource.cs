@@ -1,20 +1,32 @@
 using System.Text;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
-using UmbracoConstants = Umbraco.Cms.Core.Constants;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia;
 
 public sealed class UmbracoMediaXmlSitemapDataSource(
     IMediaService mediaService,
     IXmlSitemapStorageNameProvider nameProvider,
-    IUmbracoMediaFileAccessor mediaFileAccessor) : IXmlSitemapDataSource
+    IUmbracoMediaFileAccessor mediaFileAccessor,
+    HybridCache cache,
+    IOptions<XmlSitemapStorageOptions> storageOptions,
+    TimeProvider timeProvider) : IXmlSitemapDataSource
 {
     public const string RootFolderName = "Xml Sitemaps";
     private const int PageSize = 100;
+    private const int RetainedVersionCount = 2;
+    private static readonly HybridCacheEntryOptions CacheEntryOptions = new()
+    {
+        Expiration = TimeSpan.FromMinutes(1),
+        LocalCacheExpiration = TimeSpan.FromMinutes(1)
+    };
 
     /// <inheritdoc />
-    public Task<XmlSitemapStoredDocument?> ReadAsync(
+    public async Task<XmlSitemapStoredDocument?> ReadAsync(
         XmlSitemapStorageKey key,
         CancellationToken cancellationToken = default)
     {
@@ -22,32 +34,32 @@ public sealed class UmbracoMediaXmlSitemapDataSource(
         cancellationToken.ThrowIfCancellationRequested();
 
         var fileName = nameProvider.GetFileName(key);
-        var media = FindMedia(fileName);
-        if (media is null)
+        var cacheKey = GetCacheKey(key);
+        var version = await cache.GetOrCreateAsync(
+            cacheKey,
+            _ => ValueTask.FromResult(ResolveLatestVersion(fileName)),
+            CacheEntryOptions,
+            cancellationToken: cancellationToken);
+
+        var document = version is null ? null : ReadVersion(key, version);
+        if (document is not null || version is null)
         {
-            return Task.FromResult<XmlSitemapStoredDocument?>(null);
+            return document;
         }
 
-        var filePath = mediaFileAccessor.GetFilePath(media);
-        if (string.IsNullOrWhiteSpace(filePath))
+        await cache.RemoveAsync(cacheKey, cancellationToken);
+        var fallback = ResolveLatestVersion(fileName, version.MediaKey);
+        if (fallback is null)
         {
-            return Task.FromResult<XmlSitemapStoredDocument?>(null);
+            return null;
         }
 
-        using var stream = mediaFileAccessor.OpenRead(filePath);
-        if (stream == Stream.Null)
-        {
-            return Task.FromResult<XmlSitemapStoredDocument?>(null);
-        }
-
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-        var xml = reader.ReadToEnd();
-
-        return Task.FromResult<XmlSitemapStoredDocument?>(CreateDocument(key, media, fileName, filePath, xml));
+        await cache.SetAsync(cacheKey, fallback, CacheEntryOptions, cancellationToken: cancellationToken);
+        return ReadVersion(key, fallback);
     }
 
     /// <inheritdoc />
-    public Task<XmlSitemapStoredDocument> WriteAsync(
+    public async Task<XmlSitemapStoredDocument> WriteAsync(
         XmlSitemapStorageKey key,
         string xml,
         CancellationToken cancellationToken = default)
@@ -56,41 +68,106 @@ public sealed class UmbracoMediaXmlSitemapDataSource(
         ArgumentNullException.ThrowIfNull(xml);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var fileName = nameProvider.GetFileName(key);
+        var logicalFileName = nameProvider.GetFileName(key);
         var folder = EnsureRootFolder();
-        var media = FindMedia(fileName, folder.Id);
+        var versionedFileName = CreateVersionedFileName(logicalFileName, timeProvider.GetUtcNow());
+        var media = mediaService.CreateMedia(versionedFileName, folder, Constants.Conventions.MediaTypes.File);
 
-        if (media is not null)
+        using var createStream = CreateStream(xml);
+        mediaFileAccessor.SetInitialFile(media, versionedFileName, createStream);
+        mediaService.Save(media);
+
+        var mediaPath = mediaFileAccessor.GetFilePath(media);
+        var version = CreateVersion(media, versionedFileName, mediaPath);
+        await cache.SetAsync(GetCacheKey(key), version, CacheEntryOptions, cancellationToken: cancellationToken);
+        CleanupObsoleteVersions(folder.Id, logicalFileName);
+
+        return CreateDocument(key, media, versionedFileName, mediaPath, xml);
+    }
+
+    private XmlSitemapStoredDocument? ReadVersion(
+        XmlSitemapStorageKey key,
+        StoredSitemapMediaVersion version)
+    {
+        using var stream = mediaFileAccessor.OpenRead(version.MediaPath);
+        if (stream == Stream.Null)
         {
-            var existingPath = mediaFileAccessor.GetFilePath(media);
-            if (!string.IsNullOrWhiteSpace(existingPath))
+            return null;
+        }
+
+        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        var xml = reader.ReadToEnd();
+
+        return new XmlSitemapStoredDocument(
+            key,
+            version.MediaKey,
+            version.MediaId,
+            version.FileName,
+            version.MediaPath,
+            xml,
+            version.PublishedUtc);
+    }
+
+    private StoredSitemapMediaVersion? ResolveLatestVersion(string logicalFileName, Guid? excludedMediaKey = null)
+    {
+        var folder = FindRootFolder();
+        if (folder is null)
+        {
+            return null;
+        }
+
+        var children = GetChildren(folder.Id)
+            .Where(media => media.Key != excludedMediaKey)
+            .ToArray();
+        var candidates = children
+            .Where(media => IsVersionOf(media.Name ?? string.Empty, logicalFileName))
+            .OrderByDescending(media => media.Name, StringComparer.Ordinal)
+            .ToArray();
+
+        if (candidates.Length == 0)
+        {
+            candidates = children
+                .Where(media => string.Equals(media.Name, logicalFileName, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(GetRefreshedUtc)
+                .ToArray();
+        }
+
+        foreach (var candidate in candidates)
+        {
+            var path = mediaFileAccessor.GetFilePath(candidate);
+            if (!string.IsNullOrWhiteSpace(path))
             {
-                using var updateStream = CreateStream(xml);
-                mediaFileAccessor.UpdateFileContent(existingPath, updateStream);
-                mediaService.Save(media);
-                return Task.FromResult(CreateDocument(key, media, fileName, existingPath, xml));
+                return CreateVersion(candidate, candidate.Name ?? logicalFileName, path);
             }
         }
 
-        media ??= mediaService.CreateMedia(fileName, folder, UmbracoConstants.Conventions.MediaTypes.File);
+        return null;
+    }
 
-        using var createStream = CreateStream(xml);
-        mediaFileAccessor.SetInitialFile(media, fileName, createStream);
-        mediaService.Save(media);
+    private void CleanupObsoleteVersions(int folderId, string logicalFileName)
+    {
+        var cleanupAfterSeconds = storageOptions.Value.VersionCleanupAfterSeconds;
+        if (cleanupAfterSeconds <= 0)
+        {
+            return;
+        }
 
-        return Task.FromResult(CreateDocument(
-            key,
-            media,
-            fileName,
-            mediaFileAccessor.GetFilePath(media),
-            xml));
+        var cutoff = timeProvider.GetUtcNow().AddSeconds(-cleanupAfterSeconds);
+        var obsoleteVersions = GetChildren(folderId)
+            .Where(media => IsVersionOf(media.Name ?? string.Empty, logicalFileName))
+            .OrderByDescending(media => media.Name, StringComparer.Ordinal)
+            .Skip(RetainedVersionCount)
+            .Where(media => GetRefreshedUtc(media) is { } refreshedUtc && refreshedUtc <= cutoff);
+
+        foreach (var media in obsoleteVersions)
+        {
+            mediaService.Delete(media);
+        }
     }
 
     private IMedia EnsureRootFolder()
     {
-        var existing = mediaService.GetRootMedia()
-            .FirstOrDefault(media => string.Equals(media.Name, RootFolderName, StringComparison.OrdinalIgnoreCase));
-
+        var existing = FindRootFolder();
         if (existing is not null)
         {
             return existing;
@@ -98,42 +175,64 @@ public sealed class UmbracoMediaXmlSitemapDataSource(
 
         var folder = mediaService.CreateMedia(
             RootFolderName,
-            UmbracoConstants.System.Root,
-            UmbracoConstants.Conventions.MediaTypes.Folder);
+            Constants.System.Root,
+            Constants.Conventions.MediaTypes.Folder);
         mediaService.Save(folder);
 
         return folder;
     }
 
-    private IMedia? FindMedia(string fileName, int? parentId = null)
+    private IMedia? FindRootFolder()
     {
-        var parent = parentId ?? mediaService.GetRootMedia()
-            .FirstOrDefault(media => string.Equals(media.Name, RootFolderName, StringComparison.OrdinalIgnoreCase))
-            ?.Id;
+        return mediaService.GetRootMedia()
+            .FirstOrDefault(media => string.Equals(media.Name, RootFolderName, StringComparison.OrdinalIgnoreCase));
+    }
 
-        if (parent is null)
-        {
-            return null;
-        }
-
+    private IEnumerable<IMedia> GetChildren(int parentId)
+    {
         long total;
         var pageIndex = 0;
         do
         {
-            var children = mediaService.GetPagedChildren(parent.Value, pageIndex, PageSize, out total);
-            var match = children.FirstOrDefault(media =>
-                string.Equals(media.Name, fileName, StringComparison.OrdinalIgnoreCase));
-
-            if (match is not null)
+            var children = mediaService.GetPagedChildren(parentId, pageIndex, PageSize, out total);
+            foreach (var child in children)
             {
-                return match;
+                yield return child;
             }
 
             pageIndex++;
         }
         while (pageIndex * PageSize < total);
+    }
 
-        return null;
+    private static bool IsVersionOf(string candidateFileName, string logicalFileName)
+    {
+        var extension = Path.GetExtension(logicalFileName);
+        var stem = Path.GetFileNameWithoutExtension(logicalFileName);
+        return candidateFileName.StartsWith($"{stem}--", StringComparison.OrdinalIgnoreCase) &&
+               candidateFileName.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string CreateVersionedFileName(string logicalFileName, DateTimeOffset publishedUtc)
+    {
+        var extension = Path.GetExtension(logicalFileName);
+        var stem = Path.GetFileNameWithoutExtension(logicalFileName);
+        return $"{stem}--{publishedUtc:yyyyMMddHHmmssfffffff}Z--{Guid.NewGuid():N}{extension}";
+    }
+
+    private static string GetCacheKey(XmlSitemapStorageKey key)
+    {
+        return $"xml-sitemaps:media-version:{key.Kind}:{key.HostName ?? "default"}:{key.Alias}";
+    }
+
+    private static StoredSitemapMediaVersion CreateVersion(IMedia media, string fileName, string? mediaPath)
+    {
+        return new StoredSitemapMediaVersion(
+            media.Key,
+            media.Id,
+            fileName,
+            mediaPath ?? string.Empty,
+            GetRefreshedUtc(media));
     }
 
     private static XmlSitemapStoredDocument CreateDocument(
@@ -172,4 +271,11 @@ public sealed class UmbracoMediaXmlSitemapDataSource(
             _ => new DateTimeOffset(DateTime.SpecifyKind(media.UpdateDate, DateTimeKind.Utc))
         };
     }
+
+    private sealed record StoredSitemapMediaVersion(
+        Guid MediaKey,
+        int MediaId,
+        string FileName,
+        string MediaPath,
+        DateTimeOffset? PublishedUtc);
 }

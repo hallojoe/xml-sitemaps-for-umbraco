@@ -1,9 +1,9 @@
-using Casko.XmlSitemapsForUmbraco.Common;
 using Asp.Versioning;
+using Casko.XmlSitemapsForUmbraco.Common;
 using Casko.XmlSitemapsForUmbraco.Common.Http;
-using Casko.XmlSitemapsForUmbraco.Common.Services;
 using Casko.XmlSitemapsForUmbraco.Delivery.Authorization;
 using Casko.XmlSitemapsForUmbraco.Models;
+using Casko.XmlSitemapsForUmbraco.Providers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Api.Common.Attributes;
@@ -16,7 +16,7 @@ namespace Casko.XmlSitemapsForUmbraco.Delivery.Controllers;
 [MapToApi($"{XmlSitemapApiConstants.ApiName}")]
 [Route(XmlSitemapApiConstants.ApiRoute)]
 [XmlSitemapsDeliveryApiAccess]
-public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapService) : ControllerBase
+public class XmlSitemapDeliveryApiController(IXmlSitemapProvider xmlSitemapProvider) : ControllerBase
 {
     /// <summary>
     /// Returns the XML sitemap or sitemap index for the specified alias.
@@ -29,13 +29,9 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapServic
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapService.GetConfiguredAsync(sitemapName) as XmlSiteMap;
-            if (xmlSiteMap is null)
-            {
-                return Results.NotFound();
-            }
-
-            return new XmlResult<XmlSiteMap>(xmlSiteMap);
+            return await xmlSitemapProvider.GetConfiguredAsync(sitemapName) is not XmlSitemap xmlSiteMap 
+                ? Results.NotFound() 
+                : new XmlResult<XmlSitemap>(xmlSiteMap);
         }
         catch (Exception exception)
         {
@@ -44,72 +40,21 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapServic
     }
 
     /// <summary>
-    /// Returns the XML sitemap or sitemap index for the specified alias.
+    /// Returns the XML sitemap or sitemap index for the specified configured key.
     /// </summary>
     [Produces(Constants.XmlMimeType)]
-    [HttpGet("path")]
-    public async Task<IResult> GetXmlSiteMapByPath(
-        [FromQuery(Name = "path")]
-        string path,
-        [FromQuery(Name = "hostname")]
-        string? hostname = null,
-        [FromHeader(Name = "culture")] string? culture = null)
-    {
-        try
-        {
-            var xmlSiteMap = await xmlSitemapService.GetByPathAsync(path, culture, hostname) as XmlSiteMap;
-            if (xmlSiteMap is null)
-            {
-                return Results.NotFound();
-            }
-
-            return new XmlResult<XmlSiteMap>(xmlSiteMap);
-        }
-        catch (Exception exception)
-        {
-            return Results.BadRequest(exception.Message);
-        }
-    }
-
-    /// <summary>
-    /// Returns the XML sitemap or sitemap index for the specified key.
-    /// </summary>
-    [Produces(Constants.XmlMimeType)]
-    [HttpGet("key")]
+    [HttpGet("xmlsitemap")]
     public async Task<IResult> GetXmlSiteMapByKey([FromQuery(Name = "key")] string key)
     {
         try
         {
-            var xmlSiteMap = await xmlSitemapService.GetConfiguredAsync(key) as XmlSiteMap;
+            var xmlSiteMap = await xmlSitemapProvider.GetConfiguredAsync(key) as XmlSitemap;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
             }
 
-            return new XmlResult<XmlSiteMap>(xmlSiteMap);
-        }
-        catch (Exception exception)
-        {
-            return Results.BadRequest(exception.Message);
-        }
-    }
-
-    /// <summary>
-    /// Returns the XML sitemap for the specified root content key.
-    /// </summary>
-    [Produces(Constants.XmlMimeType)]
-    [HttpGet("root-key")]
-    public async Task<IResult> GetXmlSiteMapByRootKey([FromQuery(Name = "key")] Guid key)
-    {
-        try
-        {
-            var xmlSiteMap = await xmlSitemapService.GetByRootKeyAsync(key) as XmlSiteMap;
-            if (xmlSiteMap is null)
-            {
-                return Results.NotFound();
-            }
-
-            return new XmlResult<XmlSiteMap>(xmlSiteMap);
+            return new XmlResult<XmlSitemap>(xmlSiteMap);
         }
         catch (Exception exception)
         {
@@ -118,26 +63,25 @@ public class XmlSitemapDeliveryApiController(IXmlSitemapService xmlSitemapServic
     }
     
     /// <summary>
-    /// Returns the XML sitemap or sitemap index for the specified key.
+    /// Returns the XML sitemap or sitemap index for the specified configured key.
     /// </summary>
     [Produces(Constants.XmlMimeType)]
-    [HttpGet("index/key")]
+    [HttpGet("xmlsitemapindex")]
     public IResult GetXmlSiteMapIndexByKey([FromQuery(Name = "key")] string key)
     {
         try
         {
-            var xmlSiteMap = xmlSitemapService.GetIndex(key) as XmlSiteMapIndex;
+            var xmlSiteMap = xmlSitemapProvider.GetIndex(key) as XmlSitemapIndex;
             if (xmlSiteMap is null)
             {
                 return Results.NotFound();
             }
 
-            return new XmlResult<XmlSiteMapIndex>(xmlSiteMap);
+            return new XmlResult<XmlSitemapIndex>(xmlSiteMap);
         }
         catch (Exception exception)
         {
             return Results.BadRequest(exception.Message);
         }
     }
-    
 }

@@ -1,0 +1,308 @@
+using System.ComponentModel.DataAnnotations;
+using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Casko.XmlSitemapsForUmbraco.Common.Exceptions;
+using Casko.XmlSitemapsForUmbraco.Models;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Rendering;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Routing;
+using Casko.XmlSitemapsForUmbraco.Providers.Examine.Urls;
+using Casko.XmlSitemapsForUmbraco.Providers.Rendering.Contexts;
+using Casko.XmlSitemapsForUmbraco.Providers.Rendering.Indexes;
+using Casko.XmlSitemapsForUmbraco.Providers.Routing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using CommonXmlSitemapApiConstants = Casko.XmlSitemapsForUmbraco.Common.XmlSitemapApiConstants;
+
+namespace Casko.XmlSitemapsForUmbraco.Providers.Examine;
+
+public sealed class ExamineXmlSitemapProvider(
+    IOptions<XmlSitemapsOptions> xmlSitemapOptions,
+    IExamineSitemapRootResolver sitemapRootResolver,
+    IHostUrlProvider hostUrlProvider,
+    ICmsUrlService cmsUrlService,
+    IExamineXmlSitemapRenderer sitemapRenderer,
+    IXmlSitemapIndexRenderer sitemapIndexRenderer,
+    IEnumerable<IXmlSitemapCustomProvider> customProviders,
+    ILogger<ExamineXmlSitemapProvider> logger) : IXmlSitemapSourceProvider
+{
+    /// <inheritdoc />
+    public IXmlSitemapModel GetByRootKey(Guid rootKey)
+    {
+        return GetByRootKeyAsync(rootKey).GetAwaiter().GetResult();
+    }
+
+    /// <inheritdoc />
+    public async Task<IXmlSitemapModel> GetByRootKeyAsync(Guid rootKey)
+    {
+        return await RenderXmlSiteMapAsync(rootKey, hostname: null, culture: null, sitemapOptions: null);
+    }
+
+    /// <inheritdoc />
+    public IXmlSitemapModel GetByPath(string path, string? culture = null, string? hostname = null)
+    {
+        return GetByPathAsync(path, culture, hostname).GetAwaiter().GetResult();
+    }
+
+    /// <inheritdoc />
+    public async Task<IXmlSitemapModel> GetByPathAsync(string path, string? culture = null, string? hostname = null)
+    {
+        var sitemapRoot = await sitemapRootResolver.ResolveAsync(path, hostname, culture);
+        if (sitemapRoot is null)
+        {
+            throw new RootContentNotFoundException();
+        }
+
+        return await RenderXmlSiteMapAsync(sitemapRoot.Key, hostname, culture, sitemapOptions: null);
+    }
+
+    /// <inheritdoc />
+    public IXmlSitemapModel GetConfigured(string key)
+    {
+        return GetConfiguredAsync(key).GetAwaiter().GetResult();
+    }
+
+    /// <inheritdoc />
+    public async Task<IXmlSitemapModel> GetConfiguredAsync(string key)
+    {
+        var configuredSitemaps = xmlSitemapOptions.Value;
+        if (!configuredSitemaps.Sitemaps.TryGetValue(key, out var sitemapOptions))
+        {
+            if (IsImplicitSingleSitemapKey(configuredSitemaps, key))
+            {
+                var implicitRoot = await ResolveConfiguredRootAsync(
+                    key,
+                    path: "/",
+                    hostname: null,
+                    culture: null,
+                    isImplicitSingleSitemap: true);
+
+                return await RenderXmlSiteMapAsync(
+                    implicitRoot.Key,
+                    hostname: null,
+                    culture: null,
+                    sitemapOptions: null);
+            }
+
+            return await GetCustomConfiguredAsync(key);
+        }
+
+        var sitemapRoot = await ResolveConfiguredRootAsync(
+            key,
+            sitemapOptions.Path ?? "/",
+            sitemapOptions.HostName,
+            sitemapOptions.Culture,
+            isImplicitSingleSitemap: false);
+
+        return await RenderXmlSiteMapAsync(sitemapRoot.Key, sitemapOptions.HostName, sitemapOptions.Culture, sitemapOptions);
+    }
+
+    /// <inheritdoc />
+    public IXmlSitemapModel GetIndex(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ValidationException("A sitemap index key is required.");
+        }
+
+        var configuredSitemaps = xmlSitemapOptions.Value;
+        if (!configuredSitemaps.Indexes.TryGetValue(key, out var sitemapIndexOptions))
+        {
+            throw new InvalidOperationException("Invalid key.");
+        }
+
+        return sitemapIndexRenderer.Render(new XmlSitemapIndexRenderContext(
+            sitemapIndexOptions.Sitemaps,
+            sitemapIndexOptions.HostName,
+            XmlSitemapIndexLocationMode.LegacyXmlFile,
+            ResolvePublicSitemapAliases(sitemapIndexOptions.Sitemaps, configuredSitemaps)));
+    }
+
+    /// <inheritdoc />
+    public Task<IXmlSitemapModel> GetIndexAsync(string key)
+    {
+        return Task.FromResult(GetIndex(key));
+    }
+
+    private async Task<XmlSitemap> GetCustomConfiguredAsync(string sitemapKey)
+    {
+        var configuredSitemaps = xmlSitemapOptions.Value;
+        if (!configuredSitemaps.CustomSitemaps.TryGetValue(sitemapKey, out var sitemapOptions))
+        {
+            throw new InvalidOperationException("Invalid key.");
+        }
+
+        if (string.IsNullOrWhiteSpace(sitemapOptions.ProviderAlias))
+        {
+            throw new InvalidOperationException("A custom sitemap provider alias is required.");
+        }
+
+        var provider = customProviders.FirstOrDefault(candidate =>
+            string.Equals(candidate.Alias, sitemapOptions.ProviderAlias, StringComparison.OrdinalIgnoreCase));
+        if (provider is null)
+        {
+            throw new InvalidOperationException($"Custom sitemap provider '{sitemapOptions.ProviderAlias}' was not found.");
+        }
+
+        return await provider.GetSitemapAsync(new XmlSitemapCustomProviderContext(
+            sitemapKey,
+            sitemapOptions.HostName,
+            sitemapOptions.Settings));
+    }
+
+    private async Task<ExamineSitemapRoot> ResolveConfiguredRootAsync(
+        string sitemapKey,
+        string path,
+        string? hostname,
+        string? culture,
+        bool isImplicitSingleSitemap)
+    {
+        logger.LogDebug(
+            "Resolving XML sitemap root for sitemap {SitemapKey}. Path: {Path}; Hostname: {HostName}; Culture: {Culture}; Implicit single sitemap: {IsImplicitSingleSitemap}.",
+            sitemapKey,
+            path,
+            hostname,
+            culture,
+            isImplicitSingleSitemap);
+
+        var sitemapRoot = await sitemapRootResolver.ResolveAsync(path, hostname, culture);
+        if (sitemapRoot is null)
+        {
+            logger.LogInformation(
+                "No XML sitemap root was resolved for sitemap {SitemapKey}. Path: {Path}; Hostname: {HostName}; Culture: {Culture}; Implicit single sitemap: {IsImplicitSingleSitemap}.",
+                sitemapKey,
+                path,
+                hostname,
+                culture,
+                isImplicitSingleSitemap);
+
+            throw new RootContentNotFoundException();
+        }
+
+        logger.LogDebug(
+            "Resolved XML sitemap root {RootKey} for sitemap {SitemapKey}.",
+            sitemapRoot.Key,
+            sitemapKey);
+
+        return sitemapRoot;
+    }
+
+    private async Task<XmlSitemap> RenderXmlSiteMapAsync(
+        Guid rootKey,
+        string? hostname,
+        string? culture,
+        SitemapOptions? sitemapOptions)
+    {
+        var urls = (await cmsUrlService.GetUrlsByKeyAsync(rootKey)).ToList();
+        if (urls.Count == 0)
+        {
+            throw new RootContentHasNoContentException($"No URL's found under rootKey: {rootKey}");
+        }
+
+        var allLanguageCodes = urls
+            .Select(url => url.Culture)
+            .Where(cultureCode => string.IsNullOrWhiteSpace(cultureCode) is false)
+            .Select(cultureCode => cultureCode!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var hostUrl = await ResolveHostUrlAsync(rootKey, culture);
+        var defaultLanguageCode = culture ?? hostUrl?.Culture ?? allLanguageCodes.FirstOrDefault() ?? "en";
+        var availableCultures = ResolveAvailableCultures(allLanguageCodes, culture, hostUrl?.Culture);
+        var cultureSelection = SitemapCultureSelection.Resolve(
+            availableCultures,
+            xmlSitemapOptions.Value,
+            sitemapOptions);
+        var selectedUrls = urls
+            .Where(url => cultureSelection.Cultures.Contains(url.Culture, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+        if (selectedUrls.Count == 0)
+        {
+            return new XmlSitemap();
+        }
+
+        var resolvedHostname = string.IsNullOrWhiteSpace(hostname)
+            ? ResolveHostname(hostUrl)
+            : hostname;
+
+        return sitemapRenderer.Render(new ExamineXmlSitemapRenderContext(
+            selectedUrls,
+            defaultLanguageCode,
+            cultureSelection.Cultures,
+            resolvedHostname,
+            cultureSelection.RenderAlternateLinks));
+    }
+
+    private async Task<HostUrl?> ResolveHostUrlAsync(Guid rootKey, string? culture)
+    {
+        var hostUrls = (await hostUrlProvider.GetHostUrlsAsync())
+            .Where(hostUrl => hostUrl.Key == rootKey)
+            .ToList();
+
+        if (hostUrls.Count == 0)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(culture) is false)
+        {
+            var cultureHostUrl = hostUrls.FirstOrDefault(hostUrl =>
+                string.Equals(hostUrl.Culture, culture, StringComparison.OrdinalIgnoreCase));
+            if (cultureHostUrl is not null)
+            {
+                return cultureHostUrl;
+            }
+        }
+
+        return hostUrls.FirstOrDefault(hostUrl => hostUrl.IsDefaultCulture) ?? hostUrls.First();
+    }
+
+    private static string? ResolveHostname(HostUrl? hostUrl)
+    {
+        return hostUrl?.Uri.ToString().TrimEnd('/');
+    }
+
+    private static IReadOnlyCollection<string> ResolveAvailableCultures(
+        IEnumerable<string> languageCodes,
+        string? culture,
+        string? hostCulture)
+    {
+        return languageCodes
+            .Concat([culture, hostCulture])
+            .Where(languageCode => string.IsNullOrWhiteSpace(languageCode) is false)
+            .Select(languageCode => languageCode!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static IReadOnlyDictionary<string, string> ResolvePublicSitemapAliases(
+        IEnumerable<string> sitemapKeys,
+        XmlSitemapsOptions configuredSitemaps)
+    {
+        return sitemapKeys
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                key => key,
+                key => ResolvePublicSitemapAlias(key, configuredSitemaps),
+                StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string ResolvePublicSitemapAlias(string key, XmlSitemapsOptions configuredSitemaps)
+    {
+        if (configuredSitemaps.Sitemaps.TryGetValue(key, out var sitemapOptions))
+        {
+            return SitemapPublicName.Resolve(key, sitemapOptions.PublicName);
+        }
+
+        if (configuredSitemaps.CustomSitemaps.TryGetValue(key, out var customSitemapOptions))
+        {
+            return SitemapPublicName.Resolve(key, customSitemapOptions.PublicName);
+        }
+
+        return key;
+    }
+
+    private static bool IsImplicitSingleSitemapKey(XmlSitemapsOptions options, string key)
+    {
+        return options.Mode == XmlSitemapsMode.Single &&
+               string.Equals(key, CommonXmlSitemapApiConstants.DefaultSitemapKey, StringComparison.OrdinalIgnoreCase);
+    }
+}

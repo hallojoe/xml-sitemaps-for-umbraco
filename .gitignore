@@ -19,6 +19,8 @@ mono_crash.*
 # Git
 *.orig
 
+src/aspnet/*
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -132,6 +134,9 @@ _ReSharper*/
 
 # TeamCity is a build add-in
 _TeamCity*
+
+# Umbraco 
+umbraco*
 
 # DotCover is a Code Coverage Tool
 *.dotCover

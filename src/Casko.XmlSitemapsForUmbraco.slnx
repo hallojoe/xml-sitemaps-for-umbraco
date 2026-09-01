@@ -1,10 +1,20 @@
 <Solution>
+  <Folder Name="/DemoSites/">
+    <Project Path="Casko.XmlSitemapsForUmbraco.DemoAppHost/Casko.XmlSitemapsForUmbraco.DemoAppHost.csproj" />
+    <Project Path="Casko.XmlSitemapsForUmbraco.DemoSiteReverseProxy/Casko.XmlSitemapsForUmbraco.DemoSiteReverseProxy.csproj" />
+    <Project Path="Casko.XmlSitemapsForUmbraco.DemoSite/Casko.XmlSitemapsForUmbraco.DemoSite.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj" />
+  </Folder>
   <Project Path="Casko.XmlSitemapsForUmbraco.Common/Casko.XmlSitemapsForUmbraco.Common.csproj" />
+  <Project Path="Casko.XmlSitemapsForUmbraco.Delivery.Rewriting/Casko.XmlSitemapsForUmbraco.Delivery.Rewriting.csproj" />
+  <Project Path="Casko.XmlSitemapsForUmbraco.Delivery.Swagger/Casko.XmlSitemapsForUmbraco.Delivery.Swagger.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Delivery/Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Models/Casko.XmlSitemapsForUmbraco.Models.csproj" />
+  <Project Path="Casko.XmlSitemapsForUmbraco.Providers.Examine/Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj" />
+  <Project Path="Casko.XmlSitemapsForUmbraco.Providers/Casko.XmlSitemapsForUmbraco.Providers.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia/Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Storage/Casko.XmlSitemapsForUmbraco.Storage.csproj" />
-  <Project Path="Casko.XmlSitemapsForUmbraco.Tests/Casko.XmlSitemapsForUmbraco.Tests.csproj" />
-  <Project Path="Casko.XmlSitemapsForUmbraco.TestSite/Casko.XmlSitemapsForUmbraco.TestSite.csproj" />
   <Project Path="Casko.XmlSitemapsForUmbraco.Package/Casko.XmlSitemapsForUmbraco.Package.csproj" />
 </Solution>

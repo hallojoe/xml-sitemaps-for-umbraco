@@ -38,22 +38,52 @@ public class SitemapRewriteDefinitionServiceTests
         Assert.That(result, Has.Count.EqualTo(3));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap.xml" &&
-            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/index/key?key=xmlsitemap" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemapindex?key=xmlsitemap" &&
             definition.PublicName == "xmlsitemap" &&
             definition.Kind == SitemapRewriteKind.SitemapIndex &&
             definition.HostName == "host.dk"));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap-host-dk-en.xml" &&
-            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/key?key=xmlsitemap-host-dk-en" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap?key=xmlsitemap-host-dk-en" &&
             definition.PublicName == "xmlsitemap-host-dk-en" &&
             definition.Kind == SitemapRewriteKind.Sitemap &&
             definition.HostName == "host.dk"));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/external-products.xml" &&
-            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/key?key=external-products" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap?key=external-products" &&
             definition.PublicName == "external-products" &&
             definition.Kind == SitemapRewriteKind.Sitemap &&
             definition.HostName == "custom.dk"));
+    }
+
+    [Test]
+    public void GetDefinitions_WhenSingleModeHasNoConfiguredDefinitions_CreatesImplicitSitemapDefinition()
+    {
+        var sut = CreateService(new XmlSitemapsOptions());
+
+        var result = sut.GetDefinitions();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result.Single(), Is.EqualTo(new SitemapRewriteDefinition(
+            "/xmlsitemap.xml",
+            $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap?key=xmlsitemap",
+            "xmlsitemap",
+            "xmlsitemap",
+            SitemapRewriteKind.Sitemap,
+            HostName: null)));
+    }
+
+    [Test]
+    public void GetDefinitions_WhenConfigurationModeHasNoConfiguredDefinitions_CreatesNoDefinitions()
+    {
+        var sut = CreateService(new XmlSitemapsOptions
+        {
+            Mode = XmlSitemapsMode.Configuration
+        });
+
+        var result = sut.GetDefinitions();
+
+        Assert.That(result, Is.Empty);
     }
 
     [Test]
@@ -106,11 +136,11 @@ public class SitemapRewriteDefinitionServiceTests
         Assert.That(result, Has.Count.EqualTo(2));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap.xml" &&
-            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/key?key=regular-sitemap" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap?key=regular-sitemap" &&
             definition.HostName == "regular.dk"));
         Assert.That(result, Has.Some.Matches<SitemapRewriteDefinition>(definition =>
             definition.Path == "/xmlsitemap.xml" &&
-            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/key?key=custom-sitemap" &&
+            definition.TargetPath == $"/{XmlSitemapApiConstants.ApiRoute}/xmlsitemap?key=custom-sitemap" &&
             definition.HostName == "custom.dk"));
     }
 

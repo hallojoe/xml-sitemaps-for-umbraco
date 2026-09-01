@@ -1,20 +1,31 @@
-using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using System.Diagnostics;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Infrastructure.BackgroundJobs;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia;
 
-public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob( 
+public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
     IServiceScopeFactory serviceScopeFactory,
-    IOptions<XmlSitemapsOptions> xmlSitemapOptions) : IRecurringBackgroundJob
+    IOptions<XmlSitemapStorageOptions> xmlSitemapStorageOptions,
+    ILogger<UmbracoMediaXmlSitemapRefreshBackgroundJob> logger) : IRecurringBackgroundJob
 {
+    private const int DefaultIntervalSeconds = 3600;
+    private const int MinimumDelaySeconds = 10;
+
     public TimeSpan Period => TimeSpan.FromSeconds(GetIntervalSeconds());
 
-    public TimeSpan Delay => TimeSpan.FromSeconds(10);
+    public TimeSpan Delay => TimeSpan.FromSeconds(GetDelaySeconds());
 
-    public ServerRole[] ServerRoles => IRecurringBackgroundJob.DefaultServerRoles;
+    public ServerRole[] ServerRoles =>
+    [
+        ServerRole.SchedulingPublisher,
+        ServerRole.Single,
+        ServerRole.Unknown
+    ];
 
     public event EventHandler? PeriodChanged
     {
@@ -24,19 +35,80 @@ public sealed class UmbracoMediaXmlSitemapRefreshBackgroundJob(
 
     public async Task RunJobAsync()
     {
-        if (!xmlSitemapOptions.Value.Storage.BackgroundJob.Enabled)
-        {
-            return;
-        }
+        var startedAt = DateTimeOffset.UtcNow;
+        var stopwatch = Stopwatch.StartNew();
+
+        logger.LogInformation(
+            "Starting XML sitemap media refresh background job at {StartedAt}.",
+            startedAt);
+
+        logger.LogDebug(
+            "Creating service scope for XML sitemap media refresh.");
 
         using var scope = serviceScopeFactory.CreateScope();
-        var refreshService = scope.ServiceProvider.GetRequiredService<IXmlSitemapStorageRefreshService>();
+
+        var refreshService =
+            scope.ServiceProvider.GetRequiredService<IXmlSitemapStorageRefreshService>();
+
+        logger.LogDebug(
+            "Starting refresh of all XML sitemap storage.");
+
         await refreshService.RefreshAllAsync();
+
+        stopwatch.Stop();
+        var completedAt = DateTimeOffset.UtcNow;
+
+        logger.LogInformation(
+            "Completed XML sitemap media refresh background job at {CompletedAt}. Elapsed time: {ElapsedTime}.",
+            completedAt,
+            FormatElapsedTime(stopwatch.Elapsed));
+
+        logger.LogDebug(
+            "Completed refresh of all XML sitemap storage.");
+    }
+
+    private static string FormatElapsedTime(TimeSpan elapsed)
+    {
+        return elapsed.TotalHours >= 1
+            ? $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m {elapsed.Seconds}s"
+            : elapsed.TotalMinutes >= 1
+                ? $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds}s"
+                : $"{elapsed.TotalSeconds:F1}s";
     }
 
     private int GetIntervalSeconds()
     {
-        var intervalSeconds = xmlSitemapOptions.Value.Storage.BackgroundJob.IntervalSeconds;
-        return intervalSeconds > 0 ? intervalSeconds : 3600;
+        var intervalSeconds =
+            xmlSitemapStorageOptions.Value.BackgroundJob!.IntervalSeconds;
+
+        if (intervalSeconds > 0)
+        {
+            return intervalSeconds;
+        }
+
+        logger.LogDebug(
+            "Configured XML sitemap refresh interval {IntervalSeconds} is invalid. Using default interval {DefaultIntervalSeconds} seconds.",
+            intervalSeconds,
+            DefaultIntervalSeconds);
+
+        return DefaultIntervalSeconds;
+    }
+
+    private int GetDelaySeconds()
+    {
+        var delaySeconds =
+            xmlSitemapStorageOptions.Value.BackgroundJob!.RefreshJobDelayInSeconds;
+
+        if (delaySeconds >= MinimumDelaySeconds)
+        {
+            return delaySeconds;
+        }
+
+        logger.LogDebug(
+            "Configured XML sitemap refresh delay {DelaySeconds} is below the minimum. Using {MinimumDelaySeconds} seconds.",
+            delaySeconds,
+            MinimumDelaySeconds);
+
+        return MinimumDelaySeconds;
     }
 }

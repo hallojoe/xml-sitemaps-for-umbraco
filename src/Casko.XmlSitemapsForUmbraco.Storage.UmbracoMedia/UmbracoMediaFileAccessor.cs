@@ -1,10 +1,10 @@
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Extensions;
-using UmbracoConstants = Umbraco.Cms.Core.Constants;
 
 namespace Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia;
 
@@ -17,7 +17,7 @@ public sealed class UmbracoMediaFileAccessor(
 {
     public string? GetFilePath(IMedia media)
     {
-        return media.GetValue<string>(UmbracoConstants.Conventions.Media.File);
+        return media.GetValue<string>(Constants.Conventions.Media.File);
     }
 
     public Stream OpenRead(string filePath)
@@ -32,13 +32,9 @@ public sealed class UmbracoMediaFileAccessor(
             mediaUrlGeneratorCollection,
             shortStringHelper,
             contentTypeBaseServiceProvider,
-            UmbracoConstants.Conventions.Media.File,
+            Constants.Conventions.Media.File,
             fileName,
             content);
     }
 
-    public void UpdateFileContent(string filePath, Stream content)
-    {
-        mediaService.SetMediaFileContent(filePath, content);
-    }
 }

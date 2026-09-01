@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceBuildOutput</TargetsForTfmSpecificBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -47,11 +48,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" PrivateAssets="all" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Delivery\Casko.XmlSitemapsForUmbraco.Delivery.csproj" PrivateAssets="all" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Models\Casko.XmlSitemapsForUmbraco.Models.csproj" PrivateAssets="all" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" PrivateAssets="all" />
-      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Models\Casko.XmlSitemapsForUmbraco.Models.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers\Casko.XmlSitemapsForUmbraco.Providers.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Providers.Examine\Casko.XmlSitemapsForUmbraco.Providers.Examine.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage\Casko.XmlSitemapsForUmbraco.Storage.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia\Casko.XmlSitemapsForUmbraco.Storage.UmbracoMedia.csproj" />
+        <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Delivery\Casko.XmlSitemapsForUmbraco.Delivery.csproj" />
     </ItemGroup>
     
     <ItemGroup>

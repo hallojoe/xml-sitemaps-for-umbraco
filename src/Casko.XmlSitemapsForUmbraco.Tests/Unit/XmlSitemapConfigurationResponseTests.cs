@@ -1,5 +1,6 @@
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
 using Casko.XmlSitemapsForUmbraco.Package.Models;
+using Casko.XmlSitemapsForUmbraco.Storage.Configuration;
 using NUnit.Framework;
 
 namespace Casko.XmlSitemapsForUmbraco.Tests.Unit;
@@ -16,15 +17,17 @@ public sealed class XmlSitemapConfigurationResponseTests
         {
             Assert.That(result.Enabled, Is.True);
             Assert.That(result.RewritesEnabled, Is.False);
+            Assert.That(result.Mode, Is.EqualTo(XmlSitemapsMode.Single));
             Assert.That(result.RenderAlternateLinksForSingleCultureSitemaps, Is.False);
             Assert.That(result.RootNodeSearchLevel, Is.Zero);
-            Assert.That(result.SitemapCount, Is.Zero);
+            Assert.That(result.RootContentTypeAliases, Is.Empty);
+            Assert.That(result.SitemapCount, Is.EqualTo(1));
             Assert.That(result.CustomSitemapCount, Is.Zero);
             Assert.That(result.IndexCount, Is.Zero);
-            Assert.That(result.Storage.RefreshStaleAfterSeconds, Is.EqualTo(3600));
-            Assert.That(result.Storage.BackgroundJobEnabled, Is.True);
-            Assert.That(result.Storage.BackgroundJobIntervalSeconds, Is.EqualTo(3600));
-            Assert.That(result.Sitemaps, Is.Empty);
+            Assert.That(result.Storage, Is.Null);
+            Assert.That(result.Sitemaps.Single().Key, Is.EqualTo("xmlsitemap"));
+            Assert.That(result.Sitemaps.Single().PublicName, Is.EqualTo("xmlsitemap"));
+            Assert.That(result.Sitemaps.Single().Path, Is.EqualTo("/"));
             Assert.That(result.CustomSitemaps, Is.Empty);
             Assert.That(result.Indexes, Is.Empty);
         });
@@ -37,22 +40,22 @@ public sealed class XmlSitemapConfigurationResponseTests
         {
             Enabled = false,
             RewritesEnabled = true,
+            Mode = XmlSitemapsMode.Single,
             RenderAlternateLinksForSingleCultureSitemaps = true,
             RootNodeSearchLevel = 1,
+            RootContentTypeAliases = ["homePage"],
             IncludedContentTypeAliases = ["homePage"],
             ExcludedContentTypeAliases = ["hiddenPage"],
             IncludedCultures = ["en", "da"],
             ExcludedCultures = ["pl"],
             ExcludingUrlPropertyAlias = "metaRobots",
-            ExcludingUrlPropertyValue = "noindex",
-            Storage =
+            ExcludingUrlPropertyValue = "noindex"
+        }, new XmlSitemapStorageOptions
+        {
+            VersionCleanupAfterSeconds = 120,
+            BackgroundJob = new XmlSitemapStorageBackgroundJobOptions
             {
-                RefreshStaleAfterSeconds = 120,
-                BackgroundJob =
-                {
-                    Enabled = false,
-                    IntervalSeconds = 600
-                }
+                IntervalSeconds = 600
             }
         });
 
@@ -60,17 +63,19 @@ public sealed class XmlSitemapConfigurationResponseTests
         {
             Assert.That(result.Enabled, Is.False);
             Assert.That(result.RewritesEnabled, Is.True);
+            Assert.That(result.Mode, Is.EqualTo(XmlSitemapsMode.Single));
             Assert.That(result.RenderAlternateLinksForSingleCultureSitemaps, Is.True);
             Assert.That(result.RootNodeSearchLevel, Is.EqualTo(1));
+            Assert.That(result.RootContentTypeAliases, Is.EqualTo(new[] { "homePage" }));
             Assert.That(result.GlobalFilters.IncludedContentTypeAliases, Is.EqualTo(new[] { "homePage" }));
             Assert.That(result.GlobalFilters.ExcludedContentTypeAliases, Is.EqualTo(new[] { "hiddenPage" }));
             Assert.That(result.GlobalFilters.IncludedCultures, Is.EqualTo(new[] { "en", "da" }));
             Assert.That(result.GlobalFilters.ExcludedCultures, Is.EqualTo(new[] { "pl" }));
             Assert.That(result.GlobalFilters.ExcludingUrlPropertyAlias, Is.EqualTo("metaRobots"));
             Assert.That(result.GlobalFilters.ExcludingUrlPropertyValue, Is.EqualTo("noindex"));
-            Assert.That(result.Storage.RefreshStaleAfterSeconds, Is.EqualTo(120));
-            Assert.That(result.Storage.BackgroundJobEnabled, Is.False);
-            Assert.That(result.Storage.BackgroundJobIntervalSeconds, Is.EqualTo(600));
+            Assert.That(result.Storage?.VersionCleanupAfterSeconds, Is.EqualTo(120));
+            Assert.That(result.Storage?.BackgroundJobEnabled, Is.True);
+            Assert.That(result.Storage?.BackgroundJobIntervalSeconds, Is.EqualTo(600));
         });
     }
 
