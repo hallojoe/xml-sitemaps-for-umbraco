@@ -19,6 +19,8 @@ mono_crash.*
 # Git
 *.orig
 
+src/aspnet/*
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

@@ -1,6 +1,7 @@
 using Examine;
 using Examine.Search;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models;
@@ -26,13 +27,15 @@ public sealed class ExternalIndexUrlService(
     ILanguageService languageService,
     IDomainService domainService,
     IDocumentUrlService documentUrlService,
-    IExamineManager examineManager) : ICmsUrlService
+    IExamineManager examineManager, 
+    ILogger<ExternalIndexUrlService> logger) : ICmsUrlService
 {
     /// <inheritdoc />
     public async Task<IEnumerable<CmsUrl>> GetUrlsByKeyAsync(Guid key, CancellationToken cancellationToken = default)
     {
         if(!examineManager.TryGetIndex(Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName, out var index))
         {
+            logger.LogInformation($"Could not find examine index for {Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName}");
             return [];
         }
 
@@ -50,6 +53,8 @@ public sealed class ExternalIndexUrlService(
                 .Execute(new QueryOptions(skip, urlResolverSettings.Value.PageSize));
             
             total = searchResults.TotalItemCount;
+            
+            logger.LogInformation("Search found {total} nodes", total);
             
             searchResultList.AddRange(searchResults);
             
@@ -95,17 +100,13 @@ public sealed class ExternalIndexUrlService(
             {
                 var updatedDateForCulture = updatedDate;
 
-                if (long.TryParse(searchResult.Values["updateDate_" + language], out var updatedDateAsLongForCulture))
+                if (searchResult.Values.TryGetValue("updateDate_" + language, out var updateDateForCultureValue) &&
+                    long.TryParse(updateDateForCultureValue, out var updatedDateAsLongForCulture))
                 {
                     updatedDateForCulture = new DateTime(updatedDateAsLongForCulture);
                 }
 
-                if (!searchResult.Values.TryGetValue("__Published_" + language, out var publishedValueForCulture))
-                {
-                    continue;
-                }
-
-                if (!publishedValueForCulture.ToLower().Equals("y"))
+                if (!IsPublishedForCulture(searchResult, language))
                 {
                     continue;
                 }
@@ -190,6 +191,17 @@ public sealed class ExternalIndexUrlService(
         }
 
         return languageCodes.ToArray();
+    }
+
+    internal static bool IsPublishedForCulture(ISearchResult searchResult, string culture)
+    {
+        var cultureSpecificField = "__Published_" + culture;
+        var publicationField = searchResult.Values.ContainsKey(cultureSpecificField)
+            ? cultureSpecificField
+            : "__Published";
+
+        return searchResult.Values.TryGetValue(publicationField, out var publishedValue) &&
+               string.Equals(publishedValue, "y", StringComparison.OrdinalIgnoreCase);
     }
     
     internal static string RemoveIdFromLegacyRouteFormat(string url, bool addTrailingSlash = false)

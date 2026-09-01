@@ -7,8 +7,21 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Load XML sitemap settings before Umbraco composers run so rewrite middleware
 // registration can see RewritesEnabled and the host-specific sitemap mappings.
+const string xmlSitemapSettingsFileEnvironmentVariable = "CASKO_XML_SITEMAPS_SETTINGS_FILE";
+var xmlSitemapSettingsFile =
+    Environment.GetEnvironmentVariable(xmlSitemapSettingsFileEnvironmentVariable)
+    ?? "appsettings.XmlSitemapsForUmbraco.json";
+var xmlSitemapSettingsPath = Path.Combine(builder.Environment.ContentRootPath, xmlSitemapSettingsFile);
+
+if (!File.Exists(xmlSitemapSettingsPath))
+{
+    throw new FileNotFoundException(
+        $"The XML sitemap settings file selected by {xmlSitemapSettingsFileEnvironmentVariable} was not found.",
+        xmlSitemapSettingsPath);
+}
+
 builder.Configuration
-    .AddJsonFile("appsettings.XmlSitemapsForUmbraco.json", optional: false, reloadOnChange: true);
+    .AddJsonFile(xmlSitemapSettingsPath, optional: false, reloadOnChange: true);
 
 var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
 
