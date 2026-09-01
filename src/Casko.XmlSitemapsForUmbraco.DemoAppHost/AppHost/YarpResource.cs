@@ -23,10 +23,6 @@ internal static class YarpResourceExtensions
             .WithReference(sites.MixedSite)
             .WithReference(sites.LanguageVariantSite)
             .WithReference(sites.ManySite)
-            .WaitFor(sites.SingleSite)
-            .WaitFor(sites.MixedSite)
-            .WaitFor(sites.LanguageVariantSite)
-            .WaitFor(sites.ManySite)
             .WithParentRelationship(group);
     }
 }

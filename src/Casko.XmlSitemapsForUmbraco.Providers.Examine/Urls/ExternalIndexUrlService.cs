@@ -100,17 +100,13 @@ public sealed class ExternalIndexUrlService(
             {
                 var updatedDateForCulture = updatedDate;
 
-                if (long.TryParse(searchResult.Values["updateDate_" + language], out var updatedDateAsLongForCulture))
+                if (searchResult.Values.TryGetValue("updateDate_" + language, out var updateDateForCultureValue) &&
+                    long.TryParse(updateDateForCultureValue, out var updatedDateAsLongForCulture))
                 {
                     updatedDateForCulture = new DateTime(updatedDateAsLongForCulture);
                 }
 
-                if (!searchResult.Values.TryGetValue("__Published_" + language, out var publishedValueForCulture))
-                {
-                    continue;
-                }
-
-                if (!publishedValueForCulture.ToLower().Equals("y"))
+                if (!IsPublishedForCulture(searchResult, language))
                 {
                     continue;
                 }
@@ -195,6 +191,17 @@ public sealed class ExternalIndexUrlService(
         }
 
         return languageCodes.ToArray();
+    }
+
+    internal static bool IsPublishedForCulture(ISearchResult searchResult, string culture)
+    {
+        var cultureSpecificField = "__Published_" + culture;
+        var publicationField = searchResult.Values.ContainsKey(cultureSpecificField)
+            ? cultureSpecificField
+            : "__Published";
+
+        return searchResult.Values.TryGetValue(publicationField, out var publishedValue) &&
+               string.Equals(publishedValue, "y", StringComparison.OrdinalIgnoreCase);
     }
     
     internal static string RemoveIdFromLegacyRouteFormat(string url, bool addTrailingSlash = false)
