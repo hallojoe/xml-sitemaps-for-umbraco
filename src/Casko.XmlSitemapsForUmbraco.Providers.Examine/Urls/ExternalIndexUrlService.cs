@@ -1,6 +1,7 @@
 using Examine;
 using Examine.Search;
 using Casko.XmlSitemapsForUmbraco.Common.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models;
@@ -26,13 +27,15 @@ public sealed class ExternalIndexUrlService(
     ILanguageService languageService,
     IDomainService domainService,
     IDocumentUrlService documentUrlService,
-    IExamineManager examineManager) : ICmsUrlService
+    IExamineManager examineManager, 
+    ILogger<ExternalIndexUrlService> logger) : ICmsUrlService
 {
     /// <inheritdoc />
     public async Task<IEnumerable<CmsUrl>> GetUrlsByKeyAsync(Guid key, CancellationToken cancellationToken = default)
     {
         if(!examineManager.TryGetIndex(Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName, out var index))
         {
+            logger.LogInformation($"Could not find examine index for {Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName}");
             return [];
         }
 
@@ -50,6 +53,8 @@ public sealed class ExternalIndexUrlService(
                 .Execute(new QueryOptions(skip, urlResolverSettings.Value.PageSize));
             
             total = searchResults.TotalItemCount;
+            
+            logger.LogInformation("Search found {total} nodes", total);
             
             searchResultList.AddRange(searchResults);
             

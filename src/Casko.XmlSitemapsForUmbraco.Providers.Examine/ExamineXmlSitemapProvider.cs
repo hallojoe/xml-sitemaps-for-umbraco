@@ -194,7 +194,7 @@ public sealed class ExamineXmlSitemapProvider(
         var urls = (await cmsUrlService.GetUrlsByKeyAsync(rootKey)).ToList();
         if (urls.Count == 0)
         {
-            throw new RootContentHasNoContentException();
+            throw new RootContentHasNoContentException($"No URL's found under rootKey: {rootKey}");
         }
 
         var allLanguageCodes = urls

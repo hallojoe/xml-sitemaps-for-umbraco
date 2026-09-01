@@ -23,6 +23,10 @@
     <ItemGroup>
         <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Package\Casko.XmlSitemapsForUmbraco.Package.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="uSyncLanguageVariant\" />
+    </ItemGroup>
     
 <!--    <ItemGroup>-->
 <!--      <ProjectReference Include="..\Casko.XmlSitemapsForUmbraco.Common\Casko.XmlSitemapsForUmbraco.Common.csproj" />-->
